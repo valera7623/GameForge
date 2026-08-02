@@ -45,6 +45,10 @@ services:
       APP_ENV: production
       DEBUG: "false"
       LOG_JSON: "true"
+      ALLOW_MOCK_BILLING: "false"
+      COOKIE_SECURE: "true"
+      S3_USE_SIGNED_URLS: "true"
+      S3_PUBLIC_READ: "false"
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.tasks.celery_app.celery_app inspect ping -d celery@$$HOSTNAME || exit 1"]
       interval: 30s
