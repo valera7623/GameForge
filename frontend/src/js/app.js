@@ -129,7 +129,7 @@ export function sidebarHTML(active) {
   return `
     <aside class="sidebar" aria-label="Main">
       <div class="sidebar-top">
-        <a class="brand" href="/">GameForge</a>
+        <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
         <div class="sidebar-controls">
           <button type="button" class="btn btn-icon" id="langBtn" aria-label="${t("lang.switch")}" title="${t("lang.switch")}">${nextLang}</button>
           <button type="button" class="btn btn-icon theme-toggle" data-theme-toggle aria-label="${t("theme.toggle")}">☾</button>
