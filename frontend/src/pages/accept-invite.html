@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accept invite — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="auth-page">
+    <div class="auth-card">
+      <a class="brand" href="/">GameForge</a>
+      <h1>Team invite</h1>
+      <p class="sub" id="status">Accepting invite…</p>
+      <a class="btn btn-primary" href="/src/pages/team.html">Go to Team</a>
+    </div>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { api } from "../js/api.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
+    applyTheme(getTheme());
+    bindThemeToggles();
+
+    async function main() {
+      if (!requireAuth()) return;
+      const token = new URLSearchParams(location.search).get("token");
+      const el = document.getElementById("status");
+      if (!token) {
+        el.textContent = "Missing invite token";
+        return;
+      }
+      try {
+        await api("/orgs/invites/accept", { method: "POST", body: JSON.stringify({ token }) });
+        el.textContent = "You're in! Open Team to see your studio.";
+      } catch (e) {
+        el.textContent = e.message;
+      }
+    }
+    main();
+  </script>
+</body>
+</html>

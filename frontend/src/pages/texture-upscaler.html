@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Texture Upscaler — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header">
+        <div>
+          <h1>AI Texture Upscaler</h1>
+          <p>Upload PNG/JPG — get 2× or 4× enhanced textures.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <form id="form" class="form-grid">
+          <label>Image <input type="file" name="file" accept="image/png,image/jpeg,image/webp" required /></label>
+          <div class="form-row">
+            <label>Scale
+              <select name="scale"><option value="2">2×</option><option value="4">4×</option></select>
+            </label>
+            <label>Enhance
+              <select name="enhance"><option value="true">Yes</option><option value="false">No</option></select>
+            </label>
+            <label>Project
+              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            </label>
+          </div>
+          <img id="preview" class="preview-img" alt="" hidden />
+          <button class="btn btn-primary" type="submit">Upscale</button>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> Upscaling…</div>
+      </div>
+      <div class="panel" id="resultPanel" hidden>
+        <h2>Result</h2>
+        <p id="sizeInfo" style="color:var(--muted)"></p>
+        <img id="resultImg" class="preview-img" alt="Upscaled" />
+        <div class="actions">
+          <a class="btn btn-primary" id="dlLink" download="upscaled.png">Download PNG</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI } from "../js/api.js";
+    import { mountShell, setLoading, toast } from "../js/app.js";
+    import { previewFile } from "../js/upscaler.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("texture-upscaler.html");
+
+    ProjectsAPI.list().then(list => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+    });
+
+    const fileInput = document.querySelector('input[type="file"]');
+    fileInput.addEventListener("change", () => {
+      const img = document.getElementById("preview");
+      img.hidden = false;
+      previewFile(fileInput.files[0], img);
+    });
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const gen = await ToolsAPI.upscale(
+          fd.get("file"),
+          Number(fd.get("scale")),
+          fd.get("enhance") === "true",
+          fd.get("project_id") || null
+        );
+        const out = gen.output_data;
+        document.getElementById("resultPanel").hidden = false;
+        document.getElementById("sizeInfo").textContent =
+          `${out.original_size.width}×${out.original_size.height} → ${out.upscaled_size.width}×${out.upscaled_size.height}`;
+        document.getElementById("resultImg").src = out.url;
+        document.getElementById("dlLink").href = out.url;
+        toast(`Upscaled · +${gen.xp_awarded} XP`);
+      } catch (err) { toast(err.message, true); }
+      finally { setLoading(document.getElementById("loader"), false); }
+    });
+  </script>
+</body>
+</html>

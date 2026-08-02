@@ -1,0 +1,18 @@
+# On-prem / Enterprise overlay
+# Usage: docker compose -f docker-compose.yml -f docker-compose.onprem.yml up -d
+#
+# Sets enterprise plan for all users, disables Stripe/YuKassa checkout.
+
+services:
+  api:
+    environment:
+      DEPLOYMENT_MODE: onprem
+      DISABLE_BILLING: "true"
+      FORCE_PLAN: enterprise
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+
+  worker:
+    environment:
+      DEPLOYMENT_MODE: onprem
+      DISABLE_BILLING: "true"
+      FORCE_PLAN: enterprise

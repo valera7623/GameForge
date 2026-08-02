@@ -1,0 +1,59 @@
+"""Generation history model."""
+
+import enum
+import uuid
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Optional
+
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
+
+
+class ToolType(str, enum.Enum):
+    LEVEL_DESIGNER = "level_designer"
+    QUEST_GENERATOR = "quest_generator"
+    TEXTURE_UPSCALER = "texture_upscaler"
+    CHARACTER_CREATOR = "character_creator"
+    SOUND_DESIGNER = "sound_designer"
+    PLAYTESTER = "playtester"
+    LOCALIZATION = "localization"
+
+
+class GenerationStatus(str, enum.Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class Generation(Base):
+    __tablename__ = "generations"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="SET NULL"), nullable=True
+    )
+    tool: Mapped[ToolType] = mapped_column(Enum(ToolType, name="ToolType", values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
+    status: Mapped[GenerationStatus] = mapped_column(
+        Enum(GenerationStatus, name="GenerationStatus", values_callable=lambda x: [e.value for e in x]), default=GenerationStatus.PENDING, index=True
+    )
+    title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    input_data: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    output_data: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    asset_urls: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    celery_task_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    xp_awarded: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="generations")
+    project: Mapped[Optional["Project"]] = relationship("Project", back_populates="generations")

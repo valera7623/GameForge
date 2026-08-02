@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameForge — AI Game Dev Toolkit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body class="page-landing">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <header class="topnav">
+    <a class="brand" href="/">GameForge</a>
+    <nav>
+      <a href="#tools">Tools</a>
+      <a href="#pricing">Pricing</a>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
+      <a href="/src/pages/login.html" class="btn btn-ghost">Sign in</a>
+      <a href="/src/pages/register.html" class="btn btn-primary">Start free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="brand-hero">GameForge</p>
+      <h1>Seven AI tools. One forge for your game.</h1>
+      <p class="lede">Generate levels, quests, characters, textures, sound, playtests, and localization — then export straight into Unity, Unreal, or Godot.</p>
+      <div class="cta-row">
+        <a href="/src/pages/register.html" class="btn btn-primary btn-lg">Forge your first asset</a>
+        <a href="#tools" class="btn btn-ghost btn-lg">Explore tools</a>
+      </div>
+    </section>
+
+    <section id="tools" class="section tools-grid">
+      <h2>The toolkit</h2>
+      <p class="section-sub">Built for indie teams, studios, and modders who ship faster.</p>
+      <div class="tool-cards">
+        <article><span class="tool-icon">⬡</span><h3>Level Designer</h3><p>Text → tilemaps with enemies, traps, and spawn points.</p></article>
+        <article><span class="tool-icon">◈</span><h3>Quest Generator</h3><p>Objectives, dialogues, and rewards as engine-ready JSON.</p></article>
+        <article><span class="tool-icon">▣</span><h3>Texture Upscaler</h3><p>2× / 4× upscale with detail enhancement.</p></article>
+        <article><span class="tool-icon">◎</span><h3>Character Creator</h3><p>Concept art from a single character brief.</p></article>
+        <article><span class="tool-icon">♪</span><h3>Sound Designer</h3><p>SFX and mood-driven background loops.</p></article>
+        <article><span class="tool-icon">⚑</span><h3>Playtester</h3><p>Bug, balance, and UX reports before you ship.</p></article>
+        <article><span class="tool-icon">文</span><h3>Localization</h3><p>20+ languages with JSON/CSV export.</p></article>
+      </div>
+    </section>
+
+    <section id="pricing" class="section pricing">
+      <h2>Simple pricing</h2>
+      <div class="price-row">
+        <div class="price-plan">
+          <h3>Free</h3>
+          <p class="price">$0</p>
+          <ul><li>5 generations / month</li><li>All 7 tools</li><li>Community support</li></ul>
+          <a href="/src/pages/register.html" class="btn btn-ghost">Get started</a>
+        </div>
+        <div class="price-plan featured">
+          <h3>Indie</h3>
+          <p class="price">$19<span>/mo</span></p>
+          <ul><li>100 generations / month</li><li>Priority queue</li><li>ZIP project export</li></ul>
+          <a href="/src/pages/register.html" class="btn btn-primary">Choose Indie</a>
+        </div>
+        <div class="price-plan">
+          <h3>Studio</h3>
+          <p class="price">$99<span>/mo</span></p>
+          <ul><li>1000 generations / month</li><li>API access</li><li>Team seats</li></ul>
+          <a href="/src/pages/register.html" class="btn btn-ghost">Choose Studio</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>GameForge — AI Game Dev Toolkit</span>
+    <a href="/docs" target="_blank">API docs</a>
+  </footer>
+
+  <script type="module" src="/src/js/app.js"></script>
+</body>
+</html>

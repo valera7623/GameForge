@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Localization — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header">
+        <div>
+          <h1>AI Localization</h1>
+          <p>Translate game strings to 20+ languages. Export JSON or CSV.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <form id="form" class="form-grid">
+          <label>Source texts (JSON object: key → string)
+            <textarea name="texts" required rows="10">{
+  "ui.start": "Start",
+  "ui.settings": "Settings",
+  "ui.quit": "Quit",
+  "quest.intro": "Welcome, traveler."
+}</textarea>
+          </label>
+          <div class="form-row">
+            <label>Source lang <input name="source_lang" value="en" /></label>
+            <label>Target langs (comma)
+              <input name="target_langs" value="ru,es,de,fr,ja" />
+            </label>
+            <label>Export
+              <select name="export_format"><option>json</option><option>csv</option></select>
+            </label>
+            <label>Project
+              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            </label>
+          </div>
+          <button class="btn btn-primary" type="submit">Translate</button>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> Translating…</div>
+      </div>
+      <div class="panel" id="resultPanel" hidden>
+        <div class="actions">
+          <button class="btn btn-ghost" id="dlExport">Download export</button>
+        </div>
+        <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI, downloadJSON, downloadText } from "../js/api.js";
+    import { mountShell, setLoading, toast } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("localization.html");
+    let last = null;
+
+    ProjectsAPI.list().then(list => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+    });
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      setLoading(document.getElementById("loader"), true);
+      try {
+        let texts;
+        try { texts = JSON.parse(fd.get("texts")); }
+        catch { throw new Error("Invalid JSON in texts field"); }
+        const body = {
+          texts,
+          source_lang: fd.get("source_lang"),
+          target_langs: String(fd.get("target_langs")).split(",").map(s => s.trim()).filter(Boolean),
+          export_format: fd.get("export_format"),
+        };
+        if (fd.get("project_id")) body.project_id = fd.get("project_id");
+        const gen = await ToolsAPI.localize(body);
+        last = gen.output_data;
+        document.getElementById("resultPanel").hidden = false;
+        document.getElementById("jsonOut").textContent = JSON.stringify(last.translations, null, 2);
+        toast(`Localized ${last.key_count} keys · +${gen.xp_awarded} XP`);
+      } catch (err) { toast(err.message, true); }
+      finally { setLoading(document.getElementById("loader"), false); }
+    });
+
+    document.getElementById("dlExport").addEventListener("click", () => {
+      if (!last) return;
+      if (last.export_format === "csv") {
+        downloadText("localization.csv", last.export, "text/csv");
+      } else {
+        downloadJSON("localization.json", last.export);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle aria-label="Toggle theme">☾</button>
+  <div class="auth-page">
+    <div class="auth-card">
+      <a class="brand" href="/">GameForge</a>
+      <h1>Create account</h1>
+      <p class="sub">5 free generations every month</p>
+      <form id="regForm" class="form-grid">
+        <label>Name <input name="full_name" placeholder="Alex Indie" /></label>
+        <label>Email <input type="email" name="email" required placeholder="dev@studio.com" /></label>
+        <label>Password <input type="password" name="password" required minlength="6" /></label>
+        <button class="btn btn-primary" type="submit">Start forging</button>
+      </form>
+      <p style="margin-top:1rem;color:var(--muted);font-size:0.9rem">
+        Already have an account? <a href="/src/pages/login.html">Sign in</a>
+      </p>
+    </div>
+  </div>
+  <script type="module">
+    import { redirectIfAuthed, register } from "../js/auth.js";
+    import { toast } from "../js/app.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
+    applyTheme(getTheme());
+    bindThemeToggles();
+    redirectIfAuthed();
+    document.getElementById("regForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      try {
+        await register(fd.get("email"), fd.get("password"), fd.get("full_name") || null);
+        location.href = "/src/pages/dashboard.html";
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+  </script>
+</body>
+</html>

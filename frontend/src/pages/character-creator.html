@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Character Creator — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header">
+        <div>
+          <h1>AI Character Creator</h1>
+          <p>Describe a character — get concept art ready for production.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <form id="form" class="form-grid">
+          <label>Description
+            <textarea name="description" required placeholder="Old wizard in a blue robe with a crystal staff"></textarea>
+          </label>
+          <div class="form-row">
+            <label>Style
+              <select name="style">
+                <option>fantasy</option><option>sci-fi</option><option>anime</option><option>realistic</option>
+              </select>
+            </label>
+            <label>View
+              <select name="view"><option value="full_body">Full body</option><option value="portrait">Portrait</option></select>
+            </label>
+            <label>Project
+              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" type="submit">Generate</button>
+            <button class="btn btn-ghost" type="button" id="regen" hidden>Regenerate</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> Creating character…</div>
+      </div>
+      <div class="panel" id="resultPanel" hidden>
+        <img id="charImg" class="preview-img" alt="Character" />
+        <div class="actions">
+          <a class="btn btn-primary" id="dlLink" download="character.png">Download</a>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI } from "../js/api.js";
+    import { mountShell, setLoading, toast } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("character-creator.html");
+
+    ProjectsAPI.list().then(list => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+    });
+
+    async function run(form) {
+      const fd = new FormData(form);
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const body = Object.fromEntries(fd.entries());
+        if (!body.project_id) delete body.project_id;
+        const gen = await ToolsAPI.character(body);
+        const out = gen.output_data;
+        document.getElementById("resultPanel").hidden = false;
+        document.getElementById("charImg").src = out.url;
+        document.getElementById("dlLink").href = out.url;
+        document.getElementById("regen").hidden = false;
+        toast(`Character ready · +${gen.xp_awarded} XP`);
+      } catch (err) { toast(err.message, true); }
+      finally { setLoading(document.getElementById("loader"), false); }
+    }
+
+    const form = document.getElementById("form");
+    form.addEventListener("submit", (e) => { e.preventDefault(); run(form); });
+    document.getElementById("regen").addEventListener("click", () => run(form));
+  </script>
+</body>
+</html>

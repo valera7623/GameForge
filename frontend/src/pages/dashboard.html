@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p id="welcome">Loading…</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" id="newProjectBtn">New project</button>
+          <button class="btn btn-primary" id="upgradeBtn">Upgrade plan</button>
+        </div>
+      </div>
+
+      <div class="stats-row" id="stats"></div>
+
+      <div class="panel">
+        <h2>Launch a tool</h2>
+        <div class="tool-launch">
+          <a href="/src/pages/level-designer.html"><strong>Level Designer</strong><span>Tilemaps from text</span></a>
+          <a href="/src/pages/quest-generator.html"><strong>Quest Generator</strong><span>Quests & dialogues</span></a>
+          <a href="/src/pages/texture-upscaler.html"><strong>Texture Upscaler</strong><span>2× / 4× enhance</span></a>
+          <a href="/src/pages/character-creator.html"><strong>Character Creator</strong><span>Concept portraits</span></a>
+          <a href="/src/pages/sound-designer.html"><strong>Sound Designer</strong><span>SFX & music</span></a>
+          <a href="/src/pages/playtester.html"><strong>Playtester</strong><span>QA reports</span></a>
+          <a href="/src/pages/localization.html"><strong>Localization</strong><span>20+ languages</span></a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Projects</h2>
+        <div id="projects" class="gen-cards"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Recent generations</h2>
+        <div id="recent" class="gen-cards"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Achievements & rank</h2>
+        <div id="achievements"></div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { BillingAPI, DashboardAPI, ProjectsAPI, downloadAuthed } from "../js/api.js";
+    import { mountShell, statusBadge, toast } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("dashboard.html");
+
+    async function load() {
+      const [stats, projects] = await Promise.all([DashboardAPI.stats(), ProjectsAPI.list()]);
+      document.getElementById("welcome").textContent =
+        `Plan: ${stats.plan} · Monthly rank #${stats.leaderboard_rank} · ${stats.xp_this_month} XP this month (${stats.xp} total)`;
+
+      document.getElementById("stats").innerHTML = `
+        <div class="stat"><div class="label">This month</div><div class="value">${stats.generations_this_month}/${stats.generations_limit}</div></div>
+        <div class="stat"><div class="label">Total gens</div><div class="value">${stats.total_generations}</div></div>
+        <div class="stat"><div class="label">XP / month</div><div class="value">${stats.xp_this_month}</div></div>
+        <div class="stat"><div class="label">Projects</div><div class="value">${stats.projects_count}</div></div>
+      `;
+
+      document.getElementById("projects").innerHTML = projects.length
+        ? projects.map(p => `
+          <div class="gen-card">
+            <div class="meta"><span>${p.engine}</span><span>${p.generations_count} assets</span></div>
+            <strong>${p.name}</strong>
+            <div class="actions">
+              <button class="btn btn-ghost" data-export="${p.id}">Export ZIP</button>
+            </div>
+          </div>`).join("")
+        : `<p style="color:var(--muted)">No projects yet. Create one to group your assets.</p>`;
+
+      document.getElementById("recent").innerHTML = stats.recent_generations.length
+        ? stats.recent_generations.map(g => `
+          <div class="gen-card">
+            <div class="meta"><span>${g.tool}</span>${statusBadge(g.status)}</div>
+            <strong>${g.title || "Untitled"}</strong>
+            <div class="meta" style="margin-top:0.4rem"><span>+${g.xp_awarded} XP</span></div>
+          </div>`).join("")
+        : `<p style="color:var(--muted)">No generations yet — pick a tool above.</p>`;
+
+      document.getElementById("achievements").innerHTML = stats.achievements.length
+        ? `<ul>${stats.achievements.map(a => `<li><strong>${a.name}</strong> — ${a.description} (+${a.xp_reward} XP)</li>`).join("")}</ul>`
+        : `<p style="color:var(--muted)">Earn achievements by generating assets.</p>`;
+
+      document.querySelectorAll("[data-export]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          try {
+            await downloadAuthed(ProjectsAPI.exportUrl(btn.dataset.export), "game-assets.zip");
+            toast("Export started");
+          } catch (e) { toast(e.message, true); }
+        });
+      });
+    }
+
+    document.getElementById("newProjectBtn").addEventListener("click", async () => {
+      const name = prompt("Project name:", "Dungeon Explorer");
+      if (!name) return;
+      const engine = prompt("Engine (unity/unreal/godot):", "unreal") || "unity";
+      try {
+        await ProjectsAPI.create({ name, engine });
+        toast("Project created");
+        load();
+      } catch (e) { toast(e.message, true); }
+    });
+
+    document.getElementById("upgradeBtn").addEventListener("click", async () => {
+      const plan = prompt("Upgrade to: indie or studio?", "indie");
+      if (!plan || !["indie", "studio"].includes(plan)) return;
+      try {
+        const res = await BillingAPI.checkout(plan);
+        toast("Plan updated (mock checkout)");
+        location.href = res.checkout_url.includes("http") ? res.checkout_url : location.href;
+        load();
+      } catch (e) { toast(e.message, true); }
+    });
+
+    load().catch(e => toast(e.message, true));
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header">
+        <div>
+          <h1>Team</h1>
+          <p>Studio seats — invite collaborators to share the forge.</p>
+        </div>
+      </div>
+      <div class="panel" id="orgPanel">
+        <div class="loader visible" id="loader"><div class="spinner"></div> Loading…</div>
+        <div id="content" hidden></div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { api } from "../js/api.js";
+    import { mountShell, setLoading, toast } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("team.html");
+
+    async function load() {
+      setLoading(document.getElementById("loader"), true);
+      const content = document.getElementById("content");
+      try {
+        let org = await api("/orgs/mine");
+        if (!org) {
+          content.hidden = false;
+          content.innerHTML = `
+            <p style="color:var(--muted)">No organization yet. Studio plan creates one automatically, or create it here.</p>
+            <form id="createForm" class="form-grid" style="max-width:360px;margin-top:1rem">
+              <label>Studio name <input name="name" required placeholder="My Game Studio" /></label>
+              <button class="btn btn-primary" type="submit">Create organization</button>
+            </form>`;
+          document.getElementById("createForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            try {
+              await api("/orgs", { method: "POST", body: JSON.stringify({ name: new FormData(e.target).get("name") }) });
+              toast("Organization created");
+              load();
+            } catch (err) { toast(err.message, true); }
+          });
+          return;
+        }
+
+        const members = await api(`/orgs/${org.id}/members`);
+        content.hidden = false;
+        content.innerHTML = `
+          <h2>${org.name}</h2>
+          <p style="color:var(--muted)">Seats ${org.seats_used}/${org.seats_limit} · Your role: ${org.role} · Org gens this month: ${org.generations_this_month}</p>
+          <div class="gen-cards" style="margin:1rem 0">
+            ${members.map(m => `
+              <div class="gen-card">
+                <div class="meta"><span>${m.role}</span></div>
+                <strong>${m.full_name || m.email}</strong>
+                <div class="meta" style="margin-top:0.35rem"><span>${m.email}</span></div>
+              </div>`).join("")}
+          </div>
+          ${["owner","admin"].includes(org.role) ? `
+          <form id="inviteForm" class="form-row" style="align-items:end">
+            <label>Invite email <input type="email" name="email" required /></label>
+            <label>Role
+              <select name="role"><option value="member">Member</option><option value="admin">Admin</option></select>
+            </label>
+            <button class="btn btn-primary" type="submit">Send invite</button>
+          </form>` : ""}
+        `;
+        document.getElementById("inviteForm")?.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          try {
+            const res = await api(`/orgs/${org.id}/invites`, {
+              method: "POST",
+              body: JSON.stringify({ email: fd.get("email"), role: fd.get("role") }),
+            });
+            toast(res.token ? `Invite sent (dev token: ${res.token})` : "Invite sent");
+          } catch (err) { toast(err.message, true); }
+        });
+      } catch (err) {
+        toast(err.message, true);
+        content.hidden = false;
+        content.innerHTML = `<p style="color:var(--danger)">${err.message}</p>`;
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+    load();
+  </script>
+</body>
+</html>

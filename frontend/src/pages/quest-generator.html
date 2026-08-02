@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quest Generator — GameForge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header">
+        <div>
+          <h1>AI Quest Generator</h1>
+          <p>Create quests, dialogues, and rewards for your engine.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <form id="form" class="form-grid">
+          <label>Setting
+            <textarea name="setting" required placeholder="Frozen northern kingdom after a dragon war"></textarea>
+          </label>
+          <div class="form-row">
+            <label>Type
+              <select name="quest_type"><option value="main">Main</option><option value="side" selected>Side</option></select>
+            </label>
+            <label>Length
+              <select name="length"><option>short</option><option selected>medium</option><option>long</option></select>
+            </label>
+            <label>Tone <input name="tone" value="adventure" /></label>
+            <label>Project
+              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            </label>
+          </div>
+          <button class="btn btn-primary" type="submit">Generate quest</button>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> Writing quest…</div>
+      </div>
+      <div class="panel" id="resultPanel" hidden>
+        <h2 id="questTitle"></h2>
+        <div class="actions">
+          <button class="btn btn-ghost" id="dlJson">Export JSON (Unity/Unreal)</button>
+        </div>
+        <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { mountShell, setLoading, toast } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("quest-generator.html");
+    let last = null;
+
+    ProjectsAPI.list().then(list => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+    });
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const body = Object.fromEntries(fd.entries());
+        if (!body.project_id) delete body.project_id;
+        const gen = await ToolsAPI.quest(body);
+        last = gen.output_data;
+        document.getElementById("resultPanel").hidden = false;
+        document.getElementById("questTitle").textContent = last.title || "Quest";
+        document.getElementById("jsonOut").textContent = JSON.stringify(last, null, 2);
+        toast(`Quest ready · +${gen.xp_awarded} XP`);
+      } catch (err) { toast(err.message, true); }
+      finally { setLoading(document.getElementById("loader"), false); }
+    });
+
+    document.getElementById("dlJson").addEventListener("click", () => last && downloadJSON("quest.json", last));
+  </script>
+</body>
+</html>
