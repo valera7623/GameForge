@@ -123,7 +123,7 @@ async def test_production_rejects_mock_billing():
 
 
 @pytest.mark.asyncio
-async def test_production_rejects_mock_ai_and_console_email():
+async def test_production_rejects_console_email_without_escape_hatch():
     from app.config import Settings, validate_settings
 
     s = Settings(
@@ -134,11 +134,31 @@ async def test_production_rejects_mock_ai_and_console_email():
         FRONTEND_URL="https://app.example.com",
         ALLOW_MOCK_BILLING=False,
         USE_MOCK_AI=True,
-        OPENAI_API_KEY="sk-test",
         EMAIL_PROVIDER="console",
         DISABLE_BILLING=True,
     )
-    with pytest.raises(RuntimeError, match="USE_MOCK_AI"):
+    with pytest.raises(RuntimeError, match="EMAIL_PROVIDER"):
+        validate_settings(s)
+
+
+@pytest.mark.asyncio
+async def test_production_requires_openai_key_when_not_mock():
+    from app.config import Settings, validate_settings
+
+    s = Settings(
+        APP_ENV="production",
+        DEBUG=False,
+        SECRET_KEY="strong-production-secret-key-32chars!!",
+        CORS_ORIGINS="https://app.example.com",
+        FRONTEND_URL="https://app.example.com",
+        ALLOW_MOCK_BILLING=False,
+        USE_MOCK_AI=False,
+        OPENAI_API_KEY="",
+        EMAIL_PROVIDER="resend",
+        RESEND_API_KEY="re_test",
+        DISABLE_BILLING=True,
+    )
+    with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
         validate_settings(s)
 
 

@@ -25,7 +25,6 @@ services:
       APP_ENV: production
       DEBUG: "false"
       ALLOW_MOCK_BILLING: "false"
-      USE_MOCK_AI: "false"
       COOKIE_SECURE: "true"
       LOG_JSON: "true"
     user: "1000:1000"
@@ -46,7 +45,6 @@ services:
       APP_ENV: production
       DEBUG: "false"
       ALLOW_MOCK_BILLING: "false"
-      USE_MOCK_AI: "false"
       COOKIE_SECURE: "true"
       LOG_JSON: "true"
       S3_USE_SIGNED_URLS: "true"
@@ -74,7 +72,6 @@ services:
       DEBUG: "false"
       LOG_JSON: "true"
       ALLOW_MOCK_BILLING: "false"
-      USE_MOCK_AI: "false"
       COOKIE_SECURE: "true"
       S3_USE_SIGNED_URLS: "true"
       S3_PUBLIC_READ: "false"

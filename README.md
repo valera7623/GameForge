@@ -190,7 +190,7 @@ docker compose --profile proxy up -d
 | Variable | Value |
 |----------|--------|
 | `APP_ENV` | `production` |
-| `USE_MOCK_AI` | `false` |
+| `USE_MOCK_AI` | `true` to avoid paid AI spend; `false` + `OPENAI_API_KEY` for real providers |
 | `DISABLE_BILLING` | `true` until Stripe/YuKassa keys exist |
 | `EMAIL_PROVIDER` | `resend` or `smtp` (not `console`) |
 | `S3_PUBLIC_ENDPOINT` | `https://<domain>/s3` |

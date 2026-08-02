@@ -171,10 +171,9 @@ def validate_settings(settings: Settings) -> None:
         errors.append("FRONTEND_URL must be HTTPS in production")
     if settings.ALLOW_MOCK_BILLING:
         errors.append("ALLOW_MOCK_BILLING must be false in production")
-    if settings.USE_MOCK_AI:
-        errors.append("USE_MOCK_AI must be false in production")
-    if not settings.OPENAI_API_KEY.strip():
-        errors.append("OPENAI_API_KEY is required in production")
+    # USE_MOCK_AI=true is allowed in production to avoid paid provider spend
+    if not settings.USE_MOCK_AI and not settings.OPENAI_API_KEY.strip():
+        errors.append("OPENAI_API_KEY is required when USE_MOCK_AI=false")
 
     provider = settings.EMAIL_PROVIDER.lower().strip()
     if provider == "console":
