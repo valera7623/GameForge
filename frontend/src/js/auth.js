@@ -3,10 +3,11 @@
  */
 
 import { AuthAPI, clearTokens, isLoggedIn, setTokens } from "./api.js";
+import { t } from "./i18n.js";
 
 export function requireAuth() {
   if (!isLoggedIn()) {
-    window.location.href = "/src/pages/login.html";
+    window.location.href = "/login";
     return false;
   }
   return true;
@@ -14,7 +15,7 @@ export function requireAuth() {
 
 export function redirectIfAuthed() {
   if (isLoggedIn()) {
-    window.location.href = "/src/pages/dashboard.html";
+    window.location.href = "/dashboard";
   }
 }
 
@@ -34,9 +35,14 @@ export async function register(email, password, full_name) {
   return me;
 }
 
-export function logout() {
+export async function logout() {
+  try {
+    await AuthAPI.logout();
+  } catch {
+    /* ignore */
+  }
   clearTokens();
-  window.location.href = "/src/pages/login.html";
+  window.location.href = "/login";
 }
 
 export function currentUser() {
@@ -46,3 +52,5 @@ export function currentUser() {
     return null;
   }
 }
+
+export { t };

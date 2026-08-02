@@ -61,7 +61,6 @@ async def get_or_create_subscription(db: AsyncSession, user: User) -> Subscripti
     result = await db.execute(select(Subscription).where(Subscription.user_id == user.id))
     sub = result.scalar_one_or_none()
 
-    # On-prem / forced plan
     forced = settings.FORCE_PLAN or ("enterprise" if settings.is_onprem else "")
     if forced and forced in PLANS:
         if not sub:
@@ -108,8 +107,8 @@ async def create_checkout(
         raise ValueError("Billing is disabled in this deployment")
 
     provider = provider or settings.BILLING_PROVIDER
-    success_url = success_url or f"{settings.FRONTEND_URL}/src/pages/dashboard.html?billing=success"
-    cancel_url = cancel_url or f"{settings.FRONTEND_URL}/src/pages/dashboard.html?billing=cancel"
+    success_url = success_url or f"{settings.FRONTEND_URL}/dashboard?billing=success"
+    cancel_url = cancel_url or f"{settings.FRONTEND_URL}/dashboard?billing=cancel"
 
     if plan not in ("indie", "studio"):
         raise ValueError("Invalid plan")
@@ -120,8 +119,12 @@ async def create_checkout(
     if provider == "yukassa" and settings.YUKASSA_SHOP_ID and settings.YUKASSA_SECRET_KEY:
         return await _yukassa_checkout(db, user, plan, success_url)
 
-    # Dev mock checkout — instantly upgrades
-    await apply_plan(db, user, plan)
+    if not settings.mock_billing_allowed:
+        raise ValueError(
+            "Payment provider is not configured. Set Stripe or YuKassa credentials."
+        )
+
+    await apply_plan(db, user, plan, confirmed_payment=True)
     return {
         "checkout_url": f"{success_url}&mock=1&plan={plan}",
         "session_id": f"mock_{plan}_{user.id}",
@@ -129,9 +132,17 @@ async def create_checkout(
     }
 
 
-async def apply_plan(db: AsyncSession, user: User, plan: str) -> Subscription:
+async def apply_plan(
+    db: AsyncSession,
+    user: User,
+    plan: str,
+    *,
+    confirmed_payment: bool = False,
+) -> Subscription:
+    if not confirmed_payment and not settings.mock_billing_allowed:
+        raise ValueError("Plan changes require a confirmed payment in this environment")
+
     sub = await get_or_create_subscription(db, user)
-    # Avoid on-prem forced plan override fighting apply during saas mock
     if settings.is_onprem and settings.FORCE_PLAN:
         return sub
     plan_enum = PlanType(plan)
@@ -142,9 +153,8 @@ async def apply_plan(db: AsyncSession, user: User, plan: str) -> Subscription:
     sub.current_period_end = datetime.now(timezone.utc) + timedelta(days=30)
     await db.flush()
 
-    # Auto-create org shell for Studio so seats are ready
     if plan == "studio":
-        from app.models.organization import OrgMemberRole, OrgMembership, Organization
+        from app.models.organization import Organization, OrgMemberRole, OrgMembership
 
         existing = await db.execute(select(OrgMembership).where(OrgMembership.user_id == user.id).limit(1))
         if not existing.scalar_one_or_none():
@@ -158,6 +168,58 @@ async def apply_plan(db: AsyncSession, user: User, plan: str) -> Subscription:
             db.add(OrgMembership(organization_id=org.id, user_id=user.id, role=OrgMemberRole.OWNER))
             await db.flush()
     return sub
+
+
+async def downgrade_to_free(db: AsyncSession, user: User) -> Subscription:
+    sub = await get_or_create_subscription(db, user)
+    sub.plan = PlanType.FREE
+    sub.status = SubscriptionStatus.CANCELED
+    sub.generations_limit = settings.FREE_GENERATIONS
+    await db.flush()
+    return sub
+
+
+async def create_billing_portal(user: User, return_url: Optional[str] = None) -> dict[str, Any]:
+    if not settings.STRIPE_SECRET_KEY:
+        raise ValueError("Stripe is not configured")
+    import stripe
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    return_url = return_url or settings.STRIPE_PORTAL_RETURN_URL or f"{settings.FRONTEND_URL}/dashboard"
+    # Need customer id — look up from subscription via sync caller
+    raise ValueError("Use create_customer_portal with subscription context")
+
+
+async def create_customer_portal(db: AsyncSession, user: User, return_url: Optional[str] = None) -> dict[str, str]:
+    import stripe
+
+    if not settings.STRIPE_SECRET_KEY:
+        raise ValueError("Stripe is not configured")
+    sub = await get_or_create_subscription(db, user)
+    if not sub.stripe_customer_id:
+        raise ValueError("No Stripe customer on this account")
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    return_url = return_url or settings.STRIPE_PORTAL_RETURN_URL or f"{settings.FRONTEND_URL}/dashboard"
+    session = stripe.billing_portal.Session.create(
+        customer=sub.stripe_customer_id,
+        return_url=return_url,
+    )
+    return {"portal_url": session.url}
+
+
+async def cancel_subscription(db: AsyncSession, user: User) -> Subscription:
+    import stripe
+
+    sub = await get_or_create_subscription(db, user)
+    if sub.stripe_subscription_id and settings.STRIPE_SECRET_KEY:
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        stripe.Subscription.modify(sub.stripe_subscription_id, cancel_at_period_end=True)
+        sub.status = SubscriptionStatus.CANCELED
+        await db.flush()
+        return sub
+    if settings.mock_billing_allowed:
+        return await downgrade_to_free(db, user)
+    raise ValueError("Cannot cancel: no active Stripe subscription")
 
 
 async def _stripe_checkout(user: User, plan: str, success_url: str, cancel_url: str) -> dict[str, Any]:
@@ -209,19 +271,92 @@ async def _yukassa_checkout(
     }
 
 
+async def _user_by_id(db: AsyncSession, user_id: str) -> Optional[User]:
+    result = await db.execute(select(User).where(User.id == UUID(user_id)))
+    return result.scalar_one_or_none()
+
+
 async def handle_stripe_webhook(db: AsyncSession, payload: bytes, sig_header: str) -> None:
     import stripe
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
     event = stripe.Webhook.construct_event(payload, sig_header, settings.STRIPE_WEBHOOK_SECRET)
-    if event["type"] == "checkout.session.completed":
-        session = event["data"]["object"]
-        user_id = session.get("metadata", {}).get("user_id")
-        plan = session.get("metadata", {}).get("plan", "indie")
+    etype = event["type"]
+    obj = event["data"]["object"]
+
+    if etype == "checkout.session.completed":
+        user_id = obj.get("metadata", {}).get("user_id")
+        plan = obj.get("metadata", {}).get("plan", "indie")
         if user_id:
-            result = await db.execute(select(User).where(User.id == UUID(user_id)))
-            user = result.scalar_one_or_none()
+            user = await _user_by_id(db, user_id)
             if user:
-                sub = await apply_plan(db, user, plan)
-                sub.stripe_customer_id = session.get("customer")
-                sub.stripe_subscription_id = session.get("subscription")
+                sub = await apply_plan(db, user, plan, confirmed_payment=True)
+                sub.stripe_customer_id = obj.get("customer")
+                sub.stripe_subscription_id = obj.get("subscription")
+
+    elif etype in ("customer.subscription.updated", "customer.subscription.deleted"):
+        sub_id = obj.get("id")
+        result = await db.execute(select(Subscription).where(Subscription.stripe_subscription_id == sub_id))
+        sub = result.scalar_one_or_none()
+        if not sub:
+            return
+        if etype == "customer.subscription.deleted" or obj.get("status") in ("canceled", "unpaid"):
+            sub.plan = PlanType.FREE
+            sub.status = SubscriptionStatus.CANCELED
+            sub.generations_limit = settings.FREE_GENERATIONS
+        elif obj.get("status") == "active":
+            sub.status = SubscriptionStatus.ACTIVE
+            # map price → plan if metadata present
+            items = (obj.get("items") or {}).get("data") or []
+            price_id = (items[0].get("price") or {}).get("id") if items else None
+            if price_id == settings.STRIPE_PRICE_STUDIO:
+                sub.plan = PlanType.STUDIO
+                sub.generations_limit = settings.STUDIO_GENERATIONS
+            elif price_id == settings.STRIPE_PRICE_INDIE:
+                sub.plan = PlanType.INDIE
+                sub.generations_limit = settings.INDIE_GENERATIONS
+        await db.flush()
+
+    elif etype == "invoice.paid":
+        sub_id = obj.get("subscription")
+        if sub_id:
+            result = await db.execute(select(Subscription).where(Subscription.stripe_subscription_id == sub_id))
+            sub = result.scalar_one_or_none()
+            if sub:
+                sub.status = SubscriptionStatus.ACTIVE
+                await db.flush()
+
+    elif etype == "invoice.payment_failed":
+        sub_id = obj.get("subscription")
+        if sub_id:
+            result = await db.execute(select(Subscription).where(Subscription.stripe_subscription_id == sub_id))
+            sub = result.scalar_one_or_none()
+            if sub:
+                sub.status = SubscriptionStatus.PAST_DUE
+                await db.flush()
+
+
+async def handle_yukassa_notification(db: AsyncSession, payload: dict[str, Any]) -> None:
+    """YuKassa payment notification (HTTP notifications)."""
+    event = payload.get("event") or payload.get("type")
+    obj = payload.get("object") or {}
+    if event not in ("payment.succeeded", "payment.waiting_for_capture"):
+        if event == "payment.canceled":
+            return
+        # Some payloads nest differently
+        if obj.get("status") != "succeeded":
+            return
+
+    if obj.get("status") and obj.get("status") != "succeeded":
+        return
+
+    meta = obj.get("metadata") or {}
+    user_id = meta.get("user_id")
+    plan = meta.get("plan", "indie")
+    if not user_id:
+        return
+    user = await _user_by_id(db, user_id)
+    if user:
+        sub = await apply_plan(db, user, plan, confirmed_payment=True)
+        sub.yukassa_payment_id = obj.get("id")
+        await db.flush()

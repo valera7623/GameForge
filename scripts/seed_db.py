@@ -48,7 +48,7 @@ async def main() -> None:
         if not user:
             user = User(
                 email=email,
-                hashed_password=hash_password("demo1234"),
+                hashed_password=hash_password("demo123456"),
                 full_name="Demo Developer",
                 role=UserRole.USER,
                 is_verified=True,
@@ -75,7 +75,7 @@ async def main() -> None:
                     engine=GameEngine.UNREAL,
                 )
             )
-            print(f"Created demo user: {email} / demo1234")
+            print(f"Created demo user: {email} / demo123456")
         else:
             print(f"Demo user already exists: {email}")
 
@@ -85,7 +85,7 @@ async def main() -> None:
         if not result.scalar_one_or_none():
             admin = User(
                 email=admin_email,
-                hashed_password=hash_password("admin1234"),
+                hashed_password=hash_password("admin123456"),
                 full_name="Admin",
                 role=UserRole.ADMIN,
                 is_verified=True,
@@ -101,7 +101,7 @@ async def main() -> None:
                     generations_limit=999999,
                 )
             )
-            print(f"Created admin: {admin_email} / admin1234")
+            print(f"Created admin: {admin_email} / admin123456")
 
         await db.commit()
         print("Seed complete.")

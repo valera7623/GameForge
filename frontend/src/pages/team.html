@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Team — GameForge</title>
+  <title data-i18n="team.title">Team — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -19,12 +20,12 @@
     <main class="main-panel">
       <div class="page-header">
         <div>
-          <h1>Team</h1>
-          <p>Studio seats — invite collaborators to share the forge.</p>
+          <h1 data-i18n="team.h1">Team</h1>
+          <p data-i18n="team.sub">Studio seats — invite collaborators to share the forge.</p>
         </div>
       </div>
       <div class="panel" id="orgPanel">
-        <div class="loader visible" id="loader"><div class="spinner"></div> Loading…</div>
+        <div class="loader visible" id="loader"><div class="spinner"></div> <span data-i18n="common.loading">Loading…</span></div>
         <div id="content" hidden></div>
       </div>
     </main>
@@ -32,10 +33,11 @@
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { api } from "../js/api.js";
-    import { mountShell, setLoading, toast } from "../js/app.js";
+    import { applyDomI18n, escapeHtml, mountShell, setLoading, toast, t } from "../js/app.js";
 
     if (!requireAuth()) throw new Error("auth");
-    mountShell("team.html");
+    mountShell("team");
+    applyDomI18n(document);
 
     async function load() {
       setLoading(document.getElementById("loader"), true);
@@ -45,16 +47,16 @@
         if (!org) {
           content.hidden = false;
           content.innerHTML = `
-            <p style="color:var(--muted)">No organization yet. Studio plan creates one automatically, or create it here.</p>
+            <p style="color:var(--muted)">${escapeHtml(t("team.no_org"))}</p>
             <form id="createForm" class="form-grid" style="max-width:360px;margin-top:1rem">
-              <label>Studio name <input name="name" required placeholder="My Game Studio" /></label>
-              <button class="btn btn-primary" type="submit">Create organization</button>
+              <label>${escapeHtml(t("team.org_name"))} <input name="name" required placeholder="My Game Studio" /></label>
+              <button class="btn btn-primary" type="submit">${escapeHtml(t("team.create_org"))}</button>
             </form>`;
           document.getElementById("createForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             try {
               await api("/orgs", { method: "POST", body: JSON.stringify({ name: new FormData(e.target).get("name") }) });
-              toast("Organization created");
+              toast(t("team.toast_org"));
               load();
             } catch (err) { toast(err.message, true); }
           });
@@ -64,23 +66,31 @@
         const members = await api(`/orgs/${org.id}/members`);
         content.hidden = false;
         content.innerHTML = `
-          <h2>${org.name}</h2>
-          <p style="color:var(--muted)">Seats ${org.seats_used}/${org.seats_limit} · Your role: ${org.role} · Org gens this month: ${org.generations_this_month}</p>
+          <h2>${escapeHtml(org.name)}</h2>
+          <p style="color:var(--muted)">${escapeHtml(t("team.seats", {
+            used: org.seats_used,
+            limit: org.seats_limit,
+            role: org.role,
+            gens: org.generations_this_month,
+          }))}</p>
           <div class="gen-cards" style="margin:1rem 0">
             ${members.map(m => `
               <div class="gen-card">
-                <div class="meta"><span>${m.role}</span></div>
-                <strong>${m.full_name || m.email}</strong>
-                <div class="meta" style="margin-top:0.35rem"><span>${m.email}</span></div>
+                <div class="meta"><span>${escapeHtml(m.role)}</span></div>
+                <strong>${escapeHtml(m.full_name || m.email)}</strong>
+                <div class="meta" style="margin-top:0.35rem"><span>${escapeHtml(m.email)}</span></div>
               </div>`).join("")}
           </div>
           ${["owner","admin"].includes(org.role) ? `
           <form id="inviteForm" class="form-row" style="align-items:end">
-            <label>Invite email <input type="email" name="email" required /></label>
-            <label>Role
-              <select name="role"><option value="member">Member</option><option value="admin">Admin</option></select>
+            <label>${escapeHtml(t("team.invite_email"))} <input type="email" name="email" required /></label>
+            <label>${escapeHtml(t("team.role"))}
+              <select name="role">
+                <option value="member">${escapeHtml(t("team.member"))}</option>
+                <option value="admin">${escapeHtml(t("team.admin"))}</option>
+              </select>
             </label>
-            <button class="btn btn-primary" type="submit">Send invite</button>
+            <button class="btn btn-primary" type="submit">${escapeHtml(t("team.send_invite"))}</button>
           </form>` : ""}
         `;
         document.getElementById("inviteForm")?.addEventListener("submit", async (e) => {
@@ -91,13 +101,13 @@
               method: "POST",
               body: JSON.stringify({ email: fd.get("email"), role: fd.get("role") }),
             });
-            toast(res.token ? `Invite sent (dev token: ${res.token})` : "Invite sent");
+            toast(res.token ? t("team.toast_invite_dev", { token: res.token }) : t("team.toast_invite"));
           } catch (err) { toast(err.message, true); }
         });
       } catch (err) {
         toast(err.message, true);
         content.hidden = false;
-        content.innerHTML = `<p style="color:var(--danger)">${err.message}</p>`;
+        content.innerHTML = `<p style="color:var(--danger)">${escapeHtml(err.message)}</p>`;
       } finally {
         setLoading(document.getElementById("loader"), false);
       }

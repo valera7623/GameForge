@@ -1,4 +1,4 @@
-"""Health check."""
+"""Health / readiness checks."""
 
 from fastapi import APIRouter
 from sqlalchemy import text
@@ -12,26 +12,48 @@ settings = get_settings()
 
 @router.get("/health")
 async def health():
-    db_ok = False
+    payload = {
+        "status": "ok",
+        "app": settings.APP_NAME,
+        "env": settings.APP_ENV,
+        "deployment_mode": settings.DEPLOYMENT_MODE,
+    }
+    if not settings.is_production:
+        payload.update(
+            {
+                "mock_ai": settings.USE_MOCK_AI or not settings.OPENAI_API_KEY,
+                "billing_disabled": settings.billing_disabled,
+                "providers": {
+                    "openai": bool(settings.OPENAI_API_KEY),
+                    "realesrgan": bool(settings.REALESRGAN_URL),
+                    "musicgen": bool(settings.REPLICATE_API_TOKEN),
+                    "elevenlabs": bool(settings.ELEVENLABS_API_KEY),
+                    "email": settings.EMAIL_PROVIDER,
+                },
+            }
+        )
+    return payload
+
+
+@router.get("/health/ready")
+async def readiness():
+    checks = {"database": False, "redis": False}
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-            db_ok = True
+            checks["database"] = True
     except Exception:
-        db_ok = False
-    return {
-        "status": "ok" if db_ok else "degraded",
-        "app": settings.APP_NAME,
-        "env": settings.APP_ENV,
-        "database": "up" if db_ok else "down",
-        "mock_ai": settings.USE_MOCK_AI or not settings.OPENAI_API_KEY,
-        "deployment_mode": settings.DEPLOYMENT_MODE,
-        "billing_disabled": settings.billing_disabled,
-        "providers": {
-            "openai": bool(settings.OPENAI_API_KEY),
-            "realesrgan": bool(settings.REALESRGAN_URL),
-            "musicgen": bool(settings.REPLICATE_API_TOKEN),
-            "elevenlabs": bool(settings.ELEVENLABS_API_KEY),
-            "email": settings.EMAIL_PROVIDER,
-        },
-    }
+        checks["database"] = False
+
+    try:
+        import redis
+
+        r = redis.from_url(settings.REDIS_URL, socket_connect_timeout=1)
+        checks["redis"] = bool(r.ping())
+    except Exception:
+        checks["redis"] = False
+
+    # Broker is Redis DB — same host ping is enough for readiness
+    checks["broker"] = checks["redis"]
+    ok = all(checks.values())
+    return {"status": "ok" if ok else "degraded", "checks": checks}

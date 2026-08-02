@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Character Creator — GameForge</title>
+  <title data-i18n="char.title">Character Creator — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -17,78 +18,103 @@
   <div class="bg-grid"></div>
   <div class="app-shell">
     <main class="main-panel">
-      <div class="page-header">
-        <div>
-          <h1>AI Character Creator</h1>
-          <p>Describe a character — get concept art ready for production.</p>
-        </div>
-      </div>
+
+      <div class="page-header"><div>
+        <h1 data-i18n="char.h1">AI Character Creator</h1>
+        <p data-i18n="char.sub">Concept art from a short character brief.</p>
+      </div></div>
       <div class="panel">
         <form id="form" class="form-grid">
-          <label>Description
-            <textarea name="description" required placeholder="Old wizard in a blue robe with a crystal staff"></textarea>
+          <label><span data-i18n="char.desc">Description</span>
+            <textarea name="description" required data-i18n="char.desc_ph" data-i18n-attr="placeholder"></textarea>
           </label>
           <div class="form-row">
-            <label>Style
-              <select name="style">
-                <option>fantasy</option><option>sci-fi</option><option>anime</option><option>realistic</option>
-              </select>
+            <label><span data-i18n="char.style">Style</span>
+              <select name="style"><option value="fantasy">Fantasy</option><option value="scifi">Sci-Fi</option><option value="realistic">Realistic</option><option value="anime">Anime</option></select>
             </label>
-            <label>View
-              <select name="view"><option value="full_body">Full body</option><option value="portrait">Portrait</option></select>
+            <label><span data-i18n="char.view">View</span>
+              <select name="view"><option value="full_body">Full body</option><option value="portrait">Portrait</option><option value="bust">Bust</option></select>
             </label>
-            <label>Project
-              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
           </div>
           <div class="actions">
-            <button class="btn btn-primary" type="submit">Generate</button>
-            <button class="btn btn-ghost" type="button" id="regen" hidden>Regenerate</button>
+            <button class="btn btn-primary" type="submit" data-i18n="char.submit">Generate</button>
+            <button class="btn btn-ghost" type="button" id="regen" hidden data-i18n="char.regen">Regenerate</button>
           </div>
         </form>
-        <div class="loader" id="loader"><div class="spinner"></div> Creating character…</div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="char.loading">Creating character…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
         <img id="charImg" class="preview-img" alt="Character" />
-        <div class="actions">
-          <a class="btn btn-primary" id="dlLink" download="character.png">Download</a>
-        </div>
+        <div class="actions"><a class="btn btn-primary" id="dlLink" download="character.png" data-i18n="char.dl">Download</a></div>
       </div>
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
     </main>
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
-    import { ProjectsAPI, ToolsAPI } from "../js/api.js";
-    import { mountShell, setLoading, toast } from "../js/app.js";
-
+    import { ProjectsAPI, ToolsAPI, pollGeneration } from "../js/api.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
     if (!requireAuth()) throw new Error("auth");
-    mountShell("character-creator.html");
-
+    mountShell("character-creator");
+    applyDomI18n(document);
+    mountToolHistory("character_creator");
     ProjectsAPI.list().then(list => {
       const sel = document.getElementById("projectSelect");
       list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
     });
 
-    async function run(form) {
+    let lastBody = null;
+
+    async function run(fromRegen = false) {
+      const form = document.getElementById("form");
       const fd = new FormData(form);
+      let body = Object.fromEntries(fd.entries());
+      if (!body.project_id) delete body.project_id;
+
+      const desc = String(body.description || "").trim();
+      if (fromRegen && desc.length < 5 && lastBody) {
+        body = { ...lastBody };
+      } else if (desc.length < 5) {
+        form.querySelector('[name="description"]')?.focus();
+        toast(t("char.desc_need"), true);
+        return;
+      } else {
+        body.description = desc;
+      }
+
       setLoading(document.getElementById("loader"), true);
       try {
-        const body = Object.fromEntries(fd.entries());
-        if (!body.project_id) delete body.project_id;
-        const gen = await ToolsAPI.character(body);
+        let gen = await ToolsAPI.character(body);
+        if (gen.status === "processing" || gen.status === "pending") {
+          toast(t("common.queued"));
+          gen = await pollGeneration(gen.id, {
+            onTick: (g) => {
+              const span = document.querySelector("#loader span");
+              if (span) span.textContent = t("common.status", { status: g.status });
+            },
+          });
+        }
+        if (gen.status === "failed") throw new Error(gen.error_message || "Generation failed");
+        lastBody = { ...body };
         const out = gen.output_data;
         document.getElementById("resultPanel").hidden = false;
         document.getElementById("charImg").src = out.url;
         document.getElementById("dlLink").href = out.url;
         document.getElementById("regen").hidden = false;
-        toast(`Character ready · +${gen.xp_awarded} XP`);
+        toast(t("char.toast", { xp: gen.xp_awarded }));
+        mountToolHistory("character_creator");
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     }
-
-    const form = document.getElementById("form");
-    form.addEventListener("submit", (e) => { e.preventDefault(); run(form); });
-    document.getElementById("regen").addEventListener("click", () => run(form));
+    document.getElementById("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      run(false);
+    });
+    document.getElementById("regen").addEventListener("click", () => run(true));
   </script>
 </body>
 </html>

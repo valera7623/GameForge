@@ -63,34 +63,35 @@ async def generate_sound(
     mood: str = "dark",
     duration_sec: int = 5,
 ) -> dict[str, Any]:
-    audio_bytes: bytes | None = None
-    provider = "synthetic"
     fmt = "wav"
     content_type = "audio/wav"
-
     prompt = f"{mood} mood: {description}"
 
-    if kind == "music" and settings.REPLICATE_API_TOKEN and not settings.USE_MOCK_AI:
-        try:
-            audio_bytes = await _musicgen_replicate(prompt, duration_sec)
-            provider = "musicgen"
-            fmt = "wav"
-            content_type = "audio/wav"
-        except Exception:
-            audio_bytes = None
-
-    if kind == "sfx" and settings.ELEVENLABS_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            audio_bytes = await _elevenlabs_sfx(description, duration_sec)
-            provider = "elevenlabs"
-            fmt = "mp3"
-            content_type = "audio/mpeg"
-        except Exception:
-            audio_bytes = None
-
-    if audio_bytes is None:
+    if settings.USE_MOCK_AI:
         audio_bytes = _synth_wav(description, kind, mood, duration_sec)
         provider = "synthetic"
+    else:
+        audio_bytes = None
+        provider = None
+        errors: list[str] = []
+        if kind == "music" and settings.REPLICATE_API_TOKEN:
+            try:
+                audio_bytes = await _musicgen_replicate(prompt, duration_sec)
+                provider = "musicgen"
+            except Exception as exc:
+                errors.append(f"musicgen: {exc}")
+        if kind == "sfx" and settings.ELEVENLABS_API_KEY:
+            try:
+                audio_bytes = await _elevenlabs_sfx(description, duration_sec)
+                provider = "elevenlabs"
+                fmt = "mp3"
+                content_type = "audio/mpeg"
+            except Exception as exc:
+                errors.append(f"elevenlabs: {exc}")
+        # Allow OpenAI-free music/sfx only via configured providers
+        if audio_bytes is None:
+            detail = "; ".join(errors) if errors else f"No provider configured for kind={kind}"
+            raise RuntimeError(f"Sound generation failed: {detail}")
 
     filename = f"{kind}_{mood}.{fmt}"
     url = upload_bytes(audio_bytes, filename, content_type, "audio")

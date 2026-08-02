@@ -3,14 +3,13 @@
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.rate_limiter import rate_limit
+from app.api.v1.tool_runner import run_tool
 from app.database import get_db
-from app.deps import ensure_generation_quota, get_current_user
+from app.deps import get_current_user
 from app.models.generation import ToolType
 from app.models.user import User
 from app.schemas import GenerationResponse, PlaytesterRequest
 from app.services import ai_playtester
-from app.services.generation_tracker import complete_generation, create_generation, fail_generation
 
 router = APIRouter(prefix="/playtester", tags=["playtester"])
 
@@ -22,37 +21,13 @@ async def run_playtest(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    await rate_limit(request)
-    await ensure_generation_quota(user, db)
-
-    gen = await create_generation(
-        db,
-        user,
-        ToolType.PLAYTESTER,
-        body.model_dump(mode="json"),
-        project_id=body.project_id,
+    return await run_tool(
+        request=request,
+        db=db,
+        user=user,
+        tool=ToolType.PLAYTESTER,
+        input_data=body.model_dump(mode="json"),
         title=f"Playtest ({body.focus})",
-    )
-    try:
-        output = await ai_playtester.run_playtest(body.game_description, body.scenarios, body.focus)
-        gen = await complete_generation(db, gen, user, output)
-    except Exception as exc:
-        await fail_generation(db, gen, str(exc))
-        await db.commit()
-        from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=str(exc))
-
-    return GenerationResponse(
-        id=gen.id,
-        tool=gen.tool.value,
-        status=gen.status.value,
-        title=gen.title,
-        input_data=gen.input_data,
-        output_data=gen.output_data,
-        asset_urls=gen.asset_urls,
-        error_message=gen.error_message,
-        xp_awarded=gen.xp_awarded,
-        project_id=gen.project_id,
-        created_at=gen.created_at,
-        completed_at=gen.completed_at,
+        project_id=body.project_id,
+        run=lambda: ai_playtester.run_playtest(body.game_description, body.scenarios, body.focus),
     )

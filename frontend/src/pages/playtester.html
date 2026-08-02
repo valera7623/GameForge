@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Playtester — GameForge</title>
+  <title data-i18n="play.title">Playtester — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -17,22 +18,21 @@
   <div class="bg-grid"></div>
   <div class="app-shell">
     <main class="main-panel">
-      <div class="page-header">
-        <div>
-          <h1>AI Playtester</h1>
-          <p>Automated QA: bugs, balance, and UX recommendations.</p>
-        </div>
-      </div>
+
+      <div class="page-header"><div>
+        <h1 data-i18n="play.h1">AI Playtester</h1>
+        <p data-i18n="play.sub">Get a QA-style report before you ship.</p>
+      </div></div>
       <div class="panel">
         <form id="form" class="form-grid">
-          <label>Game description
-            <textarea name="game_description" required placeholder="Top-down dungeon crawler with crafting, stealth, and a 10-hour campaign…"></textarea>
+          <label><span data-i18n="play.desc">Game description</span>
+            <textarea name="game_description" required data-i18n="play.desc_ph" data-i18n-attr="placeholder"></textarea>
           </label>
-          <label>Scenarios (one per line)
-            <textarea name="scenarios" placeholder="First boss fight&#10;Inventory overflow&#10;Quest turn-in"></textarea>
+          <label><span data-i18n="play.scenarios">Scenarios (one per line)</span>
+            <textarea name="scenarios" data-i18n="play.scenarios_ph" data-i18n-attr="placeholder"></textarea>
           </label>
           <div class="form-row">
-            <label>Focus
+            <label><span data-i18n="play.focus">Focus</span>
               <select name="focus">
                 <option value="all">All</option>
                 <option value="bugs">Bugs</option>
@@ -40,61 +40,54 @@
                 <option value="ux">UX</option>
               </select>
             </label>
-            <label>Project
-              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
           </div>
-          <button class="btn btn-primary" type="submit">Run playtest</button>
+          <button class="btn btn-primary" type="submit" data-i18n="play.submit">Run playtest</button>
         </form>
-        <div class="loader" id="loader"><div class="spinner"></div> Analyzing…</div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="play.loading">Analyzing…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
-        <h2>Report <span id="score"></span></h2>
-        <div class="actions">
-          <button class="btn btn-ghost" id="dlJson">Export JSON</button>
-        </div>
+        <h2><span data-i18n="play.report">Report</span> <span id="score"></span></h2>
+        <div class="actions"><button class="btn btn-ghost" id="dlJson" data-i18n="play.dl">Export JSON</button></div>
         <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
       </div>
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
     </main>
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
-    import { mountShell, setLoading, toast } from "../js/app.js";
-
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
     if (!requireAuth()) throw new Error("auth");
-    mountShell("playtester.html");
+    mountShell("playtester");
+    applyDomI18n(document);
+    mountToolHistory("playtester");
     let last = null;
-
     ProjectsAPI.list().then(list => {
       const sel = document.getElementById("projectSelect");
       list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
     });
-
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       setLoading(document.getElementById("loader"), true);
       try {
-        const scenarios = String(fd.get("scenarios") || "")
-          .split("\n").map(s => s.trim()).filter(Boolean);
-        const body = {
-          game_description: fd.get("game_description"),
-          scenarios,
-          focus: fd.get("focus"),
-        };
+        const scenarios = String(fd.get("scenarios") || "").split("\n").map(s => s.trim()).filter(Boolean);
+        const body = { game_description: fd.get("game_description"), scenarios, focus: fd.get("focus") };
         if (fd.get("project_id")) body.project_id = fd.get("project_id");
         const gen = await ToolsAPI.playtest(body);
         last = gen.output_data;
         document.getElementById("resultPanel").hidden = false;
-        document.getElementById("score").textContent = `· score ${last.overall_score}/100`;
+        document.getElementById("score").textContent = t("play.score", { score: last.overall_score });
         document.getElementById("jsonOut").textContent = JSON.stringify(last, null, 2);
-        toast(`Report ready · +${gen.xp_awarded} XP`);
+        toast(t("play.toast", { xp: gen.xp_awarded }));
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     });
-
-    document.getElementById("dlJson").addEventListener("click", () => last && downloadJSON("playtest-report.json", last));
+    document.getElementById("dlJson").addEventListener("click", () => { if (last) downloadJSON("playtest.json", last); });
   </script>
 </body>
 </html>

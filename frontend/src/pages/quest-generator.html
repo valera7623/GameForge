@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quest Generator — GameForge</title>
+  <title data-i18n="quest.title">Quest Generator — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -17,56 +18,54 @@
   <div class="bg-grid"></div>
   <div class="app-shell">
     <main class="main-panel">
-      <div class="page-header">
-        <div>
-          <h1>AI Quest Generator</h1>
-          <p>Create quests, dialogues, and rewards for your engine.</p>
-        </div>
-      </div>
+
+      <div class="page-header"><div>
+        <h1 data-i18n="quest.h1">AI Quest Generator</h1>
+        <p data-i18n="quest.sub">Create quests, dialogues, and rewards for your engine.</p>
+      </div></div>
       <div class="panel">
         <form id="form" class="form-grid">
-          <label>Setting
-            <textarea name="setting" required placeholder="Frozen northern kingdom after a dragon war"></textarea>
+          <label><span data-i18n="quest.setting">Setting</span>
+            <textarea name="setting" required data-i18n="quest.setting_ph" data-i18n-attr="placeholder"></textarea>
           </label>
           <div class="form-row">
-            <label>Type
-              <select name="quest_type"><option value="main">Main</option><option value="side" selected>Side</option></select>
+            <label><span data-i18n="quest.type">Type</span>
+              <select name="quest_type"><option value="main">Main</option><option value="side">Side</option><option value="daily">Daily</option></select>
             </label>
-            <label>Length
-              <select name="length"><option>short</option><option selected>medium</option><option>long</option></select>
+            <label><span data-i18n="quest.length">Length</span>
+              <select name="length"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select>
             </label>
-            <label>Tone <input name="tone" value="adventure" /></label>
-            <label>Project
-              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            <label><span data-i18n="quest.tone">Tone</span> <input name="tone" value="adventure" /></label>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
           </div>
-          <button class="btn btn-primary" type="submit">Generate quest</button>
+          <button class="btn btn-primary" type="submit" data-i18n="quest.submit">Generate quest</button>
         </form>
-        <div class="loader" id="loader"><div class="spinner"></div> Writing quest…</div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="quest.loading">Writing quest…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
         <h2 id="questTitle"></h2>
-        <div class="actions">
-          <button class="btn btn-ghost" id="dlJson">Export JSON (Unity/Unreal)</button>
-        </div>
+        <div class="actions"><button class="btn btn-ghost" id="dlJson" data-i18n="quest.dl">Export JSON</button></div>
         <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
       </div>
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
     </main>
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
-    import { mountShell, setLoading, toast } from "../js/app.js";
-
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
     if (!requireAuth()) throw new Error("auth");
-    mountShell("quest-generator.html");
+    mountShell("quest-generator");
+    applyDomI18n(document);
+    mountToolHistory("quest_generator");
     let last = null;
-
     ProjectsAPI.list().then(list => {
       const sel = document.getElementById("projectSelect");
       list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
     });
-
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -79,12 +78,11 @@
         document.getElementById("resultPanel").hidden = false;
         document.getElementById("questTitle").textContent = last.title || "Quest";
         document.getElementById("jsonOut").textContent = JSON.stringify(last, null, 2);
-        toast(`Quest ready · +${gen.xp_awarded} XP`);
+        toast(t("quest.toast", { xp: gen.xp_awarded }));
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     });
-
-    document.getElementById("dlJson").addEventListener("click", () => last && downloadJSON("quest.json", last));
+    document.getElementById("dlJson").addEventListener("click", () => { if (last) downloadJSON("quest.json", last); });
   </script>
 </body>
 </html>

@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Level Designer — GameForge</title>
+  <title data-i18n="level.title">Level Designer — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -19,19 +20,19 @@
     <main class="main-panel">
       <div class="page-header">
         <div>
-          <h1>AI Level Designer</h1>
-          <p>Describe a level — get a tilemap, enemies, and items.</p>
+          <h1 data-i18n="level.h1">AI Level Designer</h1>
+          <p data-i18n="level.sub">Describe a space — get a playable tilemap.</p>
         </div>
       </div>
       <div class="panel">
         <form id="form" class="form-grid">
-          <label>Description
-            <textarea name="description" required placeholder="Underwater temple with traps and skeleton guardians"></textarea>
+          <label><span data-i18n="level.desc">Description</span>
+            <textarea name="description" required data-i18n="level.desc_ph" data-i18n-attr="placeholder"></textarea>
           </label>
           <div class="form-row">
-            <label>Width <input type="number" name="width" value="32" min="8" max="64" /></label>
-            <label>Height <input type="number" name="height" value="32" min="8" max="64" /></label>
-            <label>Style
+            <label><span data-i18n="level.width">Width</span> <input type="number" name="width" value="32" min="8" max="64" /></label>
+            <label><span data-i18n="level.height">Height</span> <input type="number" name="height" value="32" min="8" max="64" /></label>
+            <label><span data-i18n="level.style">Style</span>
               <select name="style">
                 <option value="dungeon">Dungeon</option>
                 <option value="cave">Cave</option>
@@ -39,33 +40,37 @@
                 <option value="city">City</option>
               </select>
             </label>
-            <label>Project
-              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
           </div>
-          <button class="btn btn-primary" type="submit">Generate level</button>
+          <button class="btn btn-primary" type="submit" data-i18n="level.submit">Generate level</button>
         </form>
-        <div class="loader" id="loader"><div class="spinner"></div> Forging level…</div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="level.loading">Forging level…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
-        <h2>Map preview</h2>
+        <h2 data-i18n="level.preview">Map preview</h2>
         <div class="canvas-wrap"><canvas id="levelCanvas"></canvas></div>
         <div class="actions">
-          <button class="btn btn-ghost" id="dlJson">Export JSON</button>
-          <button class="btn btn-ghost" id="dlPng">Export PNG</button>
+          <button class="btn btn-ghost" id="dlJson" data-i18n="level.dl_json">Export JSON</button>
+          <button class="btn btn-ghost" id="dlPng" data-i18n="level.dl_png">Export PNG</button>
         </div>
         <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
       </div>
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
     </main>
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
-    import { mountShell, setLoading, toast } from "../js/app.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
     import { downloadCanvasPNG, renderLevel } from "../js/canvas-level.js";
 
     if (!requireAuth()) throw new Error("auth");
-    mountShell("level-designer.html");
+    mountShell("level-designer");
+    applyDomI18n(document);
+    mountToolHistory("level_designer");
 
     let lastLevel = null;
     ProjectsAPI.list().then(list => {
@@ -94,7 +99,7 @@
         document.getElementById("resultPanel").hidden = false;
         renderLevel(document.getElementById("levelCanvas"), lastLevel);
         document.getElementById("jsonOut").textContent = JSON.stringify(lastLevel, null, 2);
-        toast(`Level ready · +${gen.xp_awarded} XP`);
+        toast(t("level.toast", { xp: gen.xp_awarded }));
       } catch (err) {
         toast(err.message, true);
       } finally {

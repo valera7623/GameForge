@@ -18,38 +18,33 @@ def _run(coro):
 
 @celery_app.task(name="tasks.upscale_texture", bind=True, max_retries=2)
 def upscale_texture_task(self, generation_id: str, image_b64: str, filename: str, scale: int, enhance: bool):
-    from datetime import datetime, timezone
-
-    from sqlalchemy import create_engine, select
+    from sqlalchemy import select
     from sqlalchemy.orm import Session
 
-    from app.config import get_settings
-    from app.models.generation import Generation, GenerationStatus
+    from app.models.generation import Generation
     from app.models.user import User
     from app.services.ai_texture_upscaler import upscale_texture
-    from app.services.generation_tracker import XP_PER_GENERATION
+    from app.tasks.db import get_sync_engine
+    from app.tasks.sync_award import award_generation_sync, fail_generation_sync
 
-    settings = get_settings()
-    engine = create_engine(settings.DATABASE_URL_SYNC)
-
+    engine = get_sync_engine()
     try:
         image_bytes = base64.b64decode(image_b64)
         result = _run(upscale_texture(image_bytes, filename, scale, enhance))
         with Session(engine) as session:
             gen = session.execute(select(Generation).where(Generation.id == UUID(generation_id))).scalar_one()
             user = session.execute(select(User).where(User.id == gen.user_id)).scalar_one()
-            from app.tasks.sync_award import award_generation_sync
             award_generation_sync(session, gen, user, result)
             session.commit()
         return result
     except Exception as exc:
-        with Session(engine) as session:
-            gen = session.execute(
-                select(Generation).where(Generation.id == UUID(generation_id))
-            ).scalar_one_or_none()
-            if gen:
-                gen.status = GenerationStatus.FAILED
-                gen.error_message = str(exc)
-                gen.completed_at = datetime.now(timezone.utc)
-                session.commit()
+        if self.request.retries >= self.max_retries:
+            with Session(engine) as session:
+                gen = session.execute(
+                    select(Generation).where(Generation.id == UUID(generation_id))
+                ).scalar_one_or_none()
+                if gen:
+                    fail_generation_sync(session, gen, str(exc))
+                    session.commit()
+            raise
         raise self.retry(exc=exc, countdown=10)

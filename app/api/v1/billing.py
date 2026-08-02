@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.rate_limiter import rate_limit
 from app.database import get_db
 from app.deps import get_current_user
 from app.models.user import User
@@ -20,9 +21,11 @@ async def plans():
 @router.post("/checkout", response_model=CheckoutResponse)
 async def checkout(
     body: CheckoutRequest,
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await rate_limit(request)
     try:
         result = await billing_service.create_checkout(
             db, user, body.plan, body.provider, body.success_url, body.cancel_url
@@ -41,6 +44,33 @@ async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"ok": True}
+
+
+@router.post("/webhook/yukassa")
+async def yukassa_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    payload = await request.json()
+    try:
+        await billing_service.handle_yukassa_notification(db, payload)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"ok": True}
+
+
+@router.post("/portal")
+async def customer_portal(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        return await billing_service.create_customer_portal(db, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post("/cancel")
+async def cancel(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    try:
+        sub = await billing_service.cancel_subscription(db, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"plan": sub.plan.value, "status": sub.status.value}
 
 
 @router.get("/subscription")

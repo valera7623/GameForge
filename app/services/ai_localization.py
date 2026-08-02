@@ -113,15 +113,13 @@ async def localize(
 
     translations: Dict[str, Dict[str, str]] = {source_lang: dict(texts)}
 
-    if settings.OPENAI_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            translations.update(await _openai_localize(texts, source_lang, target_langs))
-        except Exception:
-            for lang in target_langs:
-                translations[lang] = {k: _mock_translate(v, lang) for k, v in texts.items()}
-    else:
+    if settings.USE_MOCK_AI:
         for lang in target_langs:
             translations[lang] = {k: _mock_translate(v, lang) for k, v in texts.items()}
+    else:
+        if not settings.OPENAI_API_KEY:
+            raise RuntimeError("OPENAI_API_KEY is required when USE_MOCK_AI=false")
+        translations.update(await _openai_localize(texts, source_lang, target_langs))
 
     keys = list(texts.keys())
     export_payload: Any

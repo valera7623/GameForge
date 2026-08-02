@@ -3,39 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register — GameForge</title>
+  <title data-i18n="register.title">Create account — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
 <body>
   <div class="bg-grid"></div>
-  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle aria-label="Toggle theme">☾</button>
+  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle data-i18n="theme.toggle" data-i18n-attr="aria-label">☾</button>
   <div class="auth-page">
     <div class="auth-card">
       <a class="brand" href="/">GameForge</a>
-      <h1>Create account</h1>
-      <p class="sub">5 free generations every month</p>
+      <h1 data-i18n="register.h1">Create account</h1>
+      <p class="sub" data-i18n="register.sub">Start forging in under a minute</p>
       <form id="regForm" class="form-grid">
-        <label>Name <input name="full_name" placeholder="Alex Indie" /></label>
-        <label>Email <input type="email" name="email" required placeholder="dev@studio.com" /></label>
-        <label>Password <input type="password" name="password" required minlength="6" /></label>
-        <button class="btn btn-primary" type="submit">Start forging</button>
+        <label><span data-i18n="register.name">Full name</span> <input name="full_name" placeholder="Alex Indie" /></label>
+        <label><span data-i18n="login.email">Email</span> <input type="email" name="email" required placeholder="dev@studio.com" /></label>
+        <label><span data-i18n="login.password">Password</span> <input type="password" name="password" required minlength="10" /></label>
+        <button class="btn btn-primary" type="submit" data-i18n="register.submit">Create account</button>
       </form>
       <p style="margin-top:1rem;color:var(--muted);font-size:0.9rem">
-        Already have an account? <a href="/src/pages/login.html">Sign in</a>
+        <span data-i18n="register.have">Already have an account?</span> <a href="/login" data-i18n="register.signin">Sign in</a>
       </p>
     </div>
   </div>
   <script type="module">
     import { redirectIfAuthed, register } from "../js/auth.js";
-    import { toast } from "../js/app.js";
+    import { applyDomI18n, toast } from "../js/app.js";
     import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
+    applyDomI18n(document);
     applyTheme(getTheme());
     bindThemeToggles();
     redirectIfAuthed();
@@ -44,7 +46,7 @@
       const fd = new FormData(e.target);
       try {
         await register(fd.get("email"), fd.get("password"), fd.get("full_name") || null);
-        location.href = "/src/pages/dashboard.html";
+        location.href = "/dashboard";
       } catch (err) {
         toast(err.message, true);
       }

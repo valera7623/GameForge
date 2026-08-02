@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — GameForge</title>
+  <title data-i18n="dash.title">Dashboard — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -19,119 +20,205 @@
     <main class="main-panel">
       <div class="page-header">
         <div>
-          <h1>Dashboard</h1>
-          <p id="welcome">Loading…</p>
+          <h1 data-i18n="dash.h1">Dashboard</h1>
+          <p id="welcome" data-i18n="common.loading">Loading…</p>
         </div>
         <div class="actions">
-          <button class="btn btn-ghost" id="newProjectBtn">New project</button>
-          <button class="btn btn-primary" id="upgradeBtn">Upgrade plan</button>
+          <button class="btn btn-ghost" id="newProjectBtn" data-i18n="dash.new_project">New project</button>
+          <button class="btn btn-ghost" id="portalBtn" data-i18n="dash.portal">Billing portal</button>
+          <button class="btn btn-primary" id="upgradeBtn" data-i18n="dash.upgrade">Upgrade plan</button>
         </div>
       </div>
 
+      <div class="loader visible" id="dashLoader"><div class="spinner"></div> <span data-i18n="common.loading">Loading…</span></div>
+      <div id="dashContent" hidden>
       <div class="stats-row" id="stats"></div>
 
-      <div class="panel">
-        <h2>Launch a tool</h2>
+      <div class="panel panel-tool-launch">
+        <h2 data-i18n="dash.launch">Launch a tool</h2>
         <div class="tool-launch">
-          <a href="/src/pages/level-designer.html"><strong>Level Designer</strong><span>Tilemaps from text</span></a>
-          <a href="/src/pages/quest-generator.html"><strong>Quest Generator</strong><span>Quests & dialogues</span></a>
-          <a href="/src/pages/texture-upscaler.html"><strong>Texture Upscaler</strong><span>2× / 4× enhance</span></a>
-          <a href="/src/pages/character-creator.html"><strong>Character Creator</strong><span>Concept portraits</span></a>
-          <a href="/src/pages/sound-designer.html"><strong>Sound Designer</strong><span>SFX & music</span></a>
-          <a href="/src/pages/playtester.html"><strong>Playtester</strong><span>QA reports</span></a>
-          <a href="/src/pages/localization.html"><strong>Localization</strong><span>20+ languages</span></a>
+          <a href="/level-designer"><strong data-i18n="dash.tool.level">Level Designer</strong><span data-i18n="dash.tool.level_d">Tilemaps from text</span></a>
+          <a href="/quest-generator"><strong data-i18n="dash.tool.quest">Quest Generator</strong><span data-i18n="dash.tool.quest_d">Quests & dialogues</span></a>
+          <a href="/texture-upscaler"><strong data-i18n="dash.tool.texture">Texture Upscaler</strong><span data-i18n="dash.tool.texture_d">2× / 4× enhance</span></a>
+          <a href="/character-creator"><strong data-i18n="dash.tool.character">Character Creator</strong><span data-i18n="dash.tool.character_d">Concept portraits</span></a>
+          <a href="/sound-designer"><strong data-i18n="dash.tool.sound">Sound Designer</strong><span data-i18n="dash.tool.sound_d">SFX & music</span></a>
+          <a href="/playtester"><strong data-i18n="dash.tool.play">Playtester</strong><span data-i18n="dash.tool.play_d">QA reports</span></a>
+          <a href="/localization"><strong data-i18n="dash.tool.loc">Localization</strong><span data-i18n="dash.tool.loc_d">20+ languages</span></a>
         </div>
       </div>
 
       <div class="panel">
-        <h2>Projects</h2>
+        <h2 data-i18n="dash.projects">Projects</h2>
         <div id="projects" class="gen-cards"></div>
       </div>
 
       <div class="panel">
-        <h2>Recent generations</h2>
+        <h2 data-i18n="dash.recent">Recent generations</h2>
         <div id="recent" class="gen-cards"></div>
       </div>
 
       <div class="panel">
-        <h2>Achievements & rank</h2>
+        <h2 data-i18n="dash.achievements">Achievements & rank</h2>
         <div id="achievements"></div>
+      </div>
       </div>
     </main>
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { BillingAPI, DashboardAPI, ProjectsAPI, downloadAuthed } from "../js/api.js";
-    import { mountShell, statusBadge, toast } from "../js/app.js";
+    import { applyDomI18n, escapeHtml, mountShell, setLoading, showModal, statusBadge, toast, t } from "../js/app.js";
 
     if (!requireAuth()) throw new Error("auth");
-    mountShell("dashboard.html");
+    mountShell("dashboard");
+    applyDomI18n(document);
+
+    function shortTitle(title, max = 72) {
+      const s = (title || "Untitled").replace(/\s+/g, " ").trim();
+      return s.length > max ? s.slice(0, max - 1) + "…" : s;
+    }
 
     async function load() {
-      const [stats, projects] = await Promise.all([DashboardAPI.stats(), ProjectsAPI.list()]);
-      document.getElementById("welcome").textContent =
-        `Plan: ${stats.plan} · Monthly rank #${stats.leaderboard_rank} · ${stats.xp_this_month} XP this month (${stats.xp} total)`;
-
-      document.getElementById("stats").innerHTML = `
-        <div class="stat"><div class="label">This month</div><div class="value">${stats.generations_this_month}/${stats.generations_limit}</div></div>
-        <div class="stat"><div class="label">Total gens</div><div class="value">${stats.total_generations}</div></div>
-        <div class="stat"><div class="label">XP / month</div><div class="value">${stats.xp_this_month}</div></div>
-        <div class="stat"><div class="label">Projects</div><div class="value">${stats.projects_count}</div></div>
-      `;
-
-      document.getElementById("projects").innerHTML = projects.length
-        ? projects.map(p => `
-          <div class="gen-card">
-            <div class="meta"><span>${p.engine}</span><span>${p.generations_count} assets</span></div>
-            <strong>${p.name}</strong>
-            <div class="actions">
-              <button class="btn btn-ghost" data-export="${p.id}">Export ZIP</button>
-            </div>
-          </div>`).join("")
-        : `<p style="color:var(--muted)">No projects yet. Create one to group your assets.</p>`;
-
-      document.getElementById("recent").innerHTML = stats.recent_generations.length
-        ? stats.recent_generations.map(g => `
-          <div class="gen-card">
-            <div class="meta"><span>${g.tool}</span>${statusBadge(g.status)}</div>
-            <strong>${g.title || "Untitled"}</strong>
-            <div class="meta" style="margin-top:0.4rem"><span>+${g.xp_awarded} XP</span></div>
-          </div>`).join("")
-        : `<p style="color:var(--muted)">No generations yet — pick a tool above.</p>`;
-
-      document.getElementById("achievements").innerHTML = stats.achievements.length
-        ? `<ul>${stats.achievements.map(a => `<li><strong>${a.name}</strong> — ${a.description} (+${a.xp_reward} XP)</li>`).join("")}</ul>`
-        : `<p style="color:var(--muted)">Earn achievements by generating assets.</p>`;
-
-      document.querySelectorAll("[data-export]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          try {
-            await downloadAuthed(ProjectsAPI.exportUrl(btn.dataset.export), "game-assets.zip");
-            toast("Export started");
-          } catch (e) { toast(e.message, true); }
+      setLoading(document.getElementById("dashLoader"), true);
+      try {
+        const [stats, projects] = await Promise.all([DashboardAPI.stats(), ProjectsAPI.list()]);
+        document.getElementById("dashContent").hidden = false;
+        document.getElementById("welcome").textContent = t("dash.welcome", {
+          plan: stats.plan,
+          rank: stats.leaderboard_rank,
+          xpMonth: stats.xp_this_month,
+          xp: stats.xp,
         });
-      });
+
+        document.getElementById("stats").innerHTML = `
+          <div class="stat"><div class="label">${escapeHtml(t("dash.stat_month"))}</div><div class="value">${stats.generations_this_month}/${stats.generations_limit}</div></div>
+          <div class="stat"><div class="label">${escapeHtml(t("dash.stat_total"))}</div><div class="value">${stats.total_generations}</div></div>
+          <div class="stat"><div class="label">${escapeHtml(t("dash.stat_xp"))}</div><div class="value">${stats.xp_this_month}</div></div>
+          <div class="stat"><div class="label">${escapeHtml(t("dash.stat_projects"))}</div><div class="value">${stats.projects_count}</div></div>
+        `;
+
+        document.getElementById("projects").innerHTML = projects.length
+          ? projects.map(p => `
+            <div class="gen-card">
+              <div class="meta"><span>${escapeHtml(p.engine)}</span><span>${p.generations_count}</span></div>
+              <strong class="title" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</strong>
+              <div class="actions">
+                <button class="btn btn-ghost btn-sm" data-export="${p.id}">${escapeHtml(t("dash.export_zip"))}</button>
+                <button class="btn btn-danger btn-sm" data-delete-project="${p.id}">${escapeHtml(t("common.delete"))}</button>
+              </div>
+            </div>`).join("")
+          : `<p style="color:var(--muted)">${escapeHtml(t("dash.no_projects"))}</p>`;
+
+        document.getElementById("recent").innerHTML = stats.recent_generations.length
+          ? stats.recent_generations.map(g => `
+            <div class="gen-card">
+              <div class="meta"><span>${escapeHtml(g.tool)}</span>${statusBadge(g.status)}</div>
+              <strong class="title" title="${escapeHtml(g.title || "Untitled")}">${escapeHtml(shortTitle(g.title))}</strong>
+              <div class="meta"><span>+${g.xp_awarded} XP</span></div>
+              <div class="actions">
+                <button class="btn btn-danger btn-sm" data-delete="${g.id}">${escapeHtml(t("common.delete"))}</button>
+              </div>
+            </div>`).join("")
+          : `<p style="color:var(--muted)">${escapeHtml(t("dash.no_gens"))}</p>`;
+
+        document.getElementById("achievements").innerHTML = stats.achievements.length
+          ? `<ul>${stats.achievements.map(a => `<li><strong>${escapeHtml(a.name)}</strong> — ${escapeHtml(a.description)} (+${a.xp_reward} XP)</li>`).join("")}</ul>`
+          : `<p style="color:var(--muted)">${escapeHtml(t("dash.no_achievements"))}</p>`;
+
+        document.querySelectorAll("[data-export]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            try {
+              await downloadAuthed(ProjectsAPI.exportUrl(btn.dataset.export), "game-assets.zip");
+              toast(t("dash.toast_export"));
+            } catch (e) { toast(e.message, true); }
+          });
+        });
+
+        document.querySelectorAll("[data-delete-project]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            if (!confirm(t("dash.confirm_del_project"))) return;
+            try {
+              await ProjectsAPI.delete(btn.dataset.deleteProject);
+              toast(t("dash.toast_project_deleted"));
+              load();
+            } catch (e) { toast(e.message, true); }
+          });
+        });
+
+        document.querySelectorAll("[data-delete]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            if (!confirm(t("dash.confirm_del_gen"))) return;
+            try {
+              await DashboardAPI.deleteGeneration(btn.dataset.delete);
+              toast(t("dash.toast_deleted"));
+              load();
+            } catch (e) { toast(e.message, true); }
+          });
+        });
+      } finally {
+        setLoading(document.getElementById("dashLoader"), false);
+      }
     }
 
     document.getElementById("newProjectBtn").addEventListener("click", async () => {
-      const name = prompt("Project name:", "Dungeon Explorer");
-      if (!name) return;
-      const engine = prompt("Engine (unity/unreal/godot):", "unreal") || "unity";
+      const data = await showModal({
+        title: t("modal.project_title"),
+        confirmLabel: t("common.create"),
+        fields: [
+          { name: "name", label: t("modal.project_name"), value: "Dungeon Explorer" },
+          {
+            name: "engine",
+            label: t("modal.engine"),
+            type: "select",
+            options: [
+              { value: "unity", label: "Unity" },
+              { value: "unreal", label: "Unreal" },
+              { value: "godot", label: "Godot" },
+            ],
+          },
+        ],
+      });
+      if (!data) return;
       try {
-        await ProjectsAPI.create({ name, engine });
-        toast("Project created");
+        await ProjectsAPI.create({ name: data.name, engine: data.engine });
+        toast(t("dash.toast_created"));
         load();
       } catch (e) { toast(e.message, true); }
     });
 
     document.getElementById("upgradeBtn").addEventListener("click", async () => {
-      const plan = prompt("Upgrade to: indie or studio?", "indie");
-      if (!plan || !["indie", "studio"].includes(plan)) return;
+      const data = await showModal({
+        title: t("modal.upgrade_title"),
+        confirmLabel: t("common.upgrade"),
+        fields: [
+          {
+            name: "plan",
+            label: t("modal.plan"),
+            type: "select",
+            options: [
+              { value: "indie", label: "Indie" },
+              { value: "studio", label: "Studio" },
+            ],
+          },
+        ],
+      });
+      if (!data) return;
       try {
-        const res = await BillingAPI.checkout(plan);
-        toast("Plan updated (mock checkout)");
-        location.href = res.checkout_url.includes("http") ? res.checkout_url : location.href;
-        load();
+        const res = await BillingAPI.checkout(data.plan);
+        if (res.checkout_url?.startsWith("http")) {
+          location.href = res.checkout_url;
+        } else {
+          toast(t("dash.toast_plan"));
+          load();
+        }
+      } catch (e) { toast(e.message, true); }
+    });
+
+    document.getElementById("portalBtn").addEventListener("click", async () => {
+      try {
+        const res = await BillingAPI.portal();
+        if (res.portal_url) location.href = res.portal_url;
+        else toast(t("dash.toast_portal"));
       } catch (e) { toast(e.message, true); }
     });
 

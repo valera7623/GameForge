@@ -6,7 +6,7 @@ import hashlib
 import io
 from typing import Any
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 from app.config import get_settings
 from app.services.storage import upload_bytes
@@ -22,7 +22,7 @@ def _mock_character_image(description: str, style: str) -> bytes:
         (int(h[i : i + 2], 16) % 180 + 40, int(h[i + 2 : i + 4], 16) % 180 + 40, int(h[i + 4 : i + 6], 16) % 180 + 40)
         for i in range(0, 12, 6)
     ]
-    bg, primary, accent = colors[0], colors[1], colors[0]
+    primary, accent = colors[1], colors[0]
 
     img = Image.new("RGB", (768, 1024), (18, 18, 28))
     draw = ImageDraw.Draw(img)
@@ -60,25 +60,28 @@ def _mock_character_image(description: str, style: str) -> bytes:
 
 
 async def create_character(description: str, style: str = "fantasy", view: str = "full_body") -> dict[str, Any]:
-    image_bytes: bytes | None = None
-    provider = "mock"
-
-    if settings.OPENAI_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            image_bytes = await _dalle_character(description, style, view)
-            provider = "dall-e"
-        except Exception:
-            pass
-
-    if image_bytes is None and settings.STABILITY_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            image_bytes = await _sd_character(description, style, view)
-            provider = "stable-diffusion"
-        except Exception:
-            pass
-
-    if image_bytes is None:
+    if settings.USE_MOCK_AI:
         image_bytes = _mock_character_image(description, style)
+        provider = "mock"
+    else:
+        image_bytes = None
+        provider = None
+        errors: list[str] = []
+        if settings.OPENAI_API_KEY:
+            try:
+                image_bytes = await _dalle_character(description, style, view)
+                provider = "dall-e"
+            except Exception as exc:
+                errors.append(f"dall-e: {exc}")
+        if image_bytes is None and settings.STABILITY_API_KEY:
+            try:
+                image_bytes = await _sd_character(description, style, view)
+                provider = "stable-diffusion"
+            except Exception as exc:
+                errors.append(f"stability: {exc}")
+        if image_bytes is None:
+            detail = "; ".join(errors) if errors else "No image provider configured"
+            raise RuntimeError(f"Character generation failed: {detail}")
 
     url = upload_bytes(image_bytes, "character.png", "image/png", "characters")
     return {

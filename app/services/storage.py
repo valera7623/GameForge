@@ -1,13 +1,16 @@
-"""S3 / MinIO storage helpers."""
+"""S3 / MinIO storage helpers with signed URL support."""
 
 import io
 import uuid
+from pathlib import Path
 from typing import BinaryIO, Optional
+from urllib.parse import quote
 
 import boto3
 from botocore.client import Config
 
 from app.config import get_settings
+from app.core.security import hash_token
 
 settings = get_settings()
 
@@ -31,7 +34,28 @@ def ensure_bucket() -> None:
         try:
             client.create_bucket(Bucket=settings.S3_BUCKET)
         except Exception:
-            pass  # may already exist or minio not ready
+            pass
+
+
+def _presign(key: str) -> str:
+    client = get_s3_client()
+    return client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": settings.S3_BUCKET, "Key": key},
+        ExpiresIn=settings.S3_SIGNED_URL_EXPIRE_SEC,
+    )
+
+
+def _local_signed_url(folder: str, name: str) -> str:
+    """HMAC-signed path for local asset fallback (no public listing)."""
+    rel = f"{folder}/{name}"
+    sig = hash_token(rel)[:32]
+    return f"/local-assets/{quote(rel)}?sig={sig}"
+
+
+def verify_local_asset_sig(rel_path: str, sig: str) -> bool:
+    expected = hash_token(rel_path)[:32]
+    return sig == expected
 
 
 def upload_bytes(
@@ -50,16 +74,16 @@ def upload_bytes(
             Body=data,
             ContentType=content_type,
         )
+        if settings.S3_USE_SIGNED_URLS or not settings.S3_PUBLIC_READ:
+            return _presign(key)
         return f"{settings.S3_PUBLIC_URL.rstrip('/')}/{key}"
     except Exception:
-        # Fallback: save locally when MinIO unavailable
-        from pathlib import Path
-
         local_dir = Path("/tmp/gamedev-assets") / folder
         local_dir.mkdir(parents=True, exist_ok=True)
-        path = local_dir / f"{uuid.uuid4().hex}_{filename}"
+        name = f"{uuid.uuid4().hex}_{filename}"
+        path = local_dir / name
         path.write_bytes(data)
-        return f"/local-assets/{folder}/{path.name}"
+        return _local_signed_url(folder, name)
 
 
 def upload_fileobj(
@@ -73,17 +97,24 @@ def upload_fileobj(
 
 
 def download_bytes(url_or_key: str) -> Optional[bytes]:
-    if url_or_key.startswith("/local-assets/"):
-        from pathlib import Path
+    if "/local-assets/" in url_or_key:
 
-        path = Path("/tmp/gamedev-assets") / url_or_key.replace("/local-assets/", "")
-        if path.exists():
-            return path.read_bytes()
+        path = url_or_key.split("/local-assets/", 1)[-1].split("?", 1)[0]
+        local = Path("/tmp/gamedev-assets") / path
+        if local.exists():
+            return local.read_bytes()
         return None
-    # Treat as S3 key or full URL under public prefix
     key = url_or_key
     if settings.S3_PUBLIC_URL in url_or_key:
         key = url_or_key.split(settings.S3_PUBLIC_URL.rstrip("/") + "/", 1)[-1]
+    if "?" in key:
+        key = key.split("?", 1)[0]
+    # Strip signed URL host path if present
+    if "://" in key:
+        # path after bucket
+        parts = key.split(f"/{settings.S3_BUCKET}/", 1)
+        if len(parts) == 2:
+            key = parts[1].split("?", 1)[0]
     try:
         client = get_s3_client()
         buf = io.BytesIO()

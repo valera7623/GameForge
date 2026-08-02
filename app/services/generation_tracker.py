@@ -82,10 +82,10 @@ async def complete_generation(
     user.xp += XP_PER_GENERATION
     user.xp_this_month = (user.xp_this_month or 0) + XP_PER_GENERATION
     user.total_generations += 1
-    user.generations_this_month += 1
+    # generations_this_month is reserved atomically before work starts
 
     # Bump org shared counter if member of a studio org
-    from app.models.organization import OrgMembership, Organization
+    from app.models.organization import Organization, OrgMembership
 
     mem = await db.execute(
         select(OrgMembership).where(OrgMembership.user_id == user.id).limit(1)

@@ -6,13 +6,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
-
 # ── Auth ──────────────────────────────────────────────────────────────
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=6, max_length=128)
+    password: str = Field(min_length=10, max_length=128)
     full_name: Optional[str] = None
 
 
@@ -27,13 +26,17 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: Optional[str] = None
+
+
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
     token: str
-    new_password: str = Field(min_length=6, max_length=128)
+    new_password: str = Field(min_length=10, max_length=128)
 
 
 class APIKeyCreate(BaseModel):

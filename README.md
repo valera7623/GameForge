@@ -28,8 +28,8 @@ docker compose exec api python scripts/seed_db.py
 
 **Demo accounts** (after seed):
 
-- User: `demo@gamedev.ai` / `demo1234` (Indie plan)
-- Admin: `admin@gamedev.ai` / `admin1234`
+- User: `demo@gamedev.ai` / `demo123456` (Indie plan)
+- Admin: `admin@gamedev.ai` / `admin123456`
 
 ## Tools
 

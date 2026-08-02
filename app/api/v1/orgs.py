@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 from app.config import get_settings
 from app.database import get_db
 from app.deps import get_current_user
-from app.models.organization import OrgInvite, OrgMemberRole, OrgMembership, Organization
+from app.models.organization import Organization, OrgInvite, OrgMemberRole, OrgMembership
 from app.models.subscription import PlanType
 from app.models.user import User
 from app.services.billing_service import get_or_create_subscription

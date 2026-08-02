@@ -1,12 +1,14 @@
 """AI Game Dev Toolkit — FastAPI application entrypoint."""
 
+import logging
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api.v1 import (
     auth,
@@ -23,14 +25,38 @@ from app.api.v1 import (
     sound_designer,
     texture_upscaler,
 )
-from app.config import get_settings
+from app.config import get_settings, validate_settings
 from app.database import init_db
 
 settings = get_settings()
+logger = logging.getLogger("gamedev")
+
+
+class RequestIdMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+        request.state.request_id = request_id
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    validate_settings(settings)
+
+    if settings.SENTRY_DSN:
+        try:
+            import sentry_sdk
+
+            sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.APP_ENV, traces_sample_rate=0.1)
+        except Exception:
+            logger.exception("Sentry init failed")
+
+    from app.core.logging_config import configure_logging
+
+    configure_logging()
+
     await init_db()
     from sqlalchemy import select
 
@@ -55,16 +81,24 @@ async def lifespan(app: FastAPI):
     yield
 
 
+docs_url = None if settings.is_production else "/docs"
+redoc_url = None if settings.is_production else "/redoc"
+openapi_url = None if settings.is_production else "/openapi.json"
+
 app = FastAPI(
     title=settings.APP_NAME,
-    version="1.1.0",
+    version="1.2.0",
     description="AI Game Dev Toolkit — 7 AI tools for game developers",
     lifespan=lifespan,
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url,
 )
 
+app.add_middleware(RequestIdMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list + ["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,17 +119,27 @@ app.include_router(localization.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 
-# Local asset fallback
 local_assets = Path("/tmp/gamedev-assets")
 local_assets.mkdir(parents=True, exist_ok=True)
-app.mount("/local-assets", StaticFiles(directory=str(local_assets)), name="local-assets")
+
+
+@app.get("/local-assets/{asset_path:path}")
+async def serve_local_asset(asset_path: str, request: Request, sig: str = ""):
+    """Serve local fallback assets only with a valid HMAC signature."""
+    from app.services.storage import verify_local_asset_sig
+
+    if not verify_local_asset_sig(asset_path, sig):
+        raise HTTPException(status_code=403, detail="Invalid or missing signature")
+    path = local_assets / asset_path
+    if not path.is_file() or not str(path.resolve()).startswith(str(local_assets.resolve())):
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(path)
 
 
 @app.get("/")
 async def root():
     return {
         "name": settings.APP_NAME,
-        "docs": "/docs",
         "health": f"{prefix}/health",
-        "version": "1.0.0",
+        "version": "1.2.0",
     }

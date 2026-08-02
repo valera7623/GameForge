@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+import httpx
 from openai import AsyncOpenAI
 
 from app.config import get_settings
@@ -16,9 +17,12 @@ def get_openai_client() -> AsyncOpenAI:
       OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
     """
     settings = get_settings()
+    timeout = httpx.Timeout(settings.OPENAI_TIMEOUT_SEC, connect=10.0)
     return AsyncOpenAI(
         api_key=settings.OPENAI_API_KEY,
         base_url=settings.OPENAI_BASE_URL,
+        timeout=timeout,
+        max_retries=2,
     )
 
 

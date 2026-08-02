@@ -3,59 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sign in — GameForge</title>
+  <title data-i18n="login.title">Sign in — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
 <body>
   <div class="bg-grid"></div>
-  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle aria-label="Toggle theme">☾</button>
+  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle data-i18n="theme.toggle" data-i18n-attr="aria-label">☾</button>
   <div class="auth-page">
     <div class="auth-card">
       <a class="brand" href="/">GameForge</a>
-      <h1>Welcome back</h1>
-      <p class="sub">Sign in to your forge</p>
+      <h1 data-i18n="login.h1">Welcome back</h1>
+      <p class="sub" data-i18n="login.sub">Sign in to your forge</p>
       <form id="loginForm" class="form-grid">
-        <label>Email <input type="email" name="email" required placeholder="dev@studio.com" /></label>
-        <label>Password <input type="password" name="password" required minlength="6" /></label>
-        <button class="btn btn-primary" type="submit">Sign in</button>
+        <label><span data-i18n="login.email">Email</span> <input type="email" name="email" required placeholder="dev@studio.com" /></label>
+        <label><span data-i18n="login.password">Password</span> <input type="password" name="password" required minlength="10" /></label>
+        <button class="btn btn-primary" type="submit" id="loginBtn" data-i18n="login.submit">Sign in</button>
+        <div class="loader" id="loginLoader"><div class="spinner"></div> <span data-i18n="login.signing">Signing in…</span></div>
       </form>
       <p style="margin-top:1rem;color:var(--muted);font-size:0.9rem">
-        No account? <a href="/src/pages/register.html">Create one</a> ·
-        <a href="#" id="forgotLink">Forgot password</a>
+        <span data-i18n="login.no_account">No account?</span> <a href="/register" data-i18n="login.create">Create one</a> ·
+        <a href="#" id="forgotLink" data-i18n="login.forgot">Forgot password</a>
       </p>
     </div>
   </div>
   <script type="module">
-    import { redirectIfAuthed, login } from "../js/auth.js";
+    import { redirectIfAuthed, login, t } from "../js/auth.js";
     import { AuthAPI } from "../js/api.js";
-    import { toast } from "../js/app.js";
+    import { applyDomI18n, showModal, setLoading, toast } from "../js/app.js";
     import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
+    applyDomI18n(document);
     applyTheme(getTheme());
     bindThemeToggles();
     redirectIfAuthed();
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
+      const btn = document.getElementById("loginBtn");
+      btn.disabled = true;
+      setLoading(document.getElementById("loginLoader"), true);
       try {
         await login(fd.get("email"), fd.get("password"));
-        location.href = "/src/pages/dashboard.html";
+        location.href = "/dashboard";
       } catch (err) {
         toast(err.message, true);
+      } finally {
+        btn.disabled = false;
+        setLoading(document.getElementById("loginLoader"), false);
       }
     });
     document.getElementById("forgotLink").addEventListener("click", async (e) => {
       e.preventDefault();
-      const email = prompt("Email for password reset:");
-      if (!email) return;
+      const data = await showModal({
+        title: t("modal.reset_title"),
+        confirmLabel: t("modal.send"),
+        fields: [{ name: "email", label: t("modal.reset_email"), type: "email" }],
+      });
+      if (!data?.email) return;
       try {
-        const res = await AuthAPI.passwordReset(email);
+        const res = await AuthAPI.passwordReset(data.email);
         toast(res.reset_token ? `Token: ${res.reset_token}` : res.message);
       } catch (err) {
         toast(err.message, true);

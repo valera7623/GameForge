@@ -6,21 +6,57 @@ on:
   pull_request:
 
 jobs:
-  api-lint-import:
+  lint-and-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: gamedev
+          POSTGRES_PASSWORD: gamedev
+          POSTGRES_DB: gamedev_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gamedev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DEBUG: "true"
+      SECRET_KEY: test-secret-key-not-for-production-use
+      ALLOW_MOCK_BILLING: "true"
+      USE_MOCK_AI: "true"
+      CORS_ORIGINS: http://testserver
+      DATABASE_URL: postgresql+asyncpg://gamedev:gamedev@localhost:5432/gamedev_test
+      DATABASE_URL_SYNC: postgresql://gamedev:gamedev@localhost:5432/gamedev_test
+      REDIS_URL: redis://localhost:6379/15
+      CELERY_BROKER_URL: redis://localhost:6379/14
+      CELERY_RESULT_BACKEND: redis://localhost:6379/13
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
-      - run: python -c "from app.main import app; print(app.title)"
+      - run: ruff check app tests
+      - run: pytest -q
 
   docker-compose-config:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose config -q
+      - run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
 
   frontend-build:
     runs-on: ubuntu-latest

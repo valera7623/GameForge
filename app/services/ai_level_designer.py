@@ -120,12 +120,11 @@ def _title_from_desc(description: str) -> str:
 async def generate_level(
     description: str, width: int = 32, height: int = 32, style: str = "dungeon"
 ) -> dict[str, Any]:
-    if settings.OPENAI_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            return await _openai_level(description, width, height, style)
-        except Exception:
-            pass
-    return _mock_level(description, width, height, style)
+    if settings.USE_MOCK_AI:
+        return _mock_level(description, width, height, style)
+    if not settings.OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is required when USE_MOCK_AI=false")
+    return await _openai_level(description, width, height, style)
 
 
 async def _openai_level(description: str, width: int, height: int, style: str) -> dict[str, Any]:

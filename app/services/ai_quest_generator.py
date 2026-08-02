@@ -97,12 +97,11 @@ def _mock_quest(setting: str, quest_type: str, length: str, tone: str) -> dict[s
 async def generate_quest(
     setting: str, quest_type: str = "side", length: str = "medium", tone: str = "adventure"
 ) -> dict[str, Any]:
-    if settings.OPENAI_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            return await _openai_quest(setting, quest_type, length, tone)
-        except Exception:
-            pass
-    return _mock_quest(setting, quest_type, length, tone)
+    if settings.USE_MOCK_AI:
+        return _mock_quest(setting, quest_type, length, tone)
+    if not settings.OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is required when USE_MOCK_AI=false")
+    return await _openai_quest(setting, quest_type, length, tone)
 
 
 async def _openai_quest(setting: str, quest_type: str, length: str, tone: str) -> dict[str, Any]:

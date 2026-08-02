@@ -3,15 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GameForge — AI Game Dev Toolkit</title>
+  <title data-i18n="land.title">GameForge — AI Game Dev Toolkit</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -22,69 +25,96 @@
   <header class="topnav">
     <a class="brand" href="/">GameForge</a>
     <nav>
-      <a href="#tools">Tools</a>
-      <a href="#pricing">Pricing</a>
-      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
-      <a href="/src/pages/login.html" class="btn btn-ghost">Sign in</a>
-      <a href="/src/pages/register.html" class="btn btn-primary">Start free</a>
+      <a href="#tools" data-i18n="nav.tools">Tools</a>
+      <a href="#pricing" data-i18n="nav.pricing">Pricing</a>
+      <button type="button" class="btn-icon" id="langBtnLand" title="Language">RU</button>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle data-i18n="theme.toggle" data-i18n-attr="aria-label">☾</button>
+      <a href="/login" class="btn btn-ghost" data-i18n="nav.signin">Sign in</a>
+      <a href="/register" class="btn btn-primary" data-i18n="nav.start_free">Start free</a>
     </nav>
   </header>
 
   <main>
     <section class="hero">
       <p class="brand-hero">GameForge</p>
-      <h1>Seven AI tools. One forge for your game.</h1>
-      <p class="lede">Generate levels, quests, characters, textures, sound, playtests, and localization — then export straight into Unity, Unreal, or Godot.</p>
+      <h1 data-i18n="land.hero">Seven AI tools. One forge for your game.</h1>
+      <p class="lede" data-i18n="land.lede">Generate levels, quests, characters, textures, sound, playtests, and localization — then export straight into Unity, Unreal, or Godot.</p>
       <div class="cta-row">
-        <a href="/src/pages/register.html" class="btn btn-primary btn-lg">Forge your first asset</a>
-        <a href="#tools" class="btn btn-ghost btn-lg">Explore tools</a>
+        <a href="/register" class="btn btn-primary btn-lg" data-i18n="land.cta">Forge your first asset</a>
+        <a href="#tools" class="btn btn-ghost btn-lg" data-i18n="land.explore">Explore tools</a>
       </div>
     </section>
 
     <section id="tools" class="section tools-grid">
-      <h2>The toolkit</h2>
-      <p class="section-sub">Built for indie teams, studios, and modders who ship faster.</p>
+      <h2 data-i18n="land.toolkit">The toolkit</h2>
+      <p class="section-sub" data-i18n="land.toolkit_sub">Built for indie teams, studios, and modders who ship faster.</p>
       <div class="tool-cards">
-        <article><span class="tool-icon">⬡</span><h3>Level Designer</h3><p>Text → tilemaps with enemies, traps, and spawn points.</p></article>
-        <article><span class="tool-icon">◈</span><h3>Quest Generator</h3><p>Objectives, dialogues, and rewards as engine-ready JSON.</p></article>
-        <article><span class="tool-icon">▣</span><h3>Texture Upscaler</h3><p>2× / 4× upscale with detail enhancement.</p></article>
-        <article><span class="tool-icon">◎</span><h3>Character Creator</h3><p>Concept art from a single character brief.</p></article>
-        <article><span class="tool-icon">♪</span><h3>Sound Designer</h3><p>SFX and mood-driven background loops.</p></article>
-        <article><span class="tool-icon">⚑</span><h3>Playtester</h3><p>Bug, balance, and UX reports before you ship.</p></article>
-        <article><span class="tool-icon">文</span><h3>Localization</h3><p>20+ languages with JSON/CSV export.</p></article>
+        <article><span class="tool-icon">⬡</span><h3 data-i18n="land.tool.level">Level Designer</h3><p data-i18n="land.tool.level_d">Text → tilemaps with enemies, traps, and spawn points.</p></article>
+        <article><span class="tool-icon">◈</span><h3 data-i18n="land.tool.quest">Quest Generator</h3><p data-i18n="land.tool.quest_d">Objectives, dialogues, and rewards as engine-ready JSON.</p></article>
+        <article><span class="tool-icon">▣</span><h3 data-i18n="land.tool.texture">Texture Upscaler</h3><p data-i18n="land.tool.texture_d">2× / 4× upscale with detail enhancement.</p></article>
+        <article><span class="tool-icon">◎</span><h3 data-i18n="land.tool.character">Character Creator</h3><p data-i18n="land.tool.character_d">Concept art from a single character brief.</p></article>
+        <article><span class="tool-icon">♪</span><h3 data-i18n="land.tool.sound">Sound Designer</h3><p data-i18n="land.tool.sound_d">SFX and mood-driven background loops.</p></article>
+        <article><span class="tool-icon">⚑</span><h3 data-i18n="land.tool.play">Playtester</h3><p data-i18n="land.tool.play_d">Bug, balance, and UX reports before you ship.</p></article>
+        <article><span class="tool-icon">文</span><h3 data-i18n="land.tool.loc">Localization</h3><p data-i18n="land.tool.loc_d">20+ languages with JSON/CSV export.</p></article>
       </div>
     </section>
 
     <section id="pricing" class="section pricing">
-      <h2>Simple pricing</h2>
+      <h2 data-i18n="land.pricing">Simple pricing</h2>
       <div class="price-row">
         <div class="price-plan">
-          <h3>Free</h3>
+          <h3 data-i18n="land.free">Free</h3>
           <p class="price">$0</p>
-          <ul><li>5 generations / month</li><li>All 7 tools</li><li>Community support</li></ul>
-          <a href="/src/pages/register.html" class="btn btn-ghost">Get started</a>
+          <ul>
+            <li data-i18n="land.free_f1">5 generations / month</li>
+            <li data-i18n="land.free_f2">All 7 tools</li>
+            <li data-i18n="land.free_f3">Community support</li>
+          </ul>
+          <a href="/register" class="btn btn-ghost" data-i18n="land.get_started">Get started</a>
         </div>
         <div class="price-plan featured">
-          <h3>Indie</h3>
+          <h3 data-i18n="land.indie">Indie</h3>
           <p class="price">$19<span>/mo</span></p>
-          <ul><li>100 generations / month</li><li>Priority queue</li><li>ZIP project export</li></ul>
-          <a href="/src/pages/register.html" class="btn btn-primary">Choose Indie</a>
+          <ul>
+            <li data-i18n="land.indie_f1">100 generations / month</li>
+            <li data-i18n="land.indie_f2">Priority queue</li>
+            <li data-i18n="land.indie_f3">ZIP project export</li>
+          </ul>
+          <a href="/register" class="btn btn-primary" data-i18n="land.choose_indie">Choose Indie</a>
         </div>
         <div class="price-plan">
-          <h3>Studio</h3>
+          <h3 data-i18n="land.studio">Studio</h3>
           <p class="price">$99<span>/mo</span></p>
-          <ul><li>1000 generations / month</li><li>API access</li><li>Team seats</li></ul>
-          <a href="/src/pages/register.html" class="btn btn-ghost">Choose Studio</a>
+          <ul>
+            <li data-i18n="land.studio_f1">1000 generations / month</li>
+            <li data-i18n="land.studio_f2">API access</li>
+            <li data-i18n="land.studio_f3">Team seats</li>
+          </ul>
+          <a href="/register" class="btn btn-ghost" data-i18n="land.choose_studio">Choose Studio</a>
         </div>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <span>GameForge — AI Game Dev Toolkit</span>
-    <a href="/docs" target="_blank">API docs</a>
+    <span data-i18n="land.footer">GameForge — AI Game Dev Toolkit</span>
+    <a href="/docs" target="_blank" data-i18n="land.api_docs">API docs</a>
   </footer>
 
-  <script type="module" src="/src/js/app.js"></script>
+  <script type="module">
+    import { applyDomI18n, getLang, setLang } from "/src/js/i18n.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    applyDomI18n(document);
+    applyTheme(getTheme());
+    bindThemeToggles();
+    const btn = document.getElementById("langBtnLand");
+    if (btn) {
+      btn.textContent = getLang() === "ru" ? "EN" : "RU";
+      btn.addEventListener("click", () => {
+        setLang(getLang() === "ru" ? "en" : "ru");
+        location.reload();
+      });
+    }
+  </script>
 </body>
 </html>

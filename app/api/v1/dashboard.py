@@ -65,9 +65,14 @@ async def list_generations(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    from app.models.generation import ToolType
+
     q = select(Generation).where(Generation.user_id == user.id)
     if tool:
-        q = q.where(Generation.tool == tool)
+        try:
+            q = q.where(Generation.tool == ToolType(tool))
+        except ValueError:
+            pass
     if project_id:
         q = q.where(Generation.project_id == project_id)
     q = q.order_by(Generation.created_at.desc()).limit(limit)
@@ -90,6 +95,23 @@ async def get_generation(
     if not gen:
         raise HTTPException(status_code=404, detail="Generation not found")
     return _gen(gen)
+
+
+@router.delete("/generations/{generation_id}", status_code=204)
+async def delete_generation(
+    generation_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from fastapi import HTTPException
+
+    result = await db.execute(
+        select(Generation).where(Generation.id == generation_id, Generation.user_id == user.id)
+    )
+    gen = result.scalar_one_or_none()
+    if not gen:
+        raise HTTPException(status_code=404, detail="Generation not found")
+    await db.delete(gen)
 
 
 @router.get("/leaderboard", response_model=List[LeaderboardEntry])

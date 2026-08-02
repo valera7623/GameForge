@@ -6,6 +6,20 @@ from app.config import get_settings
 
 settings = get_settings()
 
+if settings.SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.celery import CeleryIntegration
+
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.APP_ENV,
+            integrations=[CeleryIntegration()],
+            traces_sample_rate=0.1,
+        )
+    except Exception:
+        pass
+
 celery_app = Celery(
     "gamedev_toolkit",
     broker=settings.CELERY_BROKER_URL,

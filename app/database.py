@@ -36,7 +36,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def _ensure_columns(conn) -> None:
-    """Additive schema patches for existing DBs (create_all won't ALTER)."""
+    """Additive schema patches for existing DBs (dev only; prod uses Alembic)."""
     patches = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS xp_this_month INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS xp_month_key VARCHAR(7)",
@@ -46,14 +46,13 @@ async def _ensure_columns(conn) -> None:
 
 
 async def init_db() -> None:
-    from app.models import (  # noqa: F401
-        achievement,
-        generation,
-        organization,
-        project,
-        subscription,
-        user,
-    )
+    import app.models  # noqa: F401 — register metadata
+
+    if settings.is_production:
+        # Schema managed by Alembic; verify connectivity only
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        return
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

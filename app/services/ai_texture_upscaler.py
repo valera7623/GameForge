@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from typing import Any, Tuple
+from typing import Any
 
 from PIL import Image, ImageEnhance, ImageFilter
 
@@ -41,29 +41,28 @@ async def upscale_texture(
     original = Image.open(io.BytesIO(image_bytes))
     orig_w, orig_h = original.size
 
-    result_bytes: bytes | None = None
-    provider = "pil"
-
-    # 1) Dedicated Real-ESRGAN microservice
-    if settings.REALESRGAN_URL and not settings.USE_MOCK_AI:
-        try:
-            result_bytes = await _realesrgan_upscale(image_bytes, scale)
-            provider = "realesrgan"
-        except Exception:
-            result_bytes = None
-
-    # 2) Stability AI upscale
-    if result_bytes is None and settings.STABILITY_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            result_bytes = await _stability_upscale(image_bytes, scale)
-            provider = "stability"
-        except Exception:
-            result_bytes = None
-
-    # 3) PIL fallback
-    if result_bytes is None:
+    if settings.USE_MOCK_AI:
         result_bytes = _pil_upscale(image_bytes, scale, enhance)
         provider = "pil"
+    else:
+        result_bytes = None
+        provider = None
+        errors: list[str] = []
+        if settings.REALESRGAN_URL:
+            try:
+                result_bytes = await _realesrgan_upscale(image_bytes, scale)
+                provider = "realesrgan"
+            except Exception as exc:
+                errors.append(f"realesrgan: {exc}")
+        if result_bytes is None and settings.STABILITY_API_KEY:
+            try:
+                result_bytes = await _stability_upscale(image_bytes, scale)
+                provider = "stability"
+            except Exception as exc:
+                errors.append(f"stability: {exc}")
+        if result_bytes is None:
+            detail = "; ".join(errors) if errors else "No upscale provider configured"
+            raise RuntimeError(f"Texture upscale failed: {detail}")
 
     url = upload_bytes(result_bytes, f"upscaled_{scale}x_{filename}", "image/png", "textures")
     result_img = Image.open(io.BytesIO(result_bytes))

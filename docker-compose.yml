@@ -36,6 +36,7 @@ services:
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
     volumes:
       - minio_data:/data
+    # Dev only: publish console; prod compose leaves these unbound
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -46,12 +47,15 @@ services:
     image: minio/mc:latest
     depends_on:
       - minio
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
     entrypoint: >
       /bin/sh -c "
       sleep 3;
-      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc alias set local http://minio:9000 $$S3_ACCESS_KEY $$S3_SECRET_KEY;
       mc mb -p local/gamedev-assets || true;
-      mc anonymous set download local/gamedev-assets || true;
+      mc anonymous set none local/gamedev-assets || true;
       exit 0;
       "
     networks:

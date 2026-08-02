@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Localization — GameForge</title>
+  <title data-i18n="loc.title">Localization — GameForge</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script>
     (function () {
-      var t = localStorage.getItem("gf_theme") || "light";
-      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
     })();
   </script>
 </head>
@@ -17,68 +18,61 @@
   <div class="bg-grid"></div>
   <div class="app-shell">
     <main class="main-panel">
-      <div class="page-header">
-        <div>
-          <h1>AI Localization</h1>
-          <p>Translate game strings to 20+ languages. Export JSON or CSV.</p>
-        </div>
-      </div>
+
+      <div class="page-header"><div>
+        <h1 data-i18n="loc.h1">AI Localization</h1>
+        <p data-i18n="loc.sub">Translate game strings to 20+ languages. Export JSON or CSV.</p>
+      </div></div>
       <div class="panel">
         <form id="form" class="form-grid">
-          <label>Source texts (JSON object: key → string)
-            <textarea name="texts" required rows="10">{
-  "ui.start": "Start",
-  "ui.settings": "Settings",
-  "ui.quit": "Quit",
+          <label><span data-i18n="loc.texts">Source texts</span>
+            <textarea name="texts" required rows="8">{
+  "ui.start": "Start game",
   "quest.intro": "Welcome, traveler."
 }</textarea>
           </label>
           <div class="form-row">
-            <label>Source lang <input name="source_lang" value="en" /></label>
-            <label>Target langs (comma)
-              <input name="target_langs" value="ru,es,de,fr,ja" />
+            <label><span data-i18n="loc.source">Source lang</span> <input name="source_lang" value="en" /></label>
+            <label><span data-i18n="loc.targets">Target langs</span> <input name="target_langs" value="ru,es,de,fr,ja" /></label>
+            <label><span data-i18n="loc.export">Export</span>
+              <select name="export_format"><option value="json">JSON</option><option value="csv">CSV</option></select>
             </label>
-            <label>Export
-              <select name="export_format"><option>json</option><option>csv</option></select>
-            </label>
-            <label>Project
-              <select name="project_id" id="projectSelect"><option value="">— none —</option></select>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
           </div>
-          <button class="btn btn-primary" type="submit">Translate</button>
+          <button class="btn btn-primary" type="submit" data-i18n="loc.submit">Translate</button>
         </form>
-        <div class="loader" id="loader"><div class="spinner"></div> Translating…</div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="loc.loading">Translating…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
-        <div class="actions">
-          <button class="btn btn-ghost" id="dlExport">Download export</button>
-        </div>
+        <h2 data-i18n="loc.result">Translations</h2>
+        <div class="actions"><button class="btn btn-ghost" id="dlExport" data-i18n="loc.dl">Download export</button></div>
         <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
       </div>
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
     </main>
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { ProjectsAPI, ToolsAPI, downloadJSON, downloadText } from "../js/api.js";
-    import { mountShell, setLoading, toast } from "../js/app.js";
-
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
     if (!requireAuth()) throw new Error("auth");
-    mountShell("localization.html");
+    mountShell("localization");
+    applyDomI18n(document);
+    mountToolHistory("localization");
     let last = null;
-
     ProjectsAPI.list().then(list => {
       const sel = document.getElementById("projectSelect");
       list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
     });
-
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       setLoading(document.getElementById("loader"), true);
       try {
-        let texts;
-        try { texts = JSON.parse(fd.get("texts")); }
-        catch { throw new Error("Invalid JSON in texts field"); }
+        const texts = JSON.parse(fd.get("texts"));
         const body = {
           texts,
           source_lang: fd.get("source_lang"),
@@ -90,18 +84,14 @@
         last = gen.output_data;
         document.getElementById("resultPanel").hidden = false;
         document.getElementById("jsonOut").textContent = JSON.stringify(last.translations, null, 2);
-        toast(`Localized ${last.key_count} keys · +${gen.xp_awarded} XP`);
+        toast(t("loc.toast", { count: last.key_count || Object.keys(texts).length, xp: gen.xp_awarded }));
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     });
-
     document.getElementById("dlExport").addEventListener("click", () => {
       if (!last) return;
-      if (last.export_format === "csv") {
-        downloadText("localization.csv", last.export, "text/csv");
-      } else {
-        downloadJSON("localization.json", last.export);
-      }
+      if (last.export_format === "csv") downloadText("localization.csv", last.export, "text/csv");
+      else downloadJSON("localization.json", last.export || last.translations);
     });
   </script>
 </body>

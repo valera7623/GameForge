@@ -1,0 +1,81 @@
+# Production overlay — use: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  postgres:
+    restart: unless-stopped
+
+  redis:
+    restart: unless-stopped
+
+  minio:
+    restart: unless-stopped
+    ports: !reset []
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  api:
+    restart: unless-stopped
+    volumes: !reset []
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      ALLOW_MOCK_BILLING: "false"
+      COOKIE_SECURE: "true"
+      LOG_JSON: "true"
+      S3_USE_SIGNED_URLS: "true"
+      S3_PUBLIC_READ: "false"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    user: "1000:1000"
+
+  worker:
+    restart: unless-stopped
+    volumes: !reset []
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      LOG_JSON: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.tasks.celery_app.celery_app inspect ping -d celery@$$HOSTNAME || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    user: "1000:1000"
+
+  frontend:
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  backup:
+    image: postgres:15-alpine
+    profiles: ["backup"]
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BACKUP_INTERVAL_SEC: ${BACKUP_INTERVAL_SEC:-86400}
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+      - backup_data:/backups
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - gamedev
+
+volumes:
+  backup_data:

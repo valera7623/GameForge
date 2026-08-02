@@ -103,12 +103,11 @@ async def run_playtest(
     game_description: str, scenarios: List[str] | None = None, focus: str = "all"
 ) -> dict[str, Any]:
     scenarios = scenarios or []
-    if settings.OPENAI_API_KEY and not settings.USE_MOCK_AI:
-        try:
-            return await _openai_playtest(game_description, scenarios, focus)
-        except Exception:
-            pass
-    return _mock_report(game_description, scenarios, focus)
+    if settings.USE_MOCK_AI:
+        return _mock_report(game_description, scenarios, focus)
+    if not settings.OPENAI_API_KEY:
+        raise RuntimeError("OPENAI_API_KEY is required when USE_MOCK_AI=false")
+    return await _openai_playtest(game_description, scenarios, focus)
 
 
 async def _openai_playtest(game_description: str, scenarios: List[str], focus: str) -> dict[str, Any]:
