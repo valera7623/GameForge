@@ -2,7 +2,17 @@
 	email {$ACME_EMAIL:admin@example.com}
 }
 
-{$DOMAIN:localhost}, www.{$DOMAIN:localhost} {
+# Any plain HTTP (including bare IP) → canonical HTTPS site
+http:// {
+	redir https://{$DOMAIN:localhost}{uri} permanent
+}
+
+www.{$DOMAIN:localhost} {
+	redir https://{$DOMAIN:localhost}{uri} permanent
+}
+
+{$DOMAIN:localhost} {
 	encode gzip
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 	reverse_proxy frontend:80
 }
