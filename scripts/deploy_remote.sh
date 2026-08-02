@@ -7,6 +7,7 @@ cd "$ROOT"
 
 BRANCH="${DEPLOY_BRANCH:-main}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
+LOCK_FILE="${HOME}/.gameforge-deploy.lock"
 
 echo "==> GameForge remote deploy ($(hostname)) branch=$BRANCH"
 
@@ -15,21 +16,33 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "Another deploy is already running — waiting up to 20m…"
+  flock -w 1200 9
+fi
+
 git fetch origin "$BRANCH"
 git checkout "$BRANCH"
 git reset --hard "origin/$BRANCH"
 
 docker network create traefik_network 2>/dev/null || true
 
+echo "==> Clear stale compose containers (keep volumes)"
+# Avoid "container name already in use" / half-recreated * _gameforge-* names
+"${COMPOSE[@]}" down --remove-orphans --timeout 60 || true
+# Sweep leftover conflict-renamed containers from interrupted recreates
+docker ps -aq --filter name='gameforge' | xargs -r docker rm -f 2>/dev/null || true
+
 echo "==> Build & up"
-"${COMPOSE[@]}" pull postgres redis minio || true
-"${COMPOSE[@]}" up -d --build --remove-orphans postgres redis minio minio-init api worker frontend caddy
+"${COMPOSE[@]}" pull postgres redis minio caddy || true
+"${COMPOSE[@]}" up -d --build --remove-orphans \
+  postgres redis minio minio-init api worker frontend caddy
 
 echo "==> Wait for API (internal)"
 ok=0
 for i in $(seq 1 60); do
-  if docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T api \
-      curl -sf http://127.0.0.1:8000/api/v1/health >/dev/null 2>&1; then
+  if "${COMPOSE[@]}" exec -T api curl -sf http://127.0.0.1:8000/api/v1/health >/dev/null 2>&1; then
     echo "API is up"
     ok=1
     break
