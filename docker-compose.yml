@@ -177,4 +177,4 @@ networks:
     driver: bridge
   traefik_network:
     name: traefik_network
-    driver: bridge
+    external: true
