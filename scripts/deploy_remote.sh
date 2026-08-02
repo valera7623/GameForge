@@ -23,7 +23,7 @@ docker network create traefik_network 2>/dev/null || true
 
 echo "==> Build & up"
 "${COMPOSE[@]}" pull postgres redis minio || true
-"${COMPOSE[@]}" up -d --build --remove-orphans postgres redis minio minio-init api worker frontend traefik
+"${COMPOSE[@]}" up -d --build --remove-orphans postgres redis minio minio-init api worker frontend caddy
 
 echo "==> Wait for API (internal)"
 ok=0

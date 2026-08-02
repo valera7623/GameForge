@@ -138,32 +138,24 @@ services:
     networks:
       - gamedev
 
-  traefik:
-    image: traefik:v3.5
+  caddy:
+    image: caddy:2.10-alpine
     profiles: ["traefik"]
     restart: unless-stopped
-    environment:
-      DOCKER_API_VERSION: "1.44"
-    command:
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=traefik_network"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.le.acme.httpchallenge=true"
-      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.le.acme.email=${ACME_EMAIL:-admin@example.com}"
-      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
-      - "--api.dashboard=false"
-      - "--log.level=INFO"
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.com}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_letsencrypt:/letsencrypt
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
     networks:
-      - traefik_network
       - gamedev
 
 volumes:
@@ -172,7 +164,8 @@ volumes:
   minio_data:
   asset_cache:
   frontend_node_modules:
-  traefik_letsencrypt:
+  caddy_data:
+  caddy_config:
 
 networks:
   gamedev:

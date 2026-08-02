@@ -60,29 +60,13 @@ services:
   frontend:
     restart: unless-stopped
     ports: !reset []
-    networks:
-      - gamedev
-      - traefik_network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik_network"
-      - "traefik.http.routers.gf-web.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
-      - "traefik.http.routers.gf-web.entrypoints=web"
-      - "traefik.http.routers.gf-web.middlewares=gf-https-redirect"
-      - "traefik.http.middlewares.gf-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.gf-https-redirect.redirectscheme.permanent=true"
-      - "traefik.http.routers.gf-secure.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
-      - "traefik.http.routers.gf-secure.entrypoints=websecure"
-      - "traefik.http.routers.gf-secure.tls=true"
-      - "traefik.http.routers.gf-secure.tls.certresolver=le"
-      - "traefik.http.services.gf.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
       interval: 20s
       timeout: 5s
       retries: 3
 
-  traefik:
+  caddy:
     profiles: !reset []
     restart: unless-stopped
 
