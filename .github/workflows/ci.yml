@@ -37,7 +37,9 @@ jobs:
       SECRET_KEY: test-secret-key-not-for-production-use
       ALLOW_MOCK_BILLING: "true"
       USE_MOCK_AI: "true"
+      FORCE_PLAN: studio
       CORS_ORIGINS: http://testserver
+      PYTHONPATH: ${{ github.workspace }}
       DATABASE_URL: postgresql+asyncpg://gamedev:gamedev@localhost:5432/gamedev_test
       DATABASE_URL_SYNC: postgresql://gamedev:gamedev@localhost:5432/gamedev_test
       REDIS_URL: redis://localhost:6379/15
@@ -51,8 +53,6 @@ jobs:
       - run: pip install -r requirements.txt
       - run: ruff check app tests
       - run: pytest -q
-        env:
-          PYTHONPATH: ${{ github.workspace }}
 
   docker-compose-config:
     runs-on: ubuntu-latest

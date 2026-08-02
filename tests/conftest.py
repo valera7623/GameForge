@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import os
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -17,6 +15,7 @@ os.environ.setdefault("DEBUG", "true")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production-use")
 os.environ.setdefault("ALLOW_MOCK_BILLING", "true")
 os.environ.setdefault("USE_MOCK_AI", "true")
+os.environ.setdefault("FORCE_PLAN", "studio")
 os.environ.setdefault("CORS_ORIGINS", "http://testserver")
 os.environ.setdefault(
     "DATABASE_URL",
@@ -35,13 +34,6 @@ from app.models import *  # noqa: F401,F403
 
 get_settings.cache_clear()
 settings = get_settings()
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest_asyncio.fixture(scope="session")
