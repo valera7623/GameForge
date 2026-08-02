@@ -14,5 +14,13 @@ https://www.{$DOMAIN:localhost} {
 https://{$DOMAIN:localhost} {
 	encode gzip
 	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-	reverse_proxy frontend:80
+
+	# Public MinIO (path-style): https://$DOMAIN/s3/<bucket>/<key>
+	handle_path /s3/* {
+		reverse_proxy minio:9000
+	}
+
+	handle {
+		reverse_proxy frontend:80
+	}
 }

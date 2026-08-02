@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "==> GameForge deploy"
+echo "==> GameForge deploy (local)"
 
 if [[ ! -f .env ]]; then
   echo "Creating .env from .env.example"
@@ -16,8 +16,6 @@ if [[ ! -f .env ]]; then
     echo "Generated SECRET_KEY"
   fi
 fi
-
-docker network create traefik_network 2>/dev/null || true
 
 echo "==> Building & starting stack"
 docker compose pull postgres redis minio || true
@@ -37,7 +35,7 @@ for i in $(seq 1 40); do
   fi
 done
 
-echo "==> Seeding database (optional demo user)"
+echo "==> Seeding database (optional demo user — skipped when APP_ENV=production)"
 docker compose exec -T api python scripts/seed_db.py || true
 
 echo ""
@@ -47,7 +45,7 @@ echo "  API:       http://localhost:8000"
 echo "  API docs:  http://localhost:8000/docs"
 echo "  MinIO:     http://localhost:9001"
 echo ""
-echo "Demo login:  demo@gamedev.ai / demo123456"
+echo "Demo login (local seed only):  demo@gamedev.ai / demo123456"
 echo ""
-echo "With Traefik:  docker compose --profile traefik up -d"
+echo "HTTPS proxy:   docker compose --profile proxy up -d"
 echo "Dev frontend:  docker compose --profile dev up frontend-dev"

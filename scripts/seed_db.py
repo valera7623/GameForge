@@ -25,6 +25,10 @@ settings = get_settings()
 
 
 async def main() -> None:
+    if settings.is_production:
+        print("Refusing to seed in production (APP_ENV=production).", file=sys.stderr)
+        sys.exit(1)
+
     await init_db()
     async with AsyncSessionLocal() as db:
         # Achievements

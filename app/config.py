@@ -2,10 +2,19 @@
 
 from functools import lru_cache
 from typing import List
+from urllib.parse import urlparse
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_INSECURE_SECRET = "change-me-in-production-use-openssl-rand-hex-32"
+_INSECURE_SECRETS = frozenset(
+    {
+        "change-me-in-production-use-openssl-rand-hex-32",
+        "change-me-use-openssl-rand-hex-32",
+        "secret",
+        "changeme",
+        "",
+    }
+)
 
 
 class Settings(BaseSettings):
@@ -15,10 +24,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "AI Game Dev Toolkit"
     APP_ENV: str = "development"
     DEBUG: bool = True
-    SECRET_KEY: str = _INSECURE_SECRET
+    SECRET_KEY: str = "change-me-in-production-use-openssl-rand-hex-32"
     API_V1_PREFIX: str = "/api/v1"
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173,http://localhost"
     ALLOW_MOCK_BILLING: bool = True  # forced False in production gate
+    # Temporary escape hatch until SMTP/Resend keys are configured
+    ALLOW_INSECURE_EMAIL: bool = False
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://gamedev:gamedev@postgres:5432/gamedev"
@@ -71,6 +82,8 @@ class Settings(BaseSettings):
 
     # Storage
     S3_ENDPOINT: str = "http://minio:9000"
+    # Browser-facing endpoint for presigned URLs (e.g. https://gameforge.website/s3)
+    S3_PUBLIC_ENDPOINT: str = ""
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
     S3_BUCKET: str = "gamedev-assets"
@@ -130,21 +143,64 @@ class Settings(BaseSettings):
         return self.ALLOW_MOCK_BILLING and self.APP_ENV.lower() in ("development", "test", "dev")
 
 
+def _is_https_url(value: str) -> bool:
+    try:
+        parsed = urlparse(value.strip())
+    except Exception:
+        return False
+    return parsed.scheme == "https" and bool(parsed.netloc)
+
+
 def validate_settings(settings: Settings) -> None:
     """Fail closed in production."""
     if not settings.is_production:
         return
     errors: list[str] = []
-    if settings.SECRET_KEY in (_INSECURE_SECRET, "", "secret", "changeme"):
-        errors.append("SECRET_KEY must be set to a strong value in production")
+    if settings.SECRET_KEY in _INSECURE_SECRETS or len(settings.SECRET_KEY) < 32:
+        errors.append("SECRET_KEY must be a strong value (≥32 chars) in production")
     if settings.DEBUG:
         errors.append("DEBUG must be false in production")
     if "*" in settings.CORS_ORIGINS:
         errors.append("CORS_ORIGINS must not contain * in production")
     if not settings.cors_origins_list:
         errors.append("CORS_ORIGINS must list explicit origins in production")
+    for origin in settings.cors_origins_list:
+        if not _is_https_url(origin):
+            errors.append(f"CORS_ORIGINS must use HTTPS in production (got {origin!r})")
+    if not _is_https_url(settings.FRONTEND_URL):
+        errors.append("FRONTEND_URL must be HTTPS in production")
     if settings.ALLOW_MOCK_BILLING:
         errors.append("ALLOW_MOCK_BILLING must be false in production")
+    if settings.USE_MOCK_AI:
+        errors.append("USE_MOCK_AI must be false in production")
+    if not settings.OPENAI_API_KEY.strip():
+        errors.append("OPENAI_API_KEY is required in production")
+
+    provider = settings.EMAIL_PROVIDER.lower().strip()
+    if provider == "console":
+        if not settings.ALLOW_INSECURE_EMAIL:
+            errors.append(
+                "EMAIL_PROVIDER must be smtp or resend in production "
+                "(set ALLOW_INSECURE_EMAIL=true only as a temporary escape hatch)"
+            )
+    elif provider == "smtp":
+        if not settings.ALLOW_INSECURE_EMAIL and not settings.SMTP_HOST.strip():
+            errors.append("SMTP_HOST is required when EMAIL_PROVIDER=smtp")
+    elif provider == "resend":
+        if not settings.ALLOW_INSECURE_EMAIL and not settings.RESEND_API_KEY.strip():
+            errors.append("RESEND_API_KEY is required when EMAIL_PROVIDER=resend")
+    else:
+        errors.append("EMAIL_PROVIDER must be smtp or resend in production")
+
+    if not settings.billing_disabled:
+        has_stripe = bool(settings.STRIPE_SECRET_KEY.strip() and settings.STRIPE_WEBHOOK_SECRET.strip())
+        has_yukassa = bool(settings.YUKASSA_SHOP_ID.strip() and settings.YUKASSA_SECRET_KEY.strip())
+        if not has_stripe and not has_yukassa:
+            errors.append(
+                "Billing is enabled but Stripe/YuKassa keys are missing — "
+                "set DISABLE_BILLING=true or configure a payment provider"
+            )
+
     if errors:
         raise RuntimeError("Production settings invalid:\n- " + "\n- ".join(errors))
 

@@ -15,14 +15,18 @@ from app.core.security import hash_token
 settings = get_settings()
 
 
-def get_s3_client():
+def get_s3_client(*, public: bool = False):
+    """Internal client for put/get; optional public endpoint for browser presigns."""
+    endpoint = settings.S3_ENDPOINT
+    if public and settings.S3_PUBLIC_ENDPOINT.strip():
+        endpoint = settings.S3_PUBLIC_ENDPOINT.strip()
     return boto3.client(
         "s3",
-        endpoint_url=settings.S3_ENDPOINT,
+        endpoint_url=endpoint,
         aws_access_key_id=settings.S3_ACCESS_KEY,
         aws_secret_access_key=settings.S3_SECRET_KEY,
         region_name=settings.S3_REGION,
-        config=Config(signature_version="s3v4"),
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
     )
 
 
@@ -38,7 +42,7 @@ def ensure_bucket() -> None:
 
 
 def _presign(key: str) -> str:
-    client = get_s3_client()
+    client = get_s3_client(public=True)
     return client.generate_presigned_url(
         "get_object",
         Params={"Bucket": settings.S3_BUCKET, "Key": key},
@@ -105,8 +109,17 @@ def download_bytes(url_or_key: str) -> Optional[bytes]:
             return local.read_bytes()
         return None
     key = url_or_key
-    if settings.S3_PUBLIC_URL in url_or_key:
-        key = url_or_key.split(settings.S3_PUBLIC_URL.rstrip("/") + "/", 1)[-1]
+    public_base = settings.S3_PUBLIC_URL.rstrip("/")
+    if public_base and public_base in url_or_key:
+        key = url_or_key.split(public_base + "/", 1)[-1]
+    if settings.S3_PUBLIC_ENDPOINT.strip():
+        pub = settings.S3_PUBLIC_ENDPOINT.rstrip("/")
+        if pub in key:
+            # path-style: {public}/{bucket}/{key}
+            rest = key.split(pub + "/", 1)[-1]
+            prefix = f"{settings.S3_BUCKET}/"
+            if rest.startswith(prefix):
+                key = rest[len(prefix) :]
     if "?" in key:
         key = key.split("?", 1)[0]
     # Strip signed URL host path if present

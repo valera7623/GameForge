@@ -34,28 +34,45 @@ logger = logging.getLogger("gamedev")
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        from app.core.logging_config import reset_request_id, set_request_id
+
         request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
         request.state.request_id = request_id
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request_id
-        return response
+        token = set_request_id(request_id)
+        try:
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = request_id
+            return response
+        finally:
+            reset_request_id(token)
+
+
+def _init_sentry() -> None:
+    if not settings.SENTRY_DSN:
+        return
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.APP_ENV,
+        traces_sample_rate=0.1,
+        integrations=[
+            StarletteIntegration(transaction_style="endpoint"),
+            FastApiIntegration(transaction_style="endpoint"),
+        ],
+    )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     validate_settings(settings)
 
-    if settings.SENTRY_DSN:
-        try:
-            import sentry_sdk
-
-            sentry_sdk.init(dsn=settings.SENTRY_DSN, environment=settings.APP_ENV, traces_sample_rate=0.1)
-        except Exception:
-            logger.exception("Sentry init failed")
-
     from app.core.logging_config import configure_logging
 
     configure_logging()
+    _init_sentry()
 
     await init_db()
     from sqlalchemy import select

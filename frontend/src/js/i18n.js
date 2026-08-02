@@ -84,7 +84,6 @@ const DICT = {
     "land.choose_indie": "Choose Indie",
     "land.choose_studio": "Choose Studio",
     "land.footer": "GameForge — AI Game Dev Toolkit",
-    "land.api_docs": "API docs",
 
     "login.title": "Sign in — GameForge",
     "login.h1": "Welcome back",
@@ -346,7 +345,6 @@ const DICT = {
     "land.choose_indie": "Выбрать Indie",
     "land.choose_studio": "Выбрать Studio",
     "land.footer": "GameForge — ИИ-инструменты для геймдева",
-    "land.api_docs": "API-документация",
 
     "login.title": "Вход — GameForge",
     "login.h1": "С возвращением",

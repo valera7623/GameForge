@@ -108,11 +108,37 @@ async def test_production_rejects_mock_billing():
     s = Settings(
         APP_ENV="production",
         DEBUG=False,
-        SECRET_KEY="strong-production-secret-key-32chars",
+        SECRET_KEY="strong-production-secret-key-32chars!!",
         CORS_ORIGINS="https://app.example.com",
+        FRONTEND_URL="https://app.example.com",
         ALLOW_MOCK_BILLING=True,
+        USE_MOCK_AI=False,
+        OPENAI_API_KEY="sk-test",
+        EMAIL_PROVIDER="resend",
+        RESEND_API_KEY="re_test",
+        DISABLE_BILLING=True,
     )
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="ALLOW_MOCK_BILLING"):
+        validate_settings(s)
+
+
+@pytest.mark.asyncio
+async def test_production_rejects_mock_ai_and_console_email():
+    from app.config import Settings, validate_settings
+
+    s = Settings(
+        APP_ENV="production",
+        DEBUG=False,
+        SECRET_KEY="strong-production-secret-key-32chars!!",
+        CORS_ORIGINS="https://app.example.com",
+        FRONTEND_URL="https://app.example.com",
+        ALLOW_MOCK_BILLING=False,
+        USE_MOCK_AI=True,
+        OPENAI_API_KEY="sk-test",
+        EMAIL_PROVIDER="console",
+        DISABLE_BILLING=True,
+    )
+    with pytest.raises(RuntimeError, match="USE_MOCK_AI"):
         validate_settings(s)
 
 

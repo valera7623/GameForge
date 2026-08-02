@@ -2,11 +2,10 @@
 
 Platform of **7 AI tools** for indie developers, studios, and modders: levels, quests, textures, characters, sound, playtesting, and localization.
 
-## Quick start
+## Local quick start
 
 ```bash
 cp .env.example .env
-docker network create traefik_network || true
 chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
@@ -23,13 +22,15 @@ docker compose exec api python scripts/seed_db.py
 |-----------|-----|
 | Frontend  | http://localhost:3000 |
 | API       | http://localhost:8000 |
-| Swagger   | http://localhost:8000/docs |
+| Swagger   | http://localhost:8000/docs (disabled when `APP_ENV=production`) |
 | MinIO     | http://localhost:9001 (`minioadmin` / `minioadmin`) |
 
-**Demo accounts** (after seed):
+**Local demo accounts** (after seed; never use these in production):
 
 - User: `demo@gamedev.ai` / `demo123456` (Indie plan)
 - Admin: `admin@gamedev.ai` / `admin123456`
+
+Seed is refused when `APP_ENV=production`.
 
 ## Tools
 
@@ -90,7 +91,7 @@ AI Engine (GPT-4o / SD / Real-ESRGAN / ElevenLabs / MusicGen — mock fallbacks 
 PostgreSQL · Redis · Celery · MinIO (S3)
 ```
 
-With `USE_MOCK_AI=true` (default) the stack runs **without** paid API keys: procedural levels, synthetic audio, PIL upscale, placeholder characters, glossary localization.
+With `USE_MOCK_AI=true` (default locally) the stack runs **without** paid API keys: procedural levels, synthetic audio, PIL upscale, placeholder characters, glossary localization.
 
 ### OpenAI via ProxyAPI
 
@@ -111,7 +112,7 @@ EMAIL_PROVIDER=console   # or smtp | resend
 # RESEND_API_KEY=...
 ```
 
-Password reset sends a link to `/src/pages/reset-password.html`. With `console`, the message is printed in API logs.
+Password reset sends a link to `/reset-password`. With `console`, the message is printed in API logs. Production forbids `console` unless `ALLOW_INSECURE_EMAIL=true` (temporary).
 
 ### Monthly leaderboard
 
@@ -155,7 +156,7 @@ Set keys in `.env` and `USE_MOCK_AI=false` to call real providers.
 | Studio | $99 | 1000 |
 | Enterprise | custom | unlimited / on-prem |
 
-Billing: Stripe or YuKassa. Without keys, checkout **mock-upgrades** the plan instantly (dev mode).
+Billing: Stripe or YuKassa. Without keys, set `DISABLE_BILLING=true` (required in production until a provider is configured). Locally, mock upgrades work when `ALLOW_MOCK_BILLING=true`.
 
 ## Dev frontend (hot reload)
 
@@ -164,13 +165,41 @@ docker compose --profile dev up frontend-dev
 # → http://localhost:5173
 ```
 
-## Traefik (HTTPS)
+## Production (Caddy + VPS)
+
+HTTPS is served by **Caddy** (Let’s Encrypt). Assets are signed against a public MinIO path proxied at `/s3/`.
 
 ```bash
-docker network create traefik_network || true
-# set DOMAIN + ACME_EMAIL in .env
-docker compose --profile traefik up -d
+# DNS (Timeweb / any DNS host)
+#   @   → A     <VPS_IP>
+#   www → A     <VPS_IP>   # or CNAME → apex hostname (never CNAME to a bare IP)
+
+# On the VPS, fill .env using the Production checklist in .env.example, then:
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile backup up -d --build
 ```
+
+Local proxy profile (same Caddyfile):
+
+```bash
+# set DOMAIN + ACME_EMAIL in .env
+docker compose --profile proxy up -d
+```
+
+**Production `.env` essentials**
+
+| Variable | Value |
+|----------|--------|
+| `APP_ENV` | `production` |
+| `USE_MOCK_AI` | `false` |
+| `DISABLE_BILLING` | `true` until Stripe/YuKassa keys exist |
+| `EMAIL_PROVIDER` | `resend` or `smtp` (not `console`) |
+| `S3_PUBLIC_ENDPOINT` | `https://<domain>/s3` |
+| `S3_PUBLIC_URL` | `https://<domain>/s3/gamedev-assets` |
+| `COOKIE_SECURE` / `LOG_JSON` | `true` |
+
+Deploy: GitHub Actions `Deploy` runs only after a green `CI` on `main` (or `workflow_dispatch`). Remote script: `scripts/deploy_remote.sh` (migrate → rolling up → public smoke on `/` and `/api/v1/health/ready`).
+
+Backups: compose profile `backup` (Postgres dump + MinIO mirror, 7-day volume retention). Copy `/backups` offsite regularly.
 
 ## Gamification
 

@@ -36,9 +36,22 @@ def _get_redis():
         return None
 
 
+def _client_ip(request: Request) -> str:
+    """Prefer first X-Forwarded-For hop (set by trusted edge proxy)."""
+    xff = request.headers.get("X-Forwarded-For") or request.headers.get("x-forwarded-for")
+    if xff:
+        first = xff.split(",")[0].strip()
+        if first:
+            return first
+    real_ip = request.headers.get("X-Real-IP") or request.headers.get("x-real-ip")
+    if real_ip and real_ip.strip():
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
+
+
 async def rate_limit(request: Request, limit: Optional[int] = None) -> None:
     limit = limit or settings.RATE_LIMIT_PER_MINUTE
-    client = request.client.host if request.client else "unknown"
+    client = _client_ip(request)
     key = f"rl:{client}:{request.url.path}"
     now = time.time()
     window = 60.0

@@ -1,6 +1,7 @@
 """Health / readiness checks."""
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.config import get_settings
@@ -56,4 +57,7 @@ async def readiness():
     # Broker is Redis DB — same host ping is enough for readiness
     checks["broker"] = checks["redis"]
     ok = all(checks.values())
-    return {"status": "ok" if ok else "degraded", "checks": checks}
+    body = {"status": "ok" if ok else "degraded", "checks": checks}
+    if not ok:
+        return JSONResponse(status_code=503, content=body)
+    return body

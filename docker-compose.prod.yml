@@ -10,23 +10,43 @@ services:
     restart: unless-stopped
     ports: !reset []
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      # Prefer native HTTP live check (curl is present in current minio image)
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
       interval: 20s
       timeout: 5s
       retries: 5
       start_period: 15s
 
-  api:
-    restart: unless-stopped
+  migrate:
+    profiles: !reset []
+    restart: "no"
     volumes: !reset []
-    ports: !reset []
-    command: >
-      sh -c "alembic upgrade head &&
-             uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"
     environment:
       APP_ENV: production
       DEBUG: "false"
       ALLOW_MOCK_BILLING: "false"
+      USE_MOCK_AI: "false"
+      COOKIE_SECURE: "true"
+      LOG_JSON: "true"
+    user: "1000:1000"
+
+  api:
+    restart: unless-stopped
+    volumes: !reset []
+    ports: !reset []
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      ALLOW_MOCK_BILLING: "false"
+      USE_MOCK_AI: "false"
       COOKIE_SECURE: "true"
       LOG_JSON: "true"
       S3_USE_SIGNED_URLS: "true"
@@ -42,11 +62,19 @@ services:
   worker:
     restart: unless-stopped
     volumes: !reset []
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       APP_ENV: production
       DEBUG: "false"
       LOG_JSON: "true"
       ALLOW_MOCK_BILLING: "false"
+      USE_MOCK_AI: "false"
       COOKIE_SECURE: "true"
       S3_USE_SIGNED_URLS: "true"
       S3_PUBLIC_READ: "false"
@@ -61,7 +89,7 @@ services:
     restart: unless-stopped
     ports: !reset []
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      test: ["CMD-SHELL", "pidof nginx >/dev/null || exit 1"]
       interval: 20s
       timeout: 5s
       retries: 3
@@ -71,12 +99,20 @@ services:
     restart: unless-stopped
 
   backup:
-    image: postgres:15-alpine
+    build:
+      context: .
+      dockerfile: scripts/backup.Dockerfile
     profiles: ["backup"]
     restart: unless-stopped
     env_file: .env
     environment:
       BACKUP_INTERVAL_SEC: ${BACKUP_INTERVAL_SEC:-86400}
+      POSTGRES_USER: ${POSTGRES_USER:-gamedev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gamedev}
+      POSTGRES_DB: ${POSTGRES_DB:-gamedev}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-gamedev-assets}
     volumes:
       - ./scripts/backup.sh:/backup.sh:ro
       - backup_data:/backups

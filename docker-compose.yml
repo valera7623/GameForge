@@ -61,6 +61,21 @@ services:
     networks:
       - gamedev
 
+  migrate:
+    build: .
+    profiles: ["migrate"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-gamedev}:${POSTGRES_PASSWORD:-gamedev}@postgres:5432/${POSTGRES_DB:-gamedev}
+      DATABASE_URL_SYNC: postgresql://${POSTGRES_USER:-gamedev}:${POSTGRES_PASSWORD:-gamedev}@postgres:5432/${POSTGRES_DB:-gamedev}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: alembic upgrade head
+    restart: "no"
+    networks:
+      - gamedev
+
   api:
     build: .
     env_file: .env
@@ -140,7 +155,7 @@ services:
 
   caddy:
     image: caddy:2.10-alpine
-    profiles: ["traefik"]
+    profiles: ["proxy"]
     restart: unless-stopped
     ports:
       - "80:80"
@@ -170,6 +185,3 @@ volumes:
 networks:
   gamedev:
     driver: bridge
-  traefik_network:
-    name: traefik_network
-    external: true
