@@ -8,6 +8,7 @@ from collections.abc import AsyncGenerator
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 # Test env before app imports
 os.environ.setdefault("APP_ENV", "test")
@@ -36,15 +37,15 @@ get_settings.cache_clear()
 settings = get_settings()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def engine():
-    eng = create_async_engine(settings.DATABASE_URL, pool_pre_ping=True)
+    # Function-scoped + NullPool avoids "Future attached to a different loop"
+    # when pytest-asyncio runs each test on its own event loop.
+    eng = create_async_engine(settings.DATABASE_URL, poolclass=NullPool)
     async with eng.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield eng
-    async with eng.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
     await eng.dispose()
 
 
