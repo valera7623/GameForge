@@ -15,14 +15,11 @@ from app.core.security import hash_token
 settings = get_settings()
 
 
-def get_s3_client(*, public: bool = False):
-    """Internal client for put/get; optional public endpoint for browser presigns."""
-    endpoint = settings.S3_ENDPOINT
-    if public and settings.S3_PUBLIC_ENDPOINT.strip():
-        endpoint = settings.S3_PUBLIC_ENDPOINT.strip()
+def get_s3_client():
+    """Internal MinIO client (put/get/presign). Public browser URLs are rewritten after presign."""
     return boto3.client(
         "s3",
-        endpoint_url=endpoint,
+        endpoint_url=settings.S3_ENDPOINT,
         aws_access_key_id=settings.S3_ACCESS_KEY,
         aws_secret_access_key=settings.S3_SECRET_KEY,
         region_name=settings.S3_REGION,
@@ -41,13 +38,29 @@ def ensure_bucket() -> None:
             pass
 
 
+def _publicize_url(url: str) -> str:
+    """Rewrite internal MinIO URL to the Caddy /s3/ public path without breaking SigV4.
+
+    Presign stays against S3_ENDPOINT (host minio:9000). Caddy strips /s3 and forwards
+    Host: minio:9000 so signature verification still matches.
+    """
+    public = settings.S3_PUBLIC_ENDPOINT.strip().rstrip("/")
+    if not public:
+        return url
+    internal = settings.S3_ENDPOINT.rstrip("/")
+    if url.startswith(internal):
+        return public + url[len(internal) :]
+    return url
+
+
 def _presign(key: str) -> str:
-    client = get_s3_client(public=True)
-    return client.generate_presigned_url(
+    client = get_s3_client()
+    url = client.generate_presigned_url(
         "get_object",
         Params={"Bucket": settings.S3_BUCKET, "Key": key},
         ExpiresIn=settings.S3_SIGNED_URL_EXPIRE_SEC,
     )
+    return _publicize_url(url)
 
 
 def _local_signed_url(folder: str, name: str) -> str:
