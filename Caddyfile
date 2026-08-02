@@ -1,17 +1,17 @@
 {
 	email {$ACME_EMAIL:admin@example.com}
+	auto_https disable_redirects
 }
 
-# Any plain HTTP (including bare IP) → canonical HTTPS site
-http:// {
+http://, http://{$DOMAIN:localhost}, http://www.{$DOMAIN:localhost} {
 	redir https://{$DOMAIN:localhost}{uri} permanent
 }
 
-www.{$DOMAIN:localhost} {
+https://www.{$DOMAIN:localhost} {
 	redir https://{$DOMAIN:localhost}{uri} permanent
 }
 
-{$DOMAIN:localhost} {
+https://{$DOMAIN:localhost} {
 	encode gzip
 	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 	reverse_proxy frontend:80
