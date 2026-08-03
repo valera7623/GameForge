@@ -88,10 +88,13 @@ async def generate_sound(
                 content_type = "audio/mpeg"
             except Exception as exc:
                 errors.append(f"elevenlabs: {exc}")
-        # Allow OpenAI-free music/sfx only via configured providers
+        # No Replicate / ElevenLabs (or they failed): keep the pipeline usable for testing.
         if audio_bytes is None:
-            detail = "; ".join(errors) if errors else f"No provider configured for kind={kind}"
-            raise RuntimeError(f"Sound generation failed: {detail}")
+            if errors:
+                # Real provider was attempted and failed — surface the error.
+                raise RuntimeError(f"Sound generation failed: {'; '.join(errors)}")
+            audio_bytes = _synth_wav(description, kind, mood, duration_sec)
+            provider = "synthetic"
 
     filename = f"{kind}_{mood}.{fmt}"
     url = upload_bytes(audio_bytes, filename, content_type, "audio")
