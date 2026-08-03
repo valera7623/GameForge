@@ -26,6 +26,12 @@ git fetch origin "$BRANCH"
 git checkout "$BRANCH"
 git reset --hard "origin/$BRANCH"
 
+# Re-exec so the rest of this script is the freshly pulled version (not a stale in-memory copy).
+if [[ "${DEPLOY_REEXEC:-0}" != "1" ]]; then
+  export DEPLOY_REEXEC=1
+  exec "$0" "$@"
+fi
+
 DOMAIN_NAME="$(grep -E '^DOMAIN=' .env | cut -d= -f2- | tr -d '\r' || true)"
 DOMAIN_NAME="${DOMAIN_NAME:-localhost}"
 
