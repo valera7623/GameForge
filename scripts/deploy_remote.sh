@@ -31,6 +31,7 @@ DOMAIN_NAME="${DOMAIN_NAME:-localhost}"
 
 echo "==> Ensure infra + migrate"
 "${COMPOSE[@]}" up -d --build --remove-orphans postgres redis minio minio-init
+"${COMPOSE[@]}" build migrate
 "${COMPOSE[@]}" run --rm migrate
 
 echo "==> Build & up app stack"
