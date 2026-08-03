@@ -5,6 +5,9 @@
 import { applyTheme, bindThemeToggles, getTheme } from "./theme.js";
 import { applyDomI18n, getLang, setLang, t } from "./i18n.js";
 import { getDocsUrl } from "./docs.js";
+import { initAnalytics } from "./analytics.js";
+
+initAnalytics();
 
 export { t, getLang, applyDomI18n };
 

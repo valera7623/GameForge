@@ -109,6 +109,8 @@
     import { applyDomI18n, getLang, setLang } from "/src/js/i18n.js";
     import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
     import { bindDocsLinks } from "/src/js/docs.js";
+    import { initAnalytics } from "/src/js/analytics.js";
+    initAnalytics();
     applyDomI18n(document);
     bindDocsLinks(document);
     applyTheme(getTheme());
