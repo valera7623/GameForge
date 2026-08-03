@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/logo.png" alt="GameForge" width="200">
+  <img src=".github/assets/logo.png" alt="GameForge" width="280">
 </p>
 
 <p align="center">
