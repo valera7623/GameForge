@@ -1,111 +1,137 @@
-# AI Game Dev Toolkit (GameForge)
+<p align="center">
+  <img src=".github/assets/logo.png" alt="GameForge" width="200">
+</p>
 
-Platform of **7 AI tools** for indie developers, studios, and modders: levels, quests, textures, characters, sound, playtesting, and localization.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue" alt="Python"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.115+-green" alt="FastAPI"></a>
+  <a href="https://docs.docker.com/compose/"><img src="https://img.shields.io/badge/docker-compose-24+-blue" alt="Docker"></a>
+  <a href="https://github.com/valera7623/GameForge/actions/workflows/ci.yml"><img src="https://github.com/valera7623/GameForge/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
 
-## Documentation
+<p align="center">
+  <strong>English</strong> ·
+  <a href="README.ru.md">Русский</a>
+</p>
 
-Bilingual docs (EN / RU) live in [`gameforge-docs/`](gameforge-docs/) (MkDocs Material, same pattern as AegisAI):
+<p align="center">
+  <a href="https://docs.gameforge.website">Docs</a> ·
+  <a href="https://gameforge.website">Production</a> ·
+  <a href="https://github.com/valera7623/GameForge/issues">Issues</a>
+</p>
+
+---
+
+## Table of contents
+
+- [About](#about)
+- [Live site](#live-site)
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Architecture](#architecture)
+- [Plans & billing](#plans--billing)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Team](#team)
+- [License](#license)
+
+---
+
+## About
+
+**GameForge** is an open-source **AI Game Dev Toolkit**: seven AI-powered tools for indie developers, studios, and modders — levels, quests, textures, characters, sound, playtesting, and localization — with projects, team seats, and ZIP export into Unity, Unreal, or Godot.
+
+### The problem
+
+Game teams burn time on repetitive content work:
+
+- Level layouts, quest graphs, and localization tables are still hand-built
+- Texture / character / audio pipelines are fragmented across tools
+- Indie budgets cannot always afford live AI APIs during prototyping
+
+### The solution
+
+| Area | What GameForge provides |
+|------|-------------------------|
+| **Seven AI tools** | Level, quest, texture, character, sound, playtester, localization |
+| **Projects & export** | Group assets per title and download a ZIP |
+| **Mock or real AI** | `USE_MOCK_AI=true` for free local/prod prototyping; ProxyAPI / OpenAI when ready |
+| **Team & plans** | Free / Indie / Studio / Enterprise (on-prem) |
+| **Production stack** | Caddy HTTPS, MinIO `/s3/`, Celery workers, CI-gated deploy |
+
+---
+
+## Live site
+
+**Production:** [https://gameforge.website](https://gameforge.website)
+
+**Docs:** [https://docs.gameforge.website](https://docs.gameforge.website) · [RU](https://docs.gameforge.website/ru/)
+
+Local demo accounts (after seed — **never** use in production):
+
+| Role | Email | Password |
+|------|-------|----------|
+| User | `demo@gamedev.ai` | `demo123456` |
+| Admin | `admin@gamedev.ai` | `admin123456` |
+
+> Seed is refused when `APP_ENV=production`.
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **Level Designer** | Text → tilemap JSON + canvas preview |
+| **Quest Generator** | Objectives, dialogues, branching JSON |
+| **Texture Upscaler** | 2× / 4× PNG (Real-ESRGAN or PIL mock) |
+| **Character Creator** | Concept art from a character brief |
+| **Sound Designer** | SFX / music / voice (WAV/MP3) |
+| **Playtester** | QA-style design report JSON |
+| **Localization** | Multi-language JSON/CSV export |
+| **Projects** | Per-engine projects + ZIP export |
+| **Team seats** | Studio organizations, invites, roles |
+| **Gamification** | XP, achievements, monthly leaderboard |
+| **i18n UI** | English + Russian, light/dark theme |
+| **Billing hooks** | Stripe / YuKassa (or `DISABLE_BILLING=true`) |
+
+---
+
+## Quick start
+
+### Docker Compose (recommended)
 
 ```bash
-cd gameforge-docs
-./mkdocs.sh serve
-# → http://127.0.0.1:8001
-```
+git clone https://github.com/valera7623/GameForge.git
+cd GameForge
 
-Strict build: `./mkdocs.sh build --strict`.
-
-## Local quick start
-
-```bash
-cp .env.example .env
-chmod +x scripts/deploy.sh
-./scripts/deploy.sh
-```
-
-Or:
-
-```bash
 cp .env.example .env
 docker compose up -d --build
 docker compose exec api python scripts/seed_db.py
+
+# Health checks
+curl -s http://localhost:8000/api/v1/health
+curl -s http://localhost:8000/api/v1/health/ready
 ```
 
-| Service   | URL |
-|-----------|-----|
-| Frontend  | http://localhost:3000 |
-| API       | http://localhost:8000 |
-| Swagger   | http://localhost:8000/docs (disabled when `APP_ENV=production`) |
-| MinIO     | http://localhost:9001 (`minioadmin` / `minioadmin`) |
+Or: `./scripts/deploy.sh`
 
-**Local demo accounts** (after seed; never use these in production):
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| API | http://localhost:8000 |
+| Swagger (non-production) | http://localhost:8000/docs |
+| MinIO console | http://localhost:9001 |
 
-- User: `demo@gamedev.ai` / `demo123456` (Indie plan)
-- Admin: `admin@gamedev.ai` / `admin123456`
-
-Seed is refused when `APP_ENV=production`.
-
-## Tools
-
-| Tool | Endpoint | Output |
-|------|----------|--------|
-| Level Designer | `POST /api/v1/level-designer` | Tilemap JSON + Canvas preview |
-| Quest Generator | `POST /api/v1/quest-generator` | Quest / dialogues JSON |
-| Texture Upscaler | `POST /api/v1/texture-upscaler` | 2×/4× PNG |
-| Character Creator | `POST /api/v1/character-creator` | Character image |
-| Sound Designer | `POST /api/v1/sound-designer` | WAV/MP3 |
-| Playtester | `POST /api/v1/playtester` | QA report JSON |
-| Localization | `POST /api/v1/localization` | JSON/CSV translations |
-
-## Example API flow
+### Hot-reload frontend
 
 ```bash
-# Register
-curl -s -X POST http://localhost:8000/api/v1/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"dev@studio.com","password":"pass123"}'
-
-# Login
-TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"dev@studio.com","password":"pass123"}' | jq -r .access_token)
-
-# Create project
-PROJ=$(curl -s -X POST http://localhost:8000/api/v1/projects \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"name":"Dungeon Explorer","engine":"unreal"}')
-echo "$PROJ"
-PID=$(echo "$PROJ" | jq -r .id)
-
-# Generate level
-curl -s -X POST http://localhost:8000/api/v1/level-designer \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d "{\"project_id\":\"$PID\",\"description\":\"Underwater temple with traps\"}" | jq .
-
-# Generate character
-curl -s -X POST http://localhost:8000/api/v1/character-creator \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"description":"Elf archer in leather armor"}' | jq .
-
-# Export ZIP
-curl -s -X GET "http://localhost:8000/api/v1/projects/$PID/export" \
-  -H "Authorization: Bearer $TOKEN" -o game-assets.zip
+docker compose --profile dev up frontend-dev
+# → http://localhost:5173
 ```
 
-## Architecture
-
-```
-Frontend (Vanilla JS + Vite + Nginx)
-        ↓
-API Gateway (FastAPI)
-        ↓
-AI Engine (GPT-4o / SD / Real-ESRGAN / ElevenLabs / MusicGen — mock fallbacks included)
-        ↓
-PostgreSQL · Redis · Celery · MinIO (S3)
-```
-
-With `USE_MOCK_AI=true` (default locally) the stack runs **without** paid API keys: procedural levels, synthetic audio, PIL upscale, placeholder characters, glossary localization.
-
-### OpenAI via ProxyAPI
+### Real AI providers
 
 ```env
 USE_MOCK_AI=false
@@ -114,40 +140,33 @@ OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
 OPENAI_MODEL=gpt-4o
 ```
 
-Key берётся из [ProxyAPI](https://proxyapi.ru). SDK тот же OpenAI — меняется только `base_url`.
+Key from [ProxyAPI](https://proxyapi.ru) — same OpenAI SDK, different `base_url`.
 
-### Email
-
-```env
-EMAIL_PROVIDER=console   # or smtp | resend
-# SMTP_HOST=... SMTP_USER=... SMTP_PASSWORD=...
-# RESEND_API_KEY=...
-```
-
-Password reset sends a link to `/reset-password`. With `console`, the message is printed in API logs. Production forbids `console` unless `ALLOW_INSECURE_EMAIL=true` (temporary).
-
-### Monthly leaderboard
-
-`GET /api/v1/leaderboard?period=month` (default) ranks by `xp_this_month`.  
-`?period=all` — lifetime XP.
-
-### MusicGen / Real-ESRGAN
-
-```env
-REPLICATE_API_TOKEN=...          # MusicGen for kind=music
-REALESRGAN_URL=http://realesrgan:8080
-```
+Optional: `REALESRGAN_URL`, `REPLICATE_API_TOKEN` (MusicGen), `ELEVENLABS_API_KEY`.
 
 ```bash
-# Optional upscale microservice (PIL stub; swap for GPU Real-ESRGAN in prod)
 docker compose --profile ai up -d realesrgan
-# then set REALESRGAN_URL=http://realesrgan:8080 and restart api/worker
 ```
 
-### Team seats (Studio)
+### Production (VPS + Caddy)
 
-Upgrade to Studio → auto-creates an organization. UI: **Team** page.  
-API: `POST /api/v1/orgs`, invite, accept.
+```bash
+# DNS: @, www, docs → A <VPS_IP>
+# Fill .env from the Production checklist in .env.example
+
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile backup up -d --build
+# or on the server: ./scripts/deploy_remote.sh
+```
+
+| Variable | Notes |
+|----------|--------|
+| `APP_ENV=production` | Fail-closed settings validation |
+| `USE_MOCK_AI` | `true` to avoid AI spend; `false` + `OPENAI_API_KEY` for live models |
+| `DISABLE_BILLING` | `true` until Stripe/YuKassa keys exist |
+| `EMAIL_PROVIDER` | `resend` or `smtp` |
+| `S3_PUBLIC_ENDPOINT` | `https://<domain>/s3` |
+
+Deploy: GitHub Actions **Deploy** after green **CI** on `main`. Details: [docs → VPS](https://docs.gameforge.website/deployment/vps/).
 
 ### On-prem (Enterprise)
 
@@ -157,9 +176,40 @@ docker compose -f docker-compose.yml -f docker-compose.onprem.yml up -d
 
 Forces `FORCE_PLAN=enterprise`, disables billing checkout.
 
-Set keys in `.env` and `USE_MOCK_AI=false` to call real providers.
+### Example API flow
 
-## Plans
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"demo@gamedev.ai","password":"demo123456"}' | jq -r .access_token)
+
+curl -s -X POST http://localhost:8000/api/v1/character-creator \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"description":"Elf archer in leather armor"}' | jq .
+```
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     GameForge (v1.2.0)                        │
+├─────────────────────────────────────────────────────────────┤
+│  Frontend (Vite MPA + Nginx)  │  FastAPI /api/v1  │  Celery │
+├───────────────────────────────┴───────────────────┴─────────┤
+│  AI tools (mock or OpenAI / Real-ESRGAN / MusicGen / …)     │
+├─────────────────────────────────────────────────────────────┤
+│  PostgreSQL  │  Redis (rate limit, broker)  │  MinIO (S3)   │
+└─────────────────────────────────────────────────────────────┘
+         ▲ Caddy + Let's Encrypt (production) · public /s3/
+```
+
+**Stack:** FastAPI · SQLAlchemy · Alembic · PostgreSQL 15 · Redis 7 · Celery · MinIO · Vite · Nginx · Caddy
+
+---
+
+## Plans & billing
 
 | Plan | Price | Generations / month |
 |------|-------|---------------------|
@@ -168,61 +218,63 @@ Set keys in `.env` and `USE_MOCK_AI=false` to call real providers.
 | Studio | $99 | 1000 |
 | Enterprise | custom | unlimited / on-prem |
 
-Billing: Stripe or YuKassa. Without keys, set `DISABLE_BILLING=true` (required in production until a provider is configured). Locally, mock upgrades work when `ALLOW_MOCK_BILLING=true`.
+Billing: Stripe or YuKassa. In production without keys, set `DISABLE_BILLING=true`. Locally, mock upgrades work when `ALLOW_MOCK_BILLING=true`.
 
-## Dev frontend (hot reload)
+---
 
-```bash
-docker compose --profile dev up frontend-dev
-# → http://localhost:5173
-```
+## Documentation
 
-## Production (Caddy + VPS)
+| Section | Description |
+|---------|-------------|
+| [User Guide](https://docs.gameforge.website/user-guide/) | Dashboard, tools, team, billing |
+| [Admin Guide](https://docs.gameforge.website/admin-guide/) | Production checklist, monitoring, backups |
+| [Developer Guide](https://docs.gameforge.website/developer-guide/) | API, auth, tool endpoints |
+| [Architecture](https://docs.gameforge.website/architecture/) | Components and data flows |
+| [Deployment](https://docs.gameforge.website/deployment/) | Docker, VPS, troubleshooting |
 
-HTTPS is served by **Caddy** (Let’s Encrypt). Assets are signed against a public MinIO path proxied at `/s3/`.
-
-```bash
-# DNS (Timeweb / any DNS host)
-#   @   → A     <VPS_IP>
-#   www → A     <VPS_IP>   # or CNAME → apex hostname (never CNAME to a bare IP)
-
-# On the VPS, fill .env using the Production checklist in .env.example, then:
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile backup up -d --build
-```
-
-Local proxy profile (same Caddyfile):
+Local docs (MkDocs Material, EN/RU):
 
 ```bash
-# set DOMAIN + ACME_EMAIL in .env
-docker compose --profile proxy up -d
+cd gameforge-docs && ./mkdocs.sh serve
+# → http://127.0.0.1:8001
 ```
 
-**Production `.env` essentials**
+---
 
-| Variable | Value |
-|----------|--------|
-| `APP_ENV` | `production` |
-| `USE_MOCK_AI` | `true` to avoid paid AI spend; `false` + `OPENAI_API_KEY` for real providers |
-| `DISABLE_BILLING` | `true` until Stripe/YuKassa keys exist |
-| `EMAIL_PROVIDER` | `resend` or `smtp` (not `console`) |
-| `S3_PUBLIC_ENDPOINT` | `https://<domain>/s3` |
-| `S3_PUBLIC_URL` | `https://<domain>/s3/gamedev-assets` |
-| `COOKIE_SECURE` / `LOG_JSON` | `true` |
+## Contributing
 
-Deploy: GitHub Actions `Deploy` runs only after a green `CI` on `main` (or `workflow_dispatch`). Remote script: `scripts/deploy_remote.sh` (migrate → rolling up → public smoke on `/` and `/api/v1/health/ready`).
+Issues, PRs, and feedback are welcome.
 
-Backups: compose profile `backup` (Postgres dump + MinIO mirror, 7-day volume retention). Copy `/backups` offsite regularly.
+1. Fork → `git checkout -b feature/my-feature`
+2. Code + tests + docs
+3. `ruff check app tests` and `pytest -q`
+4. Open a Pull Request
 
-## Gamification
+---
 
-- +10 XP per generation
-- Achievements at 1 / 10 / 50 / 100 / 500 generations
-- Monthly leaderboard: `GET /api/v1/leaderboard`
+## Team
 
-## Project layout
+| Name | Role | Contact |
+|------|------|---------|
+| **Valeriy Popov** | Founder & Lead Developer | [GitHub](https://github.com/valera7623) · [valera7623@gmail.com](mailto:valera7623@gmail.com) |
 
-See repository tree under `app/`, `frontend/`, `scripts/`.
+---
 
 ## License
 
-MIT — built as an MVP starter for AI Game Dev tooling.
+[MIT License](LICENSE) © 2026 Valeriy Popov
+
+---
+
+## Support
+
+- Star the repo on [GitHub](https://github.com/valera7623/GameForge)
+- [Report a bug](https://github.com/valera7623/GameForge/issues)
+- Docs: [https://docs.gameforge.website](https://docs.gameforge.website)
+
+---
+
+<p align="center">
+  <strong>GameForge v1.2.0</strong> — seven AI tools for game developers<br>
+  Built for indies, studios, and modders who ship faster
+</p>
