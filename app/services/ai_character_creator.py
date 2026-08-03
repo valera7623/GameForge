@@ -1,4 +1,4 @@
-"""AI Character Creator — concept art via DALL-E / SD / mock SVG."""
+"""AI Character Creator — concept art via GPT Image / SD / mock SVG."""
 
 from __future__ import annotations
 
@@ -12,6 +12,14 @@ from app.config import get_settings
 from app.services.storage import upload_bytes
 
 settings = get_settings()
+
+# Portrait-oriented sizes supported by gpt-image-1 / 1-mini / 1.5
+_IMAGE_SIZE_BY_VIEW = {
+    "full_body": "1024x1536",
+    "portrait": "1024x1536",
+    "bust": "1024x1024",
+    "face": "1024x1024",
+}
 
 
 def _mock_character_image(description: str, style: str) -> bytes:
@@ -69,10 +77,10 @@ async def create_character(description: str, style: str = "fantasy", view: str =
         errors: list[str] = []
         if settings.OPENAI_API_KEY:
             try:
-                image_bytes = await _dalle_character(description, style, view)
-                provider = "dall-e"
+                image_bytes = await _openai_character(description, style, view)
+                provider = settings.OPENAI_IMAGE_MODEL
             except Exception as exc:
-                errors.append(f"dall-e: {exc}")
+                errors.append(f"{settings.OPENAI_IMAGE_MODEL}: {exc}")
         if image_bytes is None and settings.STABILITY_API_KEY:
             try:
                 image_bytes = await _sd_character(description, style, view)
@@ -83,6 +91,11 @@ async def create_character(description: str, style: str = "fantasy", view: str =
             detail = "; ".join(errors) if errors else "No image provider configured"
             raise RuntimeError(f"Character generation failed: {detail}")
 
+    size = _IMAGE_SIZE_BY_VIEW.get(view, "1024x1024")
+    width, height = (int(x) for x in size.split("x"))
+    if settings.USE_MOCK_AI:
+        width, height = 768, 1024
+
     url = upload_bytes(image_bytes, "character.png", "image/png", "characters")
     return {
         "description": description,
@@ -90,12 +103,12 @@ async def create_character(description: str, style: str = "fantasy", view: str =
         "view": view,
         "provider": provider,
         "url": url,
-        "width": 768,
-        "height": 1024,
+        "width": width,
+        "height": height,
     }
 
 
-async def _dalle_character(description: str, style: str, view: str) -> bytes:
+async def _openai_character(description: str, style: str, view: str) -> bytes:
     import base64
 
     from app.services.openai_client import get_openai_client
@@ -105,8 +118,23 @@ async def _dalle_character(description: str, style: str, view: str) -> bytes:
         f"Game character concept art, {view.replace('_', ' ')}, {style} style: {description}. "
         "Clean background, high detail, suitable as game asset reference."
     )
-    resp = await client.images.generate(model="dall-e-3", prompt=prompt, size="1024x1024", response_format="b64_json")
-    return base64.b64decode(resp.data[0].b64_json)
+    model = settings.OPENAI_IMAGE_MODEL
+    size = _IMAGE_SIZE_BY_VIEW.get(view, "1024x1024")
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "prompt": prompt,
+        "size": size,
+    }
+    # Legacy DALL·E only; gpt-image-* always returns b64_json and rejects response_format.
+    if model.startswith("dall-e"):
+        kwargs["response_format"] = "b64_json"
+    else:
+        kwargs["quality"] = "medium"
+    resp = await client.images.generate(**kwargs)
+    b64 = resp.data[0].b64_json
+    if not b64:
+        raise RuntimeError("Image provider returned empty payload")
+    return base64.b64decode(b64)
 
 
 async def _sd_character(description: str, style: str, view: str) -> bytes:

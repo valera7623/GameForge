@@ -54,7 +54,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.proxyapi.ru/openai/v1"
     OPENAI_MODEL: str = "gpt-4o"
-    OPENAI_TIMEOUT_SEC: float = 90.0
+    # ProxyAPI / OpenAI image models (dall-e-3 is retired; use gpt-image-*)
+    OPENAI_IMAGE_MODEL: str = "gpt-image-1-mini"
+    OPENAI_TIMEOUT_SEC: float = 180.0
     STABILITY_API_KEY: str = ""
     ELEVENLABS_API_KEY: str = ""
     USE_MOCK_AI: bool = True
