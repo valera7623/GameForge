@@ -91,6 +91,13 @@ services:
       timeout: 5s
       retries: 3
 
+  docs:
+    profiles: !reset []
+    restart: unless-stopped
+    build:
+      args:
+        SITE_URL: https://docs.${DOMAIN:-gameforge.website}
+
   caddy:
     profiles: !reset []
     restart: unless-stopped

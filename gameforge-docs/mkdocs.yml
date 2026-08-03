@@ -1,0 +1,102 @@
+site_name: GameForge Documentation
+site_description: AI Game Dev Toolkit — Documentation
+site_url: https://docs.gameforge.website
+repo_url: https://github.com/valera7623/GameForge
+edit_uri: edit/main/gameforge-docs/docs/
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/valera7623/GameForge
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ru
+          name: Русский
+          build: true
+  - mermaid2
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+  - footnotes
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - User Guide:
+      - user-guide/index.md
+      - Dashboard: user-guide/dashboard.md
+      - Projects: user-guide/projects.md
+      - Tools: user-guide/tools.md
+      - Team: user-guide/team.md
+      - Billing: user-guide/billing.md
+  - Admin Guide:
+      - admin-guide/index.md
+      - Users and Roles: admin-guide/users.md
+      - Production Checklist: admin-guide/production.md
+      - Monitoring: admin-guide/monitoring.md
+      - Backup: admin-guide/backup.md
+  - Developer Guide:
+      - developer-guide/index.md
+      - API Overview: developer-guide/api-overview.md
+      - Auth: developer-guide/auth.md
+      - Tool Endpoints: developer-guide/tools-api.md
+  - Deployment:
+      - deployment/index.md
+      - Docker: deployment/docker.md
+      - VPS: deployment/vps.md
+      - Troubleshooting: deployment/troubleshooting.md

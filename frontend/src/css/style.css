@@ -435,10 +435,35 @@ a:hover {
   z-index: 1;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   padding: 2rem;
   border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.site-footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--text);
+}
+
+.sidebar-docs {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.sidebar-docs:hover {
+  color: var(--text);
+  background: var(--bg);
 }
 
 .app-shell {
@@ -1080,6 +1105,10 @@ textarea {
     margin-top: 0.5rem;
     border-top: 1px solid var(--border);
     padding-top: 0.75rem;
+  }
+
+  .sidebar-docs {
+    margin-top: 0.35rem;
   }
 
   .nav-backdrop {

@@ -36,7 +36,7 @@ echo "==> Ensure infra + migrate"
 echo "==> Build & up app stack"
 # Rolling recreate without a full `down` (keeps volumes / network)
 "${COMPOSE[@]}" up -d --build --remove-orphans \
-  postgres redis minio minio-init api worker frontend caddy backup
+  postgres redis minio minio-init api worker frontend docs caddy backup
 
 # Sweep leftover conflict-renamed containers from interrupted recreates
 docker ps -aq --filter name='gameforge' --filter status=exited 2>/dev/null \

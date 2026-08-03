@@ -27,6 +27,7 @@
     <nav>
       <a href="#tools" data-i18n="nav.tools">Tools</a>
       <a href="#pricing" data-i18n="nav.pricing">Pricing</a>
+      <a href="https://docs.gameforge.website/" target="_blank" rel="noopener noreferrer" data-docs-link data-i18n="nav.docs">Documentation</a>
       <button type="button" class="btn-icon" id="langBtnLand" title="Language">RU</button>
       <button type="button" class="btn-icon theme-toggle" data-theme-toggle data-i18n="theme.toggle" data-i18n-attr="aria-label">☾</button>
       <a href="/login" class="btn btn-ghost" data-i18n="nav.signin">Sign in</a>
@@ -101,12 +102,15 @@
 
   <footer class="site-footer">
     <span data-i18n="land.footer">GameForge — AI Game Dev Toolkit</span>
+    <a href="https://docs.gameforge.website/" target="_blank" rel="noopener noreferrer" data-docs-link data-i18n="nav.docs">Documentation</a>
   </footer>
 
   <script type="module">
     import { applyDomI18n, getLang, setLang } from "/src/js/i18n.js";
     import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    import { bindDocsLinks } from "/src/js/docs.js";
     applyDomI18n(document);
+    bindDocsLinks(document);
     applyTheme(getTheme());
     bindThemeToggles();
     const btn = document.getElementById("langBtnLand");

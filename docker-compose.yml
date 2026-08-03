@@ -153,6 +153,17 @@ services:
     networks:
       - gamedev
 
+  docs:
+    build:
+      context: .
+      dockerfile: gameforge-docs/Dockerfile
+      args:
+        SITE_URL: https://docs.${DOMAIN:-localhost}
+    profiles: ["proxy", "docs"]
+    restart: unless-stopped
+    networks:
+      - gamedev
+
   caddy:
     image: caddy:2.10-alpine
     profiles: ["proxy"]

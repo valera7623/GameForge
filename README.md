@@ -2,6 +2,18 @@
 
 Platform of **7 AI tools** for indie developers, studios, and modders: levels, quests, textures, characters, sound, playtesting, and localization.
 
+## Documentation
+
+Bilingual docs (EN / RU) live in [`gameforge-docs/`](gameforge-docs/) (MkDocs Material, same pattern as AegisAI):
+
+```bash
+cd gameforge-docs
+./mkdocs.sh serve
+# → http://127.0.0.1:8001
+```
+
+Strict build: `./mkdocs.sh build --strict`.
+
 ## Local quick start
 
 ```bash

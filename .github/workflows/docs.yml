@@ -1,0 +1,32 @@
+name: Build Documentation
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "gameforge-docs/**"
+  pull_request:
+    paths:
+      - "gameforge-docs/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r gameforge-docs/requirements.txt
+
+      - name: Build docs
+        run: mkdocs build -f gameforge-docs/mkdocs.yml --strict

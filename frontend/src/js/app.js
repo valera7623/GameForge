@@ -4,6 +4,7 @@
 
 import { applyTheme, bindThemeToggles, getTheme } from "./theme.js";
 import { applyDomI18n, getLang, setLang, t } from "./i18n.js";
+import { getDocsUrl } from "./docs.js";
 
 export { t, getLang, applyDomI18n };
 
@@ -142,6 +143,7 @@ export function sidebarHTML(active) {
         <nav class="sidebar-nav sidebar-nav-mobile" aria-label="${t("nav.menu")}">
           <a href="/dashboard" class="${activeKey === "dashboard" ? "active" : ""}">${t("nav.dashboard")}</a>
           <a href="/team" class="${activeKey === "team" ? "active" : ""}">${t("nav.team")}</a>
+          <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer">${t("nav.docs")}</a>
         </nav>
         <div class="sidebar-tools">
           <p class="sidebar-tools-title">${t("dash.launch")}</p>
@@ -157,6 +159,7 @@ export function sidebarHTML(active) {
           ).join("")}
         </nav>
         <div class="spacer"></div>
+        <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer" class="sidebar-docs">${t("nav.docs")}</a>
         <a href="#" id="logoutBtn" class="sidebar-logout">${t("nav.signout")}</a>
       </div>
     </aside>

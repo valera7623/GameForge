@@ -7,8 +7,18 @@ http://, http://{$DOMAIN:localhost}, http://www.{$DOMAIN:localhost} {
 	redir https://{$DOMAIN:localhost}{uri} permanent
 }
 
+http://docs.{$DOMAIN:localhost} {
+	redir https://docs.{$DOMAIN:localhost}{uri} permanent
+}
+
 https://www.{$DOMAIN:localhost} {
 	redir https://{$DOMAIN:localhost}{uri} permanent
+}
+
+https://docs.{$DOMAIN:localhost} {
+	encode gzip
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	reverse_proxy docs:80
 }
 
 https://{$DOMAIN:localhost} {
