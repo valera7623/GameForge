@@ -64,6 +64,8 @@
         }
 
         const members = await api(`/orgs/${org.id}/members`);
+        const me = await api("/auth/me");
+        const canManage = ["owner", "admin"].includes(org.role);
         content.hidden = false;
         content.innerHTML = `
           <h2>${escapeHtml(org.name)}</h2>
@@ -74,14 +76,25 @@
             gens: org.generations_this_month,
           }))}</p>
           <div class="gen-cards" style="margin:1rem 0">
-            ${members.map(m => `
+            ${members.map(m => {
+              const canDelete =
+                canManage &&
+                m.user_id !== me.id &&
+                m.role !== "owner" &&
+                !(org.role === "admin" && m.role !== "member");
+              return `
               <div class="gen-card">
                 <div class="meta"><span>${escapeHtml(m.role)}</span></div>
                 <strong>${escapeHtml(m.full_name || m.email)}</strong>
                 <div class="meta" style="margin-top:0.35rem"><span>${escapeHtml(m.email)}</span></div>
-              </div>`).join("")}
+                ${canDelete ? `
+                <div class="actions">
+                  <button type="button" class="btn btn-danger btn-sm" data-remove-member="${escapeHtml(m.user_id)}">${escapeHtml(t("team.delete"))}</button>
+                </div>` : ""}
+              </div>`;
+            }).join("")}
           </div>
-          ${["owner","admin"].includes(org.role) ? `
+          ${canManage ? `
           <form id="inviteForm" class="form-row" style="align-items:end">
             <label>${escapeHtml(t("team.invite_email"))} <input type="email" name="email" required /></label>
             <label>${escapeHtml(t("team.role"))}
@@ -93,6 +106,17 @@
             <button class="btn btn-primary" type="submit">${escapeHtml(t("team.send_invite"))}</button>
           </form>` : ""}
         `;
+        content.querySelectorAll("[data-remove-member]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const memberId = btn.getAttribute("data-remove-member");
+            if (!memberId || !confirm(t("team.delete_confirm"))) return;
+            try {
+              await api(`/orgs/${org.id}/members/${memberId}`, { method: "DELETE" });
+              toast(t("team.toast_removed"));
+              load();
+            } catch (err) { toast(err.message, true); }
+          });
+        });
         document.getElementById("inviteForm")?.addEventListener("submit", async (e) => {
           e.preventDefault();
           const fd = new FormData(e.target);

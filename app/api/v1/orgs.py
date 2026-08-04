@@ -142,6 +142,49 @@ async def list_members(
     ]
 
 
+@router.delete("/{org_id}/members/{member_user_id}", status_code=204)
+async def remove_member(
+    org_id: UUID,
+    member_user_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    actor = await _membership(db, user.id, org_id)
+    if not actor or actor.role not in (OrgMemberRole.OWNER, OrgMemberRole.ADMIN):
+        raise HTTPException(status_code=403, detail="Only owners/admins can remove members")
+
+    if member_user_id == user.id:
+        raise HTTPException(status_code=400, detail="Cannot remove yourself — leave the team instead")
+
+    target = await _membership(db, member_user_id, org_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    if target.role == OrgMemberRole.OWNER:
+        raise HTTPException(status_code=400, detail="Cannot remove the organization owner")
+
+    # Admins may only remove members, not other admins.
+    if actor.role == OrgMemberRole.ADMIN and target.role != OrgMemberRole.MEMBER:
+        raise HTTPException(status_code=403, detail="Admins can only remove members")
+
+    target_user = await db.get(User, member_user_id)
+    await db.delete(target)
+
+    # Drop leftover pending invite for the same email so seats/invite UX stay clean.
+    if target_user and target_user.email:
+        pending = await db.scalar(
+            select(OrgInvite).where(
+                OrgInvite.organization_id == org_id,
+                OrgInvite.email == target_user.email.lower(),
+                OrgInvite.accepted_at.is_(None),
+            )
+        )
+        if pending:
+            await db.delete(pending)
+
+    await db.flush()
+
+
 @router.post("/{org_id}/invites", status_code=201)
 async def invite_member(
     org_id: UUID,
