@@ -72,7 +72,15 @@
       const fd = new FormData(e.target);
       setLoading(document.getElementById("loader"), true);
       try {
-        const texts = JSON.parse(fd.get("texts"));
+        let texts;
+        try {
+          texts = JSON.parse(String(fd.get("texts") || "").trim());
+        } catch {
+          throw new Error(t("loc.json_invalid"));
+        }
+        if (!texts || typeof texts !== "object" || Array.isArray(texts)) {
+          throw new Error(t("loc.json_object"));
+        }
         const body = {
           texts,
           source_lang: fd.get("source_lang"),
