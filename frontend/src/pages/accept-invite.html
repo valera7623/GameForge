@@ -19,30 +19,73 @@
     <div class="auth-card">
       <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
       <h1>Team invite</h1>
-      <p class="sub" id="status">Accepting invite…</p>
-      <a class="btn btn-primary" href="/team">Go to Team</a>
+      <p class="sub" id="status">Loading invite…</p>
+      <div id="guestActions" class="form-grid" hidden style="margin-top:1rem">
+        <a class="btn btn-primary" id="registerLink">Create account</a>
+        <a class="btn btn-ghost" id="loginLink">Sign in</a>
+      </div>
+      <a class="btn btn-primary" id="teamLink" href="/team" hidden>Go to Team</a>
     </div>
   </div>
   <script type="module">
-    import { requireAuth } from "../js/auth.js";
+    import { isLoggedIn } from "../js/api.js";
     import { api } from "../js/api.js";
     import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
     applyTheme(getTheme());
     bindThemeToggles();
 
     async function main() {
-      if (!requireAuth()) return;
       const token = new URLSearchParams(location.search).get("token");
       const el = document.getElementById("status");
+      const guest = document.getElementById("guestActions");
+      const teamLink = document.getElementById("teamLink");
       if (!token) {
         el.textContent = "Missing invite token";
         return;
       }
+
+      const next = `/accept-invite?token=${encodeURIComponent(token)}`;
+      let preview = null;
+      try {
+        preview = await api(`/orgs/invites/preview?token=${encodeURIComponent(token)}`);
+      } catch (e) {
+        el.textContent = e.message || "Invite not found";
+        return;
+      }
+
+      if (preview.accepted) {
+        el.textContent = "This invite was already accepted. Sign in to open Team.";
+        guest.hidden = false;
+        document.getElementById("registerLink").hidden = true;
+        document.getElementById("loginLink").href = `/login?next=${encodeURIComponent("/team")}`;
+        return;
+      }
+
+      if (!isLoggedIn()) {
+        el.textContent = `You're invited to “${preview.org_name}”. Create an account or sign in with ${preview.email}, then we'll join you to the team.`;
+        guest.hidden = false;
+        const q = new URLSearchParams({
+          next,
+          email: preview.email,
+        });
+        document.getElementById("registerLink").href = `/register?${q}`;
+        document.getElementById("loginLink").href = `/login?${q}`;
+        return;
+      }
+
       try {
         await api("/orgs/invites/accept", { method: "POST", body: JSON.stringify({ token }) });
         el.textContent = "You're in! Open Team to see your studio.";
+        teamLink.hidden = false;
       } catch (e) {
         el.textContent = e.message;
+        // Wrong account email — offer switch
+        if (String(e.message || "").toLowerCase().includes("email")) {
+          guest.hidden = false;
+          const q = new URLSearchParams({ next, email: preview.email });
+          document.getElementById("registerLink").href = `/register?${q}`;
+          document.getElementById("loginLink").href = `/login?${q}`;
+        }
       }
     }
     main();

@@ -35,7 +35,7 @@
     </div>
   </div>
   <script type="module">
-    import { redirectIfAuthed, login, t } from "../js/auth.js";
+    import { redirectIfAuthed, login, t, safeNextPath } from "../js/auth.js";
     import { AuthAPI } from "../js/api.js";
     import { applyDomI18n, showModal, setLoading, toast } from "../js/app.js";
     import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
@@ -43,6 +43,19 @@
     applyTheme(getTheme());
     bindThemeToggles();
     redirectIfAuthed();
+    const params = new URLSearchParams(location.search);
+    const next = safeNextPath(params.get("next"), "/dashboard");
+    const emailPrefill = params.get("email");
+    if (emailPrefill) {
+      const emailInput = document.querySelector('input[name="email"]');
+      if (emailInput) emailInput.value = emailPrefill;
+    }
+    const createLink = document.querySelector('a[href="/register"]');
+    if (createLink) {
+      const q = new URLSearchParams({ next });
+      if (emailPrefill) q.set("email", emailPrefill);
+      createLink.href = `/register?${q}`;
+    }
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -51,9 +64,14 @@
       setLoading(document.getElementById("loginLoader"), true);
       try {
         await login(fd.get("email"), fd.get("password"));
-        location.href = "/dashboard";
+        location.href = next;
       } catch (err) {
-        toast(err.message, true);
+        const msg = err.message || "";
+        if (msg.includes("Invalid credentials") && next.includes("accept-invite")) {
+          toast(t("login.invite_need_register"), true);
+        } else {
+          toast(msg, true);
+        }
       } finally {
         btn.disabled = false;
         setLoading(document.getElementById("loginLoader"), false);

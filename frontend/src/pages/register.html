@@ -34,19 +34,32 @@
     </div>
   </div>
   <script type="module">
-    import { redirectIfAuthed, register } from "../js/auth.js";
+    import { redirectIfAuthed, register, safeNextPath } from "../js/auth.js";
     import { applyDomI18n, toast } from "../js/app.js";
     import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
     applyDomI18n(document);
     applyTheme(getTheme());
     bindThemeToggles();
     redirectIfAuthed();
+    const params = new URLSearchParams(location.search);
+    const next = safeNextPath(params.get("next"), "/dashboard");
+    const emailPrefill = params.get("email");
+    if (emailPrefill) {
+      const emailInput = document.querySelector('input[name="email"]');
+      if (emailInput) emailInput.value = emailPrefill;
+    }
+    const signinLink = document.querySelector('a[href="/login"]');
+    if (signinLink) {
+      const q = new URLSearchParams({ next });
+      if (emailPrefill) q.set("email", emailPrefill);
+      signinLink.href = `/login?${q}`;
+    }
     document.getElementById("regForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       try {
         await register(fd.get("email"), fd.get("password"), fd.get("full_name") || null);
-        location.href = "/dashboard";
+        location.href = next;
       } catch (err) {
         toast(err.message, true);
       }

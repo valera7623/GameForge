@@ -96,6 +96,7 @@ const DICT = {
     "login.no_account": "No account?",
     "login.create": "Create one",
     "login.forgot": "Forgot password",
+    "login.invite_need_register": "No account yet — create one with the invited email (password min 10 characters).",
 
     "register.title": "Create account — GameForge",
     "register.h1": "Create account",
@@ -373,6 +374,7 @@ const DICT = {
     "login.no_account": "Нет аккаунта?",
     "login.create": "Создать",
     "login.forgot": "Забыли пароль",
+    "login.invite_need_register": "Аккаунта ещё нет — зарегистрируйтесь с email из приглашения (пароль от 10 символов).",
 
     "register.title": "Регистрация — GameForge",
     "register.h1": "Создать аккаунт",

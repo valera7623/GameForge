@@ -52,6 +52,13 @@ class InviteAccept(BaseModel):
     token: str
 
 
+class InvitePreview(BaseModel):
+    org_name: str
+    email: str
+    role: str
+    accepted: bool
+
+
 async def _require_studio_or_enterprise(user: User, db: AsyncSession) -> None:
     if settings.is_onprem:
         return
@@ -262,6 +269,24 @@ async def invite_member(
     await db.flush()
     await send_org_invite(email, org.name, invite.token, user.full_name or user.email)
     return {"id": invite.id, "email": invite.email, "token": invite.token if settings.DEBUG else None}
+
+
+@router.get("/invites/preview", response_model=InvitePreview)
+async def preview_invite(token: str, db: AsyncSession = Depends(get_db)):
+    """Public preview so invitees can register/login with the right email."""
+    result = await db.execute(select(OrgInvite).where(OrgInvite.token == token))
+    invite = result.scalar_one_or_none()
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    org = await db.get(Organization, invite.organization_id)
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    return InvitePreview(
+        org_name=org.name,
+        email=invite.email,
+        role=invite.role.value,
+        accepted=invite.accepted_at is not None,
+    )
 
 
 @router.post("/invites/accept")

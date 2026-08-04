@@ -5,9 +5,18 @@
 import { AuthAPI, clearTokens, isLoggedIn, setTokens } from "./api.js";
 import { t } from "./i18n.js";
 
+/** Safe in-app path for post-login redirect (blocks open redirects). */
+export function safeNextPath(raw, fallback = "/dashboard") {
+  if (!raw || typeof raw !== "string") return fallback;
+  const next = raw.trim();
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("://")) return fallback;
+  return next;
+}
+
 export function requireAuth() {
   if (!isLoggedIn()) {
-    window.location.href = "/login";
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
+    window.location.href = `/login?next=${next}`;
     return false;
   }
   return true;
@@ -15,7 +24,8 @@ export function requireAuth() {
 
 export function redirectIfAuthed() {
   if (isLoggedIn()) {
-    window.location.href = "/dashboard";
+    const params = new URLSearchParams(location.search);
+    window.location.href = safeNextPath(params.get("next"), "/dashboard");
   }
 }
 

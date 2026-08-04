@@ -71,12 +71,13 @@ async def send_welcome(to: str, name: Optional[str] = None) -> bool:
 
 
 async def send_org_invite(to: str, org_name: str, invite_token: str, inviter: str) -> bool:
-    link = f"{settings.FRONTEND_URL.rstrip('/')}/src/pages/accept-invite.html?token={invite_token}"
+    link = f"{settings.FRONTEND_URL.rstrip('/')}/accept-invite?token={invite_token}"
     subject = f"You're invited to {org_name} on {settings.APP_NAME}"
     html = f"""
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
       <h2>Team invite</h2>
       <p><strong>{inviter}</strong> invited you to join <strong>{org_name}</strong>.</p>
+      <p>Use this email address (<strong>{to}</strong>) when you register or sign in.</p>
       <p><a href="{link}" style="display:inline-block;padding:12px 18px;background:#0d9f90;color:#fff;text-decoration:none;border-radius:8px">
         Accept invite
       </a></p>
