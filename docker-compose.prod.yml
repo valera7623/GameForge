@@ -105,6 +105,12 @@ services:
     profiles: !reset []
     restart: unless-stopped
 
+  # CPU Real-ESRGAN — internal only (no public 8088)
+  realesrgan:
+    profiles: ["ai"]
+    restart: unless-stopped
+    ports: !reset []
+
   backup:
     build:
       context: .

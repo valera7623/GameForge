@@ -1,7 +1,7 @@
-"""Lightweight Real-ESRGAN-compatible HTTP stub (PIL).
+"""Deprecated PIL stub.
 
-Replace with a GPU Real-ESRGAN container in production.
-POST /upscale  multipart: image + scale
+Use services/realesrgan (ncnn + Mesa llvmpipe) for real upscaling on CPU VPS.
+Kept only for local smoke tests without downloading the ncnn binary.
 """
 
 from __future__ import annotations
@@ -12,12 +12,12 @@ from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import Response
 from PIL import Image, ImageEnhance, ImageFilter
 
-app = FastAPI(title="Real-ESRGAN Stub")
+app = FastAPI(title="Real-ESRGAN Stub (deprecated)")
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "engine": "pil-stub"}
+    return {"status": "ok", "engine": "pil-stub", "deprecated": True}
 
 
 @app.post("/upscale")

@@ -139,7 +139,11 @@ OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
 OPENAI_MODEL=gpt-4o
 ```
 
-Ключ из [ProxyAPI](https://proxyapi.ru). Опционально: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability` (облачный Stable Image), `STABILITY_AUDIO_MODEL=stable-audio-2.5` (Sound Designer), `REALESRGAN_URL`, `REPLICATE_API_TOKEN`, `ELEVENLABS_API_KEY`.
+Ключ из [ProxyAPI](https://proxyapi.ru) / AITunnel. Опционально: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability`, `STABILITY_AUDIO_MODEL=stable-audio-2.5` (Sound Designer), `REALESRGAN_URL=http://realesrgan:8080` (CPU Real-ESRGAN ncnn/llvmpipe), `REPLICATE_API_TOKEN`, `ELEVENLABS_API_KEY`.
+
+```bash
+docker compose --profile ai up -d --build realesrgan
+```
 
 ### Production (VPS + Caddy)
 

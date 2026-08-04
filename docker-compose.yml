@@ -115,12 +115,24 @@ services:
       - gamedev
 
 
+  # CPU Real-ESRGAN (ncnn + Mesa llvmpipe). Set REALESRGAN_URL=http://realesrgan:8080
   realesrgan:
     profiles: ["ai"]
     build:
-      context: ./services/realesrgan_stub
+      context: ./services/realesrgan
+    environment:
+      REALESRGAN_MODEL: ${REALESRGAN_MODEL:-realesrgan-x4plus}
+      REALESRGAN_TILE: ${REALESRGAN_TILE:-128}
+      REALESRGAN_THREADS: ${REALESRGAN_THREADS:-1:2:2}
+      REALESRGAN_TIMEOUT: ${REALESRGAN_TIMEOUT:-600}
     ports:
       - "8088:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - gamedev
 

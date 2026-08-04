@@ -15,7 +15,7 @@ Services: `postgres`, `redis`, `minio`, `minio-init`, `api`, `worker`, `frontend
 | Profile | Service | Purpose |
 |---------|---------|---------|
 | `dev` | `frontend-dev` | Vite HMR on :5173 |
-| `ai` | `realesrgan` | Optional upscale microservice |
+| `ai` | `realesrgan` | CPU Real-ESRGAN (ncnn + llvmpipe); set `REALESRGAN_URL=http://realesrgan:8080` |
 | `proxy` | `caddy` | Local HTTPS via Caddyfile |
 | `migrate` | `migrate` | One-shot Alembic (always on in prod overlay) |
 | `backup` | `backup` | Prod backups |

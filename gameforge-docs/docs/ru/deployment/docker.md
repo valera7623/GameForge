@@ -15,7 +15,7 @@ docker compose exec api python scripts/seed_db.py
 | Профиль | Сервис | Назначение |
 |---------|--------|------------|
 | `dev` | `frontend-dev` | Vite HMR :5173 |
-| `ai` | `realesrgan` | Опциональный upscale |
+| `ai` | `realesrgan` | CPU Real-ESRGAN (ncnn + llvmpipe); `REALESRGAN_URL=http://realesrgan:8080` |
 | `proxy` | `caddy` | Локальный HTTPS |
 | `migrate` | `migrate` | One-shot Alembic |
 | `backup` | `backup` | Бэкапы (prod) |

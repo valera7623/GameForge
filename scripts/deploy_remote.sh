@@ -6,7 +6,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 BRANCH="${DEPLOY_BRANCH:-main}"
-COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile backup)
+# backup = nightly dumps; ai = CPU Real-ESRGAN (used when REALESRGAN_URL is set)
+COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile backup --profile ai)
 LOCK_FILE="${HOME}/.gameforge-deploy.lock"
 
 echo "==> GameForge remote deploy ($(hostname)) branch=$BRANCH"
@@ -43,7 +44,7 @@ echo "==> Ensure infra + migrate"
 echo "==> Build & up app stack"
 # Rolling recreate without a full `down` (keeps volumes / network)
 "${COMPOSE[@]}" up -d --build --remove-orphans \
-  postgres redis minio minio-init api worker frontend docs caddy backup
+  postgres redis minio minio-init api worker frontend docs caddy backup realesrgan
 
 # Sweep leftover conflict-renamed containers from interrupted recreates
 docker ps -aq --filter name='gameforge' --filter status=exited 2>/dev/null \
