@@ -142,7 +142,7 @@ OPENAI_MODEL=gpt-4o
 
 Key from [ProxyAPI](https://proxyapi.ru) — same OpenAI SDK, different `base_url`.
 
-Optional: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability` (cloud Stable Image, no local SD), `REALESRGAN_URL`, `REPLICATE_API_TOKEN` (MusicGen), `ELEVENLABS_API_KEY`.
+Optional: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability` (cloud Stable Image), `STABILITY_AUDIO_MODEL=stable-audio-2.5` (Sound Designer), `REALESRGAN_URL`, `REPLICATE_API_TOKEN` (MusicGen fallback), `ELEVENLABS_API_KEY` (SFX fallback).
 
 ```bash
 docker compose --profile ai up -d realesrgan

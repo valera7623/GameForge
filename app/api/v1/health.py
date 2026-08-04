@@ -30,6 +30,7 @@ async def health():
                     "image_provider": settings.IMAGE_PROVIDER,
                     "realesrgan": bool(settings.REALESRGAN_URL),
                     "musicgen": bool(settings.REPLICATE_API_TOKEN),
+                    "stable_audio": bool(settings.STABILITY_API_KEY),
                     "elevenlabs": bool(settings.ELEVENLABS_API_KEY),
                     "email": settings.EMAIL_PROVIDER,
                 },
