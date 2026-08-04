@@ -145,15 +145,76 @@ async def _openai_localize(
     from app.services.openai_client import get_openai_client
 
     client = get_openai_client()
-    prompt = f"""Translate game UI/strings from {source_lang} to {target_langs}.
-Preserve placeholders like {{name}}, %s, <color>.
-Input JSON: {json.dumps(texts, ensure_ascii=False)}
-Respond JSON: {{ "<lang>": {{ "<key>": "<translation>" }} }} for each target language."""
+    langs = ", ".join(target_langs)
+    keys = list(texts.keys())
+    prompt = f"""You are a professional game localization translator.
+
+Task: translate the UI/game strings below from source language "{source_lang}" into each of: {langs}.
+
+Rules:
+1. Keep every input key unchanged; translate only the string values.
+2. Preserve placeholders and markup exactly as written, including:
+   - curly braces: {{name}}, {{count}}, {{0}}
+   - printf: %s, %d, %1$s
+   - tags: <color>, </color>, <b>, </b>, [b], [/b]
+3. Keep tone suitable for games (UI labels short and natural; dialogue may be more expressive).
+4. Do not add explanations, transliterate brand/proper names only when customary in the target language.
+5. Return ONLY valid JSON (no markdown).
+
+Output schema (one object; top-level keys are language codes):
+{{
+  "{target_langs[0] if target_langs else "ru"}": {{
+    "{keys[0] if keys else "example.key"}": "translated string"
+  }}
+}}
+
+Include every language in [{langs}] and every key in {json.dumps(keys, ensure_ascii=False)}.
+
+Source strings ({source_lang}):
+{json.dumps(texts, ensure_ascii=False, indent=2)}
+"""
 
     resp = await client.chat.completions.create(
         model=settings.OPENAI_MODEL,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You translate game localization files. "
+                    "Reply with a single JSON object: language code → { key → translation }."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ],
         temperature=0.2,
         response_format={"type": "json_object"},
     )
-    return json.loads(resp.choices[0].message.content)
+    raw = json.loads(resp.choices[0].message.content or "{}")
+    return _normalize_localization_payload(raw, texts, target_langs)
+
+
+def _normalize_localization_payload(
+    raw: Dict[str, Any], texts: Dict[str, str], target_langs: List[str]
+) -> Dict[str, Dict[str, str]]:
+    """Accept common LLM shapes and guarantee lang → key → str."""
+    out: Dict[str, Dict[str, str]] = {}
+    # Some models wrap as {"translations": {...}} or {"data": {...}}
+    if len(raw) == 1:
+        only = next(iter(raw.values()))
+        if isinstance(only, dict) and any(lang in only for lang in target_langs):
+            raw = only  # type: ignore[assignment]
+
+    for lang in target_langs:
+        block = raw.get(lang)
+        if not isinstance(block, dict):
+            # case-insensitive lang key
+            block = next(
+                (v for k, v in raw.items() if str(k).lower() == lang.lower() and isinstance(v, dict)),
+                {},
+            )
+        cleaned: Dict[str, str] = {}
+        for key in texts:
+            val = block.get(key) if isinstance(block, dict) else None
+            cleaned[key] = str(val) if val is not None else texts[key]
+        out[lang] = cleaned
+    return out
