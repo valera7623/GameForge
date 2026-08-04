@@ -48,7 +48,9 @@ async def upscale_texture(
         result_bytes = None
         provider = None
         errors: list[str] = []
-        if settings.REALESRGAN_URL:
+        # REALESRGAN_URL must be an HTTP microservice base (…/upscale), not a .pth weights file.
+        realesrgan_base = (settings.REALESRGAN_URL or "").strip().rstrip("/")
+        if realesrgan_base and not realesrgan_base.lower().endswith((".pth", ".pt", ".onnx", ".ckpt")):
             try:
                 result_bytes = await _realesrgan_upscale(image_bytes, scale)
                 provider = "realesrgan"
@@ -60,9 +62,10 @@ async def upscale_texture(
                 provider = "stability"
             except Exception as exc:
                 errors.append(f"stability: {exc}")
+        # Keep the tool usable without Real-ESRGAN / Stability (local Lanczos upscale).
         if result_bytes is None:
-            detail = "; ".join(errors) if errors else "No upscale provider configured"
-            raise RuntimeError(f"Texture upscale failed: {detail}")
+            result_bytes = _pil_upscale(image_bytes, scale, enhance)
+            provider = "pil"
 
     url = upload_bytes(result_bytes, f"upscaled_{scale}x_{filename}", "image/png", "textures")
     result_img = Image.open(io.BytesIO(result_bytes))

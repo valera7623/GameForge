@@ -31,7 +31,9 @@ async def upscale(
     db: AsyncSession = Depends(get_db),
 ):
     if async_mode is None:
-        async_mode = bool(settings.REALESRGAN_URL)
+        # Async only when a real Real-ESRGAN HTTP service is configured (not a weights file URL).
+        base = (settings.REALESRGAN_URL or "").strip().rstrip("/")
+        async_mode = bool(base) and not base.lower().endswith((".pth", ".pt", ".onnx", ".ckpt"))
 
     if file.content_type not in ("image/png", "image/jpeg", "image/jpg", "image/webp"):
         raise HTTPException(status_code=400, detail="Only PNG/JPG/WEBP supported")
