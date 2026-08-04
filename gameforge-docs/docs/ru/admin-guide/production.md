@@ -11,6 +11,7 @@
 | `COOKIE_SECURE` | `true` |
 | `ALLOW_MOCK_BILLING` | `false` |
 | `USE_MOCK_AI` | `true` без трат на AI, или `false` + `OPENAI_API_KEY` |
+| `STABILITY_API_KEY` | Опционально: облачный Stable Image ([platform.stability.ai](https://platform.stability.ai)); `IMAGE_PROVIDER=stability` чтобы использовать его для персонажей |
 | `EMAIL_PROVIDER` | `resend` или `smtp` (не `console`, кроме `ALLOW_INSECURE_EMAIL=true`) |
 | `DISABLE_BILLING` | `true`, пока нет платёжных ключей |
 | `S3_PUBLIC_ENDPOINT` | `https://<domain>/s3` |

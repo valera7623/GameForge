@@ -26,6 +26,8 @@ async def health():
                 "billing_disabled": settings.billing_disabled,
                 "providers": {
                     "openai": bool(settings.OPENAI_API_KEY),
+                    "stability": bool(settings.STABILITY_API_KEY),
+                    "image_provider": settings.IMAGE_PROVIDER,
                     "realesrgan": bool(settings.REALESRGAN_URL),
                     "musicgen": bool(settings.REPLICATE_API_TOKEN),
                     "elevenlabs": bool(settings.ELEVENLABS_API_KEY),

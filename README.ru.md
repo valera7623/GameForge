@@ -139,7 +139,7 @@ OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
 OPENAI_MODEL=gpt-4o
 ```
 
-Ключ из [ProxyAPI](https://proxyapi.ru). Опционально: `REALESRGAN_URL`, `REPLICATE_API_TOKEN`, `ELEVENLABS_API_KEY`.
+Ключ из [ProxyAPI](https://proxyapi.ru). Опционально: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability` (облачный Stable Image, без SD на сервере), `REALESRGAN_URL`, `REPLICATE_API_TOKEN`, `ELEVENLABS_API_KEY`.
 
 ### Production (VPS + Caddy)
 

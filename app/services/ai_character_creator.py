@@ -21,6 +21,14 @@ _IMAGE_SIZE_BY_VIEW = {
     "face": "1024x1024",
 }
 
+# Stability AI aspect ratios (v2beta generate)
+_STABILITY_ASPECT_BY_VIEW = {
+    "full_body": "2:3",
+    "portrait": "2:3",
+    "bust": "1:1",
+    "face": "1:1",
+}
+
 
 def _mock_character_image(description: str, style: str) -> bytes:
     """Generate a stylized placeholder portrait when no AI keys are set."""
@@ -75,20 +83,31 @@ async def create_character(description: str, style: str = "fantasy", view: str =
         image_bytes = None
         provider = None
         errors: list[str] = []
-        if settings.OPENAI_API_KEY:
-            try:
-                image_bytes = await _openai_character(description, style, view)
-                provider = settings.OPENAI_IMAGE_MODEL
-            except Exception as exc:
-                errors.append(f"{settings.OPENAI_IMAGE_MODEL}: {exc}")
-        if image_bytes is None and settings.STABILITY_API_KEY:
-            try:
-                image_bytes = await _sd_character(description, style, view)
-                provider = "stable-diffusion"
-            except Exception as exc:
-                errors.append(f"stability: {exc}")
+        mode = (settings.IMAGE_PROVIDER or "auto").strip().lower()
+        try_openai = mode in ("auto", "openai") and bool(settings.OPENAI_API_KEY)
+        try_stability = mode in ("auto", "stability") and bool(settings.STABILITY_API_KEY)
+        # Prefer Stability when explicitly selected; otherwise OpenAI first (auto).
+        order = ("stability", "openai") if mode == "stability" else ("openai", "stability")
+        for name in order:
+            if image_bytes is not None:
+                break
+            if name == "openai" and try_openai:
+                try:
+                    image_bytes = await _openai_character(description, style, view)
+                    provider = settings.OPENAI_IMAGE_MODEL
+                except Exception as exc:
+                    errors.append(f"{settings.OPENAI_IMAGE_MODEL}: {exc}")
+            elif name == "stability" and try_stability:
+                try:
+                    image_bytes = await _sd_character(description, style, view)
+                    provider = f"stability:{settings.STABILITY_IMAGE_MODEL}"
+                except Exception as exc:
+                    errors.append(f"stability: {exc}")
         if image_bytes is None:
-            detail = "; ".join(errors) if errors else "No image provider configured"
+            detail = "; ".join(errors) if errors else (
+                "No image provider configured "
+                "(set OPENAI_API_KEY and/or STABILITY_API_KEY, IMAGE_PROVIDER=auto|openai|stability)"
+            )
             raise RuntimeError(f"Character generation failed: {detail}")
 
     size = _IMAGE_SIZE_BY_VIEW.get(view, "1024x1024")
@@ -138,15 +157,29 @@ async def _openai_character(description: str, style: str, view: str) -> bytes:
 
 
 async def _sd_character(description: str, style: str, view: str) -> bytes:
+    """Cloud Stability AI generate (core / sd3 / ultra) — no self-hosted SD."""
     import httpx
 
-    prompt = f"{style} game character, {view}, {description}, concept art"
-    async with httpx.AsyncClient(timeout=120) as client:
+    model = (settings.STABILITY_IMAGE_MODEL or "core").strip().lower()
+    if model not in ("core", "sd3", "ultra"):
+        model = "core"
+    prompt = (
+        f"Game character concept art, {view.replace('_', ' ')}, {style} style: {description}. "
+        "Clean background, high detail, suitable as game asset reference."
+    )
+    aspect = _STABILITY_ASPECT_BY_VIEW.get(view, "1:1")
+    async with httpx.AsyncClient(timeout=180) as client:
         resp = await client.post(
-            "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+            f"https://api.stability.ai/v2beta/stable-image/generate/{model}",
             headers={"Authorization": f"Bearer {settings.STABILITY_API_KEY}", "Accept": "image/*"},
             files={"none": ""},
-            data={"prompt": prompt, "output_format": "png"},
+            data={
+                "prompt": prompt,
+                "output_format": "png",
+                "aspect_ratio": aspect,
+            },
         )
-        resp.raise_for_status()
+        if resp.status_code >= 400:
+            detail = resp.text[:500]
+            raise RuntimeError(f"HTTP {resp.status_code}: {detail}")
         return resp.content

@@ -57,7 +57,12 @@ class Settings(BaseSettings):
     # ProxyAPI / OpenAI image models (dall-e-3 is retired; use gpt-image-*)
     OPENAI_IMAGE_MODEL: str = "gpt-image-1-mini"
     OPENAI_TIMEOUT_SEC: float = 180.0
+    # Character / image gen: auto (openai→stability) | openai | stability
+    IMAGE_PROVIDER: str = "auto"
+    # Cloud Stability AI (https://platform.stability.ai) — no self-hosted SD needed
     STABILITY_API_KEY: str = ""
+    # generate path segment: core | sd3 | ultra
+    STABILITY_IMAGE_MODEL: str = "core"
     ELEVENLABS_API_KEY: str = ""
     USE_MOCK_AI: bool = True
 
