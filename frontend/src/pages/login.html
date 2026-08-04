@@ -22,14 +22,22 @@
       <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
       <h1 data-i18n="login.h1">Welcome back</h1>
       <p class="sub" data-i18n="login.sub">Sign in to your forge</p>
-      <form id="loginForm" class="form-grid">
-        <label><span data-i18n="login.email">Email</span> <input type="email" name="email" required placeholder="dev@studio.com" /></label>
-        <label><span data-i18n="login.password">Password</span> <input type="password" name="password" required minlength="10" /></label>
-        <button class="btn btn-primary" type="submit" id="loginBtn" data-i18n="login.submit">Sign in</button>
+      <form id="loginForm" class="auth-form">
+        <div class="field">
+          <label class="field-label" for="loginEmail" data-i18n="login.email">Email</label>
+          <input id="loginEmail" type="email" name="email" required autocomplete="email" inputmode="email" data-i18n="login.email_ph" data-i18n-attr="placeholder" placeholder="you@email.com" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="loginPassword" data-i18n="login.password">Password</label>
+          <input id="loginPassword" type="password" name="password" required minlength="10" autocomplete="current-password" data-i18n="login.password_ph" data-i18n-attr="placeholder" placeholder="Your password" />
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="loginBtn" data-i18n="login.submit">Sign in</button>
         <div class="loader" id="loginLoader"><div class="spinner"></div> <span data-i18n="login.signing">Signing in…</span></div>
       </form>
-      <p style="margin-top:1rem;color:var(--muted);font-size:0.9rem">
-        <span data-i18n="login.no_account">No account?</span> <a href="/register" data-i18n="login.create">Create one</a> ·
+      <p class="auth-footer">
+        <span data-i18n="login.no_account">No account?</span>
+        <a href="/register" data-i18n="login.create">Create one</a>
+        <span aria-hidden="true"> · </span>
         <a href="#" id="forgotLink" data-i18n="login.forgot">Forgot password</a>
       </p>
     </div>
@@ -47,10 +55,10 @@
     const next = safeNextPath(params.get("next"), "/dashboard");
     const emailPrefill = params.get("email");
     if (emailPrefill) {
-      const emailInput = document.querySelector('input[name="email"]');
+      const emailInput = document.getElementById("loginEmail");
       if (emailInput) emailInput.value = emailPrefill;
     }
-    const createLink = document.querySelector('a[href="/register"]');
+    const createLink = document.querySelector(".auth-footer a[href='/register'], .auth-footer a[href^=\"/register\"]");
     if (createLink) {
       const q = new URLSearchParams({ next });
       if (emailPrefill) q.set("email", emailPrefill);

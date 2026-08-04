@@ -22,14 +22,25 @@
       <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
       <h1 data-i18n="register.h1">Create account</h1>
       <p class="sub" data-i18n="register.sub">Start forging in under a minute</p>
-      <form id="regForm" class="form-grid">
-        <label><span data-i18n="register.name">Full name</span> <input name="full_name" placeholder="Alex Indie" /></label>
-        <label><span data-i18n="login.email">Email</span> <input type="email" name="email" required placeholder="dev@studio.com" /></label>
-        <label><span data-i18n="login.password">Password</span> <input type="password" name="password" required minlength="10" /></label>
-        <button class="btn btn-primary" type="submit" data-i18n="register.submit">Create account</button>
+      <form id="regForm" class="auth-form">
+        <div class="field">
+          <label class="field-label" for="regName" data-i18n="register.name">Full name</label>
+          <input id="regName" name="full_name" autocomplete="name" data-i18n="register.name_ph" data-i18n-attr="placeholder" placeholder="Your name" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="regEmail" data-i18n="login.email">Email</label>
+          <input id="regEmail" type="email" name="email" required autocomplete="email" inputmode="email" data-i18n="register.email_ph" data-i18n-attr="placeholder" placeholder="you@email.com" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="regPassword" data-i18n="login.password">Password</label>
+          <input id="regPassword" type="password" name="password" required minlength="10" autocomplete="new-password" data-i18n="register.password_ph" data-i18n-attr="placeholder" placeholder="At least 10 characters" />
+          <p class="field-hint" data-i18n="register.password_hint">Minimum 10 characters</p>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="register.submit">Create account</button>
       </form>
-      <p style="margin-top:1rem;color:var(--muted);font-size:0.9rem">
-        <span data-i18n="register.have">Already have an account?</span> <a href="/login" data-i18n="register.signin">Sign in</a>
+      <p class="auth-footer">
+        <span data-i18n="register.have">Already have an account?</span>
+        <a href="/login" data-i18n="register.signin">Sign in</a>
       </p>
     </div>
   </div>
@@ -45,10 +56,10 @@
     const next = safeNextPath(params.get("next"), "/dashboard");
     const emailPrefill = params.get("email");
     if (emailPrefill) {
-      const emailInput = document.querySelector('input[name="email"]');
+      const emailInput = document.getElementById("regEmail");
       if (emailInput) emailInput.value = emailPrefill;
     }
-    const signinLink = document.querySelector('a[href="/login"]');
+    const signinLink = document.querySelector(".auth-footer a[href='/login'], .auth-footer a[href^=\"/login\"]");
     if (signinLink) {
       const q = new URLSearchParams({ next });
       if (emailPrefill) q.set("email", emailPrefill);
