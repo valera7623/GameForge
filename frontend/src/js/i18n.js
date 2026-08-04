@@ -207,6 +207,7 @@ const DICT = {
     "texture.no": "No",
     "texture.submit": "Upscale",
     "texture.loading": "Upscaling…",
+    "texture.loading_cpu": "Upscaling on CPU — usually a few minutes…",
     "texture.result": "Result",
     "texture.toast": "Upscaled · +{xp} XP",
 
@@ -469,6 +470,7 @@ const DICT = {
     "texture.no": "Нет",
     "texture.submit": "Апскейл",
     "texture.loading": "Апскейл…",
+    "texture.loading_cpu": "Апскейл на CPU — обычно несколько минут…",
     "texture.result": "Результат",
     "texture.toast": "Готово · +{xp} XP",
 

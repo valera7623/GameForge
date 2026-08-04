@@ -40,7 +40,7 @@
           </div>
           <button class="btn btn-primary" type="submit" data-i18n="texture.submit">Upscale</button>
         </form>
-        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="texture.loading">Upscaling…</span></div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span id="loaderText" data-i18n="texture.loading">Upscaling…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
         <h2 data-i18n="texture.result">Result</h2>
@@ -78,7 +78,17 @@
         let gen = await ToolsAPI.upscale(fd.get("file"), Number(fd.get("scale")), fd.get("enhance") === "true", fd.get("project_id") || null);
         if (gen.status === "processing" || gen.status === "pending") {
           toast(t("common.queued"));
-          gen = await pollGeneration(gen.id);
+          const loaderText = document.getElementById("loaderText");
+          const started = Date.now();
+          // CPU Real-ESRGAN often needs 3–8+ minutes; default poll (3m) is too short.
+          gen = await pollGeneration(gen.id, {
+            intervalMs: 2000,
+            timeoutMs: 900000,
+            onTick: () => {
+              const sec = Math.round((Date.now() - started) / 1000);
+              if (loaderText) loaderText.textContent = `${t("texture.loading_cpu")} (${sec}s)`;
+            },
+          });
         }
         if (gen.status === "failed") throw new Error(gen.error_message || "Upscale failed");
         const out = gen.output_data;
