@@ -177,10 +177,21 @@ async def _openai_character(description: str, style: str, view: str) -> bytes:
     else:
         kwargs["quality"] = "medium"
     resp = await client.images.generate(**kwargs)
-    b64 = resp.data[0].b64_json
-    if not b64:
-        raise RuntimeError("Image provider returned empty payload")
-    return base64.b64decode(b64)
+    item = resp.data[0]
+    b64 = getattr(item, "b64_json", None)
+    if b64:
+        return base64.b64decode(b64)
+    # Some gateways (e.g. AITunnel docs examples) return a temporary URL instead.
+    url = getattr(item, "url", None)
+    if url:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=120) as http:
+            dl = await http.get(url)
+            if dl.status_code >= 400:
+                raise RuntimeError(f"Image download failed: HTTP {dl.status_code}")
+            return dl.content
+    raise RuntimeError("Image provider returned empty payload")
 
 
 async def _sd_character(description: str, style: str, view: str) -> bytes:

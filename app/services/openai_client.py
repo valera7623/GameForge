@@ -11,10 +11,12 @@ from app.config import get_settings
 @lru_cache
 def get_openai_client() -> AsyncOpenAI:
     """
-    OpenAI SDK pointed at ProxyAPI (or any OpenAI-compatible gateway).
+    OpenAI SDK pointed at any OpenAI-compatible gateway
+    (ProxyAPI, AITunnel, etc.).
 
-    Set OPENAI_API_KEY to your ProxyAPI key and keep:
-      OPENAI_BASE_URL=https://api.proxyapi.ru/openai/v1
+    Example AITunnel:
+      OPENAI_BASE_URL=https://api.aitunnel.ru/v1/
+      OPENAI_API_KEY=<aitunnel key>
     """
     settings = get_settings()
     timeout = httpx.Timeout(settings.OPENAI_TIMEOUT_SEC, connect=10.0)
