@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     IMAGE_PROVIDER: str = "auto"
     # Cloud Stability AI (https://platform.stability.ai) — no self-hosted SD needed
     STABILITY_API_KEY: str = ""
-    # generate path segment: core | sd3 | ultra
+    # core | ultra | sd3 | sd3.5-large | sd3.5-large-turbo | sd3.5-medium | sd3.5-flash
     STABILITY_IMAGE_MODEL: str = "core"
     ELEVENLABS_API_KEY: str = ""
     USE_MOCK_AI: bool = True

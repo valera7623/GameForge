@@ -29,6 +29,32 @@ _STABILITY_ASPECT_BY_VIEW = {
     "face": "1:1",
 }
 
+# STABILITY_IMAGE_MODEL → (API path segment, optional multipart `model` for /generate/sd3)
+_STABILITY_GENERATE_ALIASES: dict[str, tuple[str, str | None]] = {
+    "core": ("core", None),
+    "ultra": ("ultra", None),
+    "sd3": ("sd3", "sd3.5-large"),
+    "sd3.5-large": ("sd3", "sd3.5-large"),
+    "sd3-large": ("sd3", "sd3.5-large"),
+    "large": ("sd3", "sd3.5-large"),
+    "sd3.5-large-turbo": ("sd3", "sd3.5-large-turbo"),
+    "sd3-large-turbo": ("sd3", "sd3.5-large-turbo"),
+    "large-turbo": ("sd3", "sd3.5-large-turbo"),
+    "turbo": ("sd3", "sd3.5-large-turbo"),
+    "sd3.5-medium": ("sd3", "sd3.5-medium"),
+    "sd3-medium": ("sd3", "sd3.5-medium"),
+    "medium": ("sd3", "sd3.5-medium"),
+    "sd3.5-flash": ("sd3", "sd3.5-flash"),
+    "sd3-flash": ("sd3", "sd3.5-flash"),
+    "flash": ("sd3", "sd3.5-flash"),
+}
+
+
+def resolve_stability_generate(model: str) -> tuple[str, str | None]:
+    """Map STABILITY_IMAGE_MODEL to (path, optional sd3 `model` form field)."""
+    key = (model or "core").strip().lower()
+    return _STABILITY_GENERATE_ALIASES.get(key, ("core", None))
+
 
 def _mock_character_image(description: str, style: str) -> bytes:
     """Generate a stylized placeholder portrait when no AI keys are set."""
@@ -100,7 +126,8 @@ async def create_character(description: str, style: str = "fantasy", view: str =
             elif name == "stability" and try_stability:
                 try:
                     image_bytes = await _sd_character(description, style, view)
-                    provider = f"stability:{settings.STABILITY_IMAGE_MODEL}"
+                    path, sd3_model = resolve_stability_generate(settings.STABILITY_IMAGE_MODEL)
+                    provider = f"stability:{sd3_model or path}"
                 except Exception as exc:
                     errors.append(f"stability: {exc}")
         if image_bytes is None:
@@ -157,27 +184,28 @@ async def _openai_character(description: str, style: str, view: str) -> bytes:
 
 
 async def _sd_character(description: str, style: str, view: str) -> bytes:
-    """Cloud Stability AI generate (core / sd3 / ultra) — no self-hosted SD."""
+    """Cloud Stability AI generate (core / ultra / SD 3.5 via /sd3) — no self-hosted SD."""
     import httpx
 
-    model = (settings.STABILITY_IMAGE_MODEL or "core").strip().lower()
-    if model not in ("core", "sd3", "ultra"):
-        model = "core"
+    path, sd3_model = resolve_stability_generate(settings.STABILITY_IMAGE_MODEL)
     prompt = (
         f"Game character concept art, {view.replace('_', ' ')}, {style} style: {description}. "
         "Clean background, high detail, suitable as game asset reference."
     )
     aspect = _STABILITY_ASPECT_BY_VIEW.get(view, "1:1")
+    data: dict[str, Any] = {
+        "prompt": prompt,
+        "output_format": "png",
+        "aspect_ratio": aspect,
+    }
+    if sd3_model:
+        data["model"] = sd3_model
     async with httpx.AsyncClient(timeout=180) as client:
         resp = await client.post(
-            f"https://api.stability.ai/v2beta/stable-image/generate/{model}",
+            f"https://api.stability.ai/v2beta/stable-image/generate/{path}",
             headers={"Authorization": f"Bearer {settings.STABILITY_API_KEY}", "Accept": "image/*"},
             files={"none": ""},
-            data={
-                "prompt": prompt,
-                "output_format": "png",
-                "aspect_ratio": aspect,
-            },
+            data=data,
         )
         if resp.status_code >= 400:
             detail = resp.text[:500]
