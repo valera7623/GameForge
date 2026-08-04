@@ -149,6 +149,8 @@ async def invite_member(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    import secrets
+
     mem = await _membership(db, user.id, org_id)
     if not mem or mem.role not in (OrgMemberRole.OWNER, OrgMemberRole.ADMIN):
         raise HTTPException(status_code=403, detail="Only owners/admins can invite")
@@ -156,6 +158,45 @@ async def invite_member(
     org = await db.get(Organization, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
+
+    email = body.email.lower().strip()
+    role = OrgMemberRole.ADMIN if body.role == "admin" else OrgMemberRole.MEMBER
+
+    # Already a member?
+    existing_user = await db.scalar(select(User).where(User.email == email))
+    if existing_user:
+        already = await db.scalar(
+            select(OrgMembership.id).where(
+                OrgMembership.organization_id == org_id,
+                OrgMembership.user_id == existing_user.id,
+            )
+        )
+        if already:
+            raise HTTPException(status_code=400, detail="User is already a team member")
+
+    existing_invite = await db.scalar(
+        select(OrgInvite).where(
+            OrgInvite.organization_id == org_id,
+            OrgInvite.email == email,
+        )
+    )
+    if existing_invite and existing_invite.accepted_at is not None:
+        raise HTTPException(status_code=400, detail="Invite was already accepted")
+
+    if existing_invite:
+        # Re-send: refresh token/role instead of inserting a duplicate (uq_org_invite_email).
+        existing_invite.role = role
+        existing_invite.token = secrets.token_urlsafe(24)
+        existing_invite.invited_by = user.id
+        existing_invite.accepted_at = None
+        await db.flush()
+        await send_org_invite(email, org.name, existing_invite.token, user.full_name or user.email)
+        return {
+            "id": existing_invite.id,
+            "email": existing_invite.email,
+            "resent": True,
+            "token": existing_invite.token if settings.DEBUG else None,
+        }
 
     used = await db.scalar(
         select(func.count(OrgMembership.id)).where(OrgMembership.organization_id == org_id)
@@ -168,16 +209,15 @@ async def invite_member(
     if (used or 0) + (pending or 0) >= org.seats_limit:
         raise HTTPException(status_code=400, detail=f"Seat limit reached ({org.seats_limit})")
 
-    role = OrgMemberRole.ADMIN if body.role == "admin" else OrgMemberRole.MEMBER
     invite = OrgInvite(
         organization_id=org_id,
-        email=body.email.lower(),
+        email=email,
         role=role,
         invited_by=user.id,
     )
     db.add(invite)
     await db.flush()
-    await send_org_invite(body.email.lower(), org.name, invite.token, user.full_name or user.email)
+    await send_org_invite(email, org.name, invite.token, user.full_name or user.email)
     return {"id": invite.id, "email": invite.email, "token": invite.token if settings.DEBUG else None}
 
 

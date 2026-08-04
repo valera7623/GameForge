@@ -167,6 +167,7 @@ const DICT = {
     "team.send_invite": "Send invite",
     "team.toast_org": "Organization created",
     "team.toast_invite": "Invite sent",
+    "team.toast_invite_resent": "Invite re-sent to this email",
     "team.toast_invite_dev": "Invite sent (dev token: {token})",
 
     "level.title": "Level Designer — GameForge",
@@ -440,6 +441,7 @@ const DICT = {
     "team.send_invite": "Отправить",
     "team.toast_org": "Организация создана",
     "team.toast_invite": "Приглашение отправлено",
+    "team.toast_invite_resent": "Приглашение повторно отправлено на этот email",
     "team.toast_invite_dev": "Приглашение отправлено (dev-токен: {token})",
 
     "level.title": "Дизайн уровней — GameForge",

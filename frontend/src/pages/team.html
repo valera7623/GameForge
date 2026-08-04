@@ -101,7 +101,13 @@
               method: "POST",
               body: JSON.stringify({ email: fd.get("email"), role: fd.get("role") }),
             });
-            toast(res.token ? t("team.toast_invite_dev", { token: res.token }) : t("team.toast_invite"));
+            toast(
+              res.token
+                ? t("team.toast_invite_dev", { token: res.token })
+                : res.resent
+                  ? t("team.toast_invite_resent")
+                  : t("team.toast_invite")
+            );
           } catch (err) { toast(err.message, true); }
         });
       } catch (err) {
