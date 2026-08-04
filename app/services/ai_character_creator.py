@@ -49,14 +49,55 @@ _STYLE_DIRECTION: dict[str, str] = {
         "studio anime key visual style (makoto shinkai / modern TV anime lighting), "
         "NOT oil painting, NOT photoreal, NOT western comic ink"
     ),
+    "pixel": (
+        "classic pixel art game character sprite, visible pixels, limited 16–32 color palette, "
+        "crisp 1px outlines, dithering for shading, retro SNES / indie RPG sprite sheet look, "
+        "readable silhouette at low resolution — "
+        "NOT smooth gradients, NOT photoreal, NOT high-res digital painting, NOT 3D render"
+    ),
+    "lowpoly": (
+        "low-poly 3D game character, faceted geometric mesh, flat shaded triangles, "
+        "stylized minimal topology, soft studio lighting, clean game-engine viewport look, "
+        "bright but simple material colors — "
+        "NOT high-poly realism, NOT anime 2D, NOT pixel art, NOT oil painting"
+    ),
+    "comic": (
+        "western comic book / graphic novel character art, bold ink outlines, "
+        "halftone or flat cel color fills, dynamic comic shading, "
+        "superhero or pulp illustration palette with strong contrast, "
+        "NOT anime, NOT photoreal photo, NOT pixel art, NOT soft watercolor"
+    ),
+    "chibi": (
+        "chibi / super-deformed cute character, oversized head, tiny body, "
+        "big sparkling eyes, simplified limbs, pastel-friendly bright colors, "
+        "kawaii sticker / gacha game mascot style, clean flat shading — "
+        "NOT realistic proportions, NOT grimdark, NOT photoreal, NOT hard-surface sci-fi armor focus"
+    ),
 }
 
 
+def _normalize_style_key(style: str) -> str:
+    key = (style or "fantasy").strip().lower().replace("-", "").replace("_", "").replace(" ", "")
+    aliases = {
+        "scifi": "scifi",
+        "sciencefiction": "scifi",
+        "cyberpunk": "scifi",
+        "pixel": "pixel",
+        "pixelart": "pixel",
+        "lowpoly": "lowpoly",
+        "lowpolygon": "lowpoly",
+        "comic": "comic",
+        "comics": "comic",
+        "westerncomic": "comic",
+        "chibi": "chibi",
+        "cute": "chibi",
+        "kawaii": "chibi",
+    }
+    return aliases.get(key, key)
+
+
 def _character_prompt(description: str, style: str, view: str) -> str:
-    key = (style or "fantasy").strip().lower().replace("-", "").replace(" ", "")
-    # Accept sci-fi / sci_fi aliases
-    if key in ("scifi", "sciencefiction", "cyberpunk"):
-        key = "scifi"
+    key = _normalize_style_key(style)
     direction = _STYLE_DIRECTION.get(key) or (
         f"{style} art style with a clearly distinct color palette and rendering technique "
         f"matching {style}, not a generic concept-art look"
@@ -249,14 +290,16 @@ async def _sd_character(description: str, style: str, view: str) -> bytes:
     prompt = _character_prompt(description, style, view)
     aspect = _STABILITY_ASPECT_BY_VIEW.get(view, "1:1")
     # Push the model away from the "same concept art" average when switching styles.
-    style_key = (style or "fantasy").strip().lower().replace("-", "").replace(" ", "")
-    if style_key in ("scifi", "sciencefiction", "cyberpunk"):
-        style_key = "scifi"
+    style_key = _normalize_style_key(style)
     negative_by_style = {
-        "fantasy": "photorealistic, anime, cel shading, neon cyberpunk, chrome tech",
-        "scifi": "medieval, fantasy armor, oil painting, warm earth tones, anime eyes",
-        "realistic": "anime, cartoon, cel shading, neon glow, painterly brush strokes",
-        "anime": "photorealistic, oil painting, western comic, muddy realistic lighting",
+        "fantasy": "photorealistic, anime, cel shading, neon cyberpunk, chrome tech, pixel art",
+        "scifi": "medieval, fantasy armor, oil painting, warm earth tones, anime eyes, pixel art",
+        "realistic": "anime, cartoon, cel shading, neon glow, painterly brush strokes, pixel art, chibi",
+        "anime": "photorealistic, oil painting, western comic, muddy realistic lighting, pixel art",
+        "pixel": "smooth anti-aliased art, photoreal, 3D render, soft gradients, high resolution painting",
+        "lowpoly": "high-poly realism, anime 2D, pixel art, oil painting, detailed skin pores",
+        "comic": "anime eyes, photoreal photo, pixel art, soft watercolor, muddy greyscale only",
+        "chibi": "realistic adult proportions, grimdark gore, photoreal, hard-surface mech focus",
     }
     data: dict[str, Any] = {
         "prompt": prompt,
