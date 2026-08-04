@@ -21,6 +21,56 @@ _IMAGE_SIZE_BY_VIEW = {
     "face": "1024x1024",
 }
 
+# Strong art-direction blocks — a bare "{style} style" token is too weak for gpt-image / SD.
+_STYLE_DIRECTION: dict[str, str] = {
+    "fantasy": (
+        "high-fantasy digital painting, oil-painted illustration, "
+        "rich jewel tones (emerald, sapphire, gold, deep crimson), warm torchlight and magical glow, "
+        "ornate armor and cloaks, painterly brushwork, epic RPG key-art mood — "
+        "NOT sci-fi, NOT anime cel-shading, NOT photoreal photography"
+    ),
+    "scifi": (
+        "hard science-fiction concept art, cyberpunk / near-future tech aesthetic, "
+        "cool palette (cyan, electric blue, magenta neon, graphite metal, cold whites), "
+        "holographic UI accents, chrome and polymer materials, volumetric neon rim light, "
+        "crisp hard-surface design — "
+        "NOT medieval fantasy, NOT warm earth tones, NOT anime"
+    ),
+    "realistic": (
+        "photorealistic character portrait / full-body reference, cinematic photography look, "
+        "natural skin texture and subsurface scattering, grounded real-world fabrics and materials, "
+        "neutral-to-natural color grading, soft key light with realistic shadows, "
+        "like a film still or AAA character scan — "
+        "NOT stylized painting, NOT anime, NOT cartoon, NOT neon cyberpunk"
+    ),
+    "anime": (
+        "Japanese anime / manga character art, clean cel-shaded flat colors, "
+        "bold line art, large expressive eyes, saturated but flat color blocks, "
+        "studio anime key visual style (makoto shinkai / modern TV anime lighting), "
+        "NOT oil painting, NOT photoreal, NOT western comic ink"
+    ),
+}
+
+
+def _character_prompt(description: str, style: str, view: str) -> str:
+    key = (style or "fantasy").strip().lower().replace("-", "").replace(" ", "")
+    # Accept sci-fi / sci_fi aliases
+    if key in ("scifi", "sciencefiction", "cyberpunk"):
+        key = "scifi"
+    direction = _STYLE_DIRECTION.get(key) or (
+        f"{style} art style with a clearly distinct color palette and rendering technique "
+        f"matching {style}, not a generic concept-art look"
+    )
+    view_label = view.replace("_", " ")
+    # Style first — image models overweight the opening tokens.
+    return (
+        f"Art style (must follow strictly): {direction}. "
+        f"Subject: game character, {view_label} view. "
+        f"Character brief: {description}. "
+        "Single character, clean simple background, high detail, usable as a game asset reference. "
+        "Make the chosen art style and its color palette unmistakably different from other styles."
+    )
+
 # Stability AI aspect ratios (v2beta generate)
 _STABILITY_ASPECT_BY_VIEW = {
     "full_body": "2:3",
@@ -160,10 +210,7 @@ async def _openai_character(description: str, style: str, view: str) -> bytes:
     from app.services.openai_client import get_openai_client
 
     client = get_openai_client()
-    prompt = (
-        f"Game character concept art, {view.replace('_', ' ')}, {style} style: {description}. "
-        "Clean background, high detail, suitable as game asset reference."
-    )
+    prompt = _character_prompt(description, style, view)
     model = settings.OPENAI_IMAGE_MODEL
     size = _IMAGE_SIZE_BY_VIEW.get(view, "1024x1024")
     kwargs: dict[str, Any] = {
@@ -199,15 +246,25 @@ async def _sd_character(description: str, style: str, view: str) -> bytes:
     import httpx
 
     path, sd3_model = resolve_stability_generate(settings.STABILITY_IMAGE_MODEL)
-    prompt = (
-        f"Game character concept art, {view.replace('_', ' ')}, {style} style: {description}. "
-        "Clean background, high detail, suitable as game asset reference."
-    )
+    prompt = _character_prompt(description, style, view)
     aspect = _STABILITY_ASPECT_BY_VIEW.get(view, "1:1")
+    # Push the model away from the "same concept art" average when switching styles.
+    style_key = (style or "fantasy").strip().lower().replace("-", "").replace(" ", "")
+    if style_key in ("scifi", "sciencefiction", "cyberpunk"):
+        style_key = "scifi"
+    negative_by_style = {
+        "fantasy": "photorealistic, anime, cel shading, neon cyberpunk, chrome tech",
+        "scifi": "medieval, fantasy armor, oil painting, warm earth tones, anime eyes",
+        "realistic": "anime, cartoon, cel shading, neon glow, painterly brush strokes",
+        "anime": "photorealistic, oil painting, western comic, muddy realistic lighting",
+    }
     data: dict[str, Any] = {
         "prompt": prompt,
         "output_format": "png",
         "aspect_ratio": aspect,
+        "negative_prompt": negative_by_style.get(
+            style_key, "generic concept art, muddy colors, mixed styles"
+        ),
     }
     if sd3_model:
         data["model"] = sd3_model
