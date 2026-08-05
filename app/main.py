@@ -15,6 +15,7 @@ from app.api.v1 import (
     billing,
     character_creator,
     dashboard,
+    discord_bot,
     game_balancer,
     health,
     level_analyzer,
@@ -25,12 +26,11 @@ from app.api.v1 import (
     playtester,
     projects,
     quest_generator,
+    review_analyzer,
     sound_designer,
     store_description,
     texture_upscaler,
     trailer_script,
-    review_analyzer,
-    discord_bot,
 )
 from app.api.v1 import content as public_content
 from app.api.v1.admin import router as admin_router

@@ -6,8 +6,8 @@ import re
 
 from app.services.ai_discord_bot import (
     analyze_community,
-    encrypt_bot_token,
     decrypt_bot_token,
+    encrypt_bot_token,
     moderate_message,
     run_builtin_command,
 )

@@ -7,7 +7,6 @@ from httpx import AsyncClient
 
 from app.services.ai_game_balancer import analyze_game_data
 
-
 SAMPLE = {
     "game_name": "Dungeon Explorer",
     "version": "1.0.0",

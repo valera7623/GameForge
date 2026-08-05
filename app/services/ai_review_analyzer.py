@@ -340,7 +340,7 @@ def analyze_reviews(payload: dict[str, Any], lang: str | None = None) -> dict[st
     neu_n = labels.count("neutral")
     rated = [r["rating"] for r in reviews if r.get("rating") is not None]
     avg_rating = round(sum(rated) / len(rated), 2) if rated else round(
-        sum(_sentiment_score_1_5(l, None) for l in labels) / n, 2
+        sum(_sentiment_score_1_5(label, None) for label in labels) / n, 2
     )
     lang_counts = Counter(r["language"] or "en" for r in reviews)
 
