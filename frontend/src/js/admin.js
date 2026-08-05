@@ -167,6 +167,7 @@ export function mountAdminShell(activeKey) {
   applyDomI18n(shell);
   applyTheme(getTheme());
   bindThemeToggles(shell);
+  import("./analytics.js").then((m) => m.syncMetrikaBadge?.()).catch(() => {});
   document.getElementById("langBtn")?.addEventListener("click", () => {
     setLang(getLang() === "ru" ? "en" : "ru");
     location.reload();
