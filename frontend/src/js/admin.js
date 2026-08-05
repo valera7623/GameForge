@@ -132,6 +132,11 @@ export const AdminAPI = {
 
 function adminSidebar(active) {
   const nextLang = getLang() === "ru" ? "EN" : "RU";
+  const user = currentUser();
+  const email = user?.email ? String(user.email) : "";
+  const userBlock = email
+    ? `<div class="sidebar-user" title="${escapeHtml(email)}">${escapeHtml(email)}</div>`
+    : "";
   return `
     <aside class="sidebar admin-sidebar" aria-label="Admin">
       <div class="sidebar-top">
@@ -148,6 +153,7 @@ function adminSidebar(active) {
         ).join("")}
       </nav>
       <div class="spacer"></div>
+      ${userBlock}
       <a href="/dashboard" class="sidebar-docs">${escapeHtml(t("admin.nav.app"))}</a>
       <a href="#" id="logoutBtn" class="sidebar-logout">${escapeHtml(t("nav.signout"))}</a>
     </aside>

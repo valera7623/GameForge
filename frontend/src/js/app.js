@@ -131,9 +131,11 @@ export function sidebarHTML(active) {
   const activeKey = (active || "").replace(/\.html$/, "");
   const nextLang = getLang() === "ru" ? "EN" : "RU";
   let adminLink = "";
+  let userEmail = "";
   try {
     const raw = localStorage.getItem("gf_user");
     const u = raw ? JSON.parse(raw) : null;
+    if (u?.email) userEmail = String(u.email);
     const staff = u && ["super_admin", "admin", "manager", "support"].includes(u.role);
     if (staff) {
       adminLink = `<a href="/admin">${t("nav.admin")}</a>`;
@@ -141,6 +143,9 @@ export function sidebarHTML(active) {
   } catch {
     /* ignore */
   }
+  const userBlock = userEmail
+    ? `<div class="sidebar-user" title="${escapeHtml(userEmail)}">${escapeHtml(userEmail)}</div>`
+    : "";
   return `
     <aside class="sidebar" aria-label="Main">
       <div class="sidebar-top">
@@ -175,6 +180,7 @@ export function sidebarHTML(active) {
           ${adminLink}
         </nav>
         <div class="spacer"></div>
+        ${userBlock}
         <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer" class="sidebar-docs">${t("nav.docs")}</a>
         <a href="#" id="logoutBtn" class="sidebar-logout">${t("nav.signout")}</a>
       </div>

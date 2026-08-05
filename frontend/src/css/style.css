@@ -595,6 +595,18 @@ a:hover {
   font-size: 0.9rem;
 }
 
+.sidebar-user {
+  display: block;
+  padding: 0.35rem 0.65rem 0.15rem;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sidebar-docs:hover {
   color: var(--text);
   background: var(--bg);
