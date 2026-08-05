@@ -168,9 +168,23 @@
     let last = null;
 
     function setJson(obj) {
-      document.getElementById("gameJson").value = JSON.stringify(obj, null, 2);
+      const ta = document.getElementById("gameJson");
+      const text = JSON.stringify(obj, null, 2);
+      // Force textarea refresh even when content is identical
+      ta.value = "";
+      ta.value = text;
       if (obj.game_name) document.getElementById("gameName").value = obj.game_name;
       if (obj.version) document.getElementById("gameVersion").value = obj.version;
+      ta.focus();
+      ta.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function loadSample() {
+      setJson(structuredClone(SAMPLE));
+      try {
+        localStorage.removeItem(DRAFT_KEY);
+      } catch { /* ignore */ }
+      toast(t("bal.sample_loaded"));
     }
 
     function readPayload() {
@@ -275,7 +289,10 @@
       });
     }).catch(() => {});
 
-    document.getElementById("loadSample").addEventListener("click", () => setJson(SAMPLE));
+    document.getElementById("loadSample").addEventListener("click", (e) => {
+      e.preventDefault();
+      loadSample();
+    });
     document.getElementById("saveLocal").addEventListener("click", () => {
       try {
         const body = readPayload();
