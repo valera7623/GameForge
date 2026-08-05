@@ -278,6 +278,28 @@ class StoreDescriptionRequest(BaseModel):
         return self
 
 
+class PlaytestAnalyzerRequest(BaseModel):
+    """Playtest session dump for retention / difficulty / feedback analysis."""
+
+    project_id: Optional[UUID] = None
+    game_name: str = Field(default="Untitled Game", max_length=200)
+    sessions: List[dict] = Field(default_factory=list)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+    def to_playtest_data(self) -> dict:
+        return {
+            "game_name": self.game_name,
+            "sessions": self.sessions,
+            "lang": self.lang,
+        }
+
+    @model_validator(mode="after")
+    def _require_sessions(self) -> "PlaytestAnalyzerRequest":
+        if not self.sessions:
+            raise ValueError("Provide at least one playtest session")
+        return self
+
+
 class LocalizationRequest(BaseModel):
     project_id: Optional[UUID] = None
     texts: dict[str, str]  # key -> source text

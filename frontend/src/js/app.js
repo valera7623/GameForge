@@ -117,6 +117,7 @@ const ROUTES = [
   ["game-balancer", "nav.balancer"],
   ["level-analyzer", "nav.level_analyzer"],
   ["store-description", "nav.store"],
+  ["playtest-analyzer", "nav.playtest_analyzer"],
   ["team", "nav.team"],
 ];
 
@@ -131,6 +132,7 @@ const TOOL_ROUTES = [
   ["game-balancer", "nav.balancer", "dash.tool.bal_d"],
   ["level-analyzer", "nav.level_analyzer", "dash.tool.lana_d"],
   ["store-description", "nav.store", "dash.tool.store_d"],
+  ["playtest-analyzer", "nav.playtest_analyzer", "dash.tool.pta_d"],
 ];
 
 export function sidebarHTML(active) {

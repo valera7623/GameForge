@@ -21,6 +21,7 @@ from app.api.v1 import (
     level_designer,
     localization,
     orgs,
+    playtest_analyzer,
     playtester,
     projects,
     quest_generator,
@@ -143,6 +144,7 @@ app.include_router(localization.router, prefix=prefix)
 app.include_router(game_balancer.router, prefix=prefix)
 app.include_router(level_analyzer.router, prefix=prefix)
 app.include_router(store_description.router, prefix=prefix)
+app.include_router(playtest_analyzer.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)

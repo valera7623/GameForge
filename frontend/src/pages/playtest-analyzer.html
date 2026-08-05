@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="pta.title">Playtest Analyzer — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .pta-score {
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      margin: 0.75rem 0 1.25rem;
+    }
+    .pta-score strong { font-family: Orbitron, sans-serif; font-size: 1.6rem; }
+    .pta-bar {
+      flex: 1; min-width: 160px; height: 10px; border-radius: 999px;
+      background: color-mix(in srgb, var(--border) 80%, transparent);
+      overflow: hidden;
+    }
+    .pta-bar > i {
+      display: block; height: 100%; border-radius: 999px;
+      background: var(--accent); width: 0%; transition: width .4s ease;
+    }
+    .pta-metrics {
+      display: grid; gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      margin: 0.75rem 0 1.25rem;
+    }
+    .pta-metric {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;
+      background: var(--bg);
+    }
+    .pta-metric span { display: block; color: var(--muted); font-size: 0.75rem; }
+    .pta-metric strong { font-variant-numeric: tabular-nums; }
+    .pta-issue {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.75rem 0.9rem; margin: 0.5rem 0;
+      background: var(--bg-elevated);
+    }
+    .pta-issue[data-sev="high"] { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+    .pta-issue[data-sev="medium"] { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
+    .pta-issue[data-sev="low"] { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .pta-sev { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .pta-charts { display: grid; gap: 1rem; margin-top: 1rem; }
+    @media (min-width: 900px) { .pta-charts { grid-template-columns: 1fr 1fr; } }
+    .pta-chart {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem;
+      background: var(--bg);
+    }
+    .pta-chart h3 { margin: 0 0 0.75rem; font-size: 0.95rem; }
+    .pta-bars { display: flex; flex-direction: column; gap: 0.45rem; }
+    .pta-row { display: grid; grid-template-columns: 100px 1fr 48px; gap: 0.5rem; align-items: center; font-size: 0.85rem; }
+    .pta-row .track { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--border) 70%, transparent); overflow: hidden; }
+    .pta-row .track > i { display:block; height:100%; background: var(--accent); border-radius: 999px; }
+    .pta-row .val { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .pta-heat { display: grid; gap: 2px; margin-top: 0.5rem; }
+    .pta-heat i { display:block; aspect-ratio:1; border-radius: 2px; }
+    #playtestJson { min-height: 280px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="pta.h1">AI Playtest Analyzer</h1>
+        <p data-i18n="pta.sub">Find difficulty spikes, drop-offs, and feedback patterns from playtest sessions.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="pta.step1">Step 1: Upload playtest data</h2>
+        <form id="form" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="pta.game_name">Game name</span>
+              <input name="game_name" id="gameName" value="Dungeon Explorer" required />
+            </label>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
+            </label>
+          </div>
+          <label><span data-i18n="pta.json">Playtest data (JSON)</span>
+            <textarea id="playtestJson" spellcheck="false"></textarea>
+          </label>
+          <p id="sessionStats" style="color:var(--muted);font-size:0.9rem;margin:0"></p>
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="pta.sample">Load sample</button>
+            <button class="btn btn-ghost" type="button" id="loadFile" data-i18n="pta.load">Load from JSON</button>
+            <input type="file" id="fileInput" accept="application/json,.json,.csv,text/csv" hidden />
+            <button class="btn btn-ghost" type="button" id="saveLocal" data-i18n="pta.save">Save draft</button>
+            <button class="btn btn-primary" type="submit" data-i18n="pta.analyze">Analyze</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="pta.loading">Analyzing playtest…</span></div>
+      </div>
+
+      <div class="panel" id="resultPanel" hidden>
+        <h2 data-i18n="pta.step2">Step 2: Results</h2>
+        <div class="pta-score">
+          <div><span data-i18n="pta.score_label">Playtest health</span><br /><strong id="scoreVal">—</strong></div>
+          <div class="pta-bar" aria-hidden="true"><i id="scoreBar"></i></div>
+        </div>
+        <div class="pta-metrics" id="metrics"></div>
+        <p id="summary" style="color:var(--muted)"></p>
+
+        <h3 data-i18n="pta.insights">Insights</h3>
+        <div id="insights"></div>
+
+        <h3 data-i18n="pta.issues">Issues found</h3>
+        <div id="issues"></div>
+
+        <h3 data-i18n="pta.recs">Recommendations</h3>
+        <div id="recs"></div>
+
+        <h3 data-i18n="pta.viz">Visualizations</h3>
+        <div class="pta-charts" id="charts"></div>
+
+        <div class="actions" style="margin-top:1rem">
+          <button class="btn btn-ghost" id="dlJson" data-i18n="pta.export">Export JSON</button>
+          <button class="btn btn-ghost" id="dlText" data-i18n="pta.export_text">Export report</button>
+          <button class="btn btn-ghost" id="reanalyze" data-i18n="pta.reanalyze">Re-analyze</button>
+        </div>
+        <details style="margin-top:1rem">
+          <summary data-i18n="pta.raw">Raw JSON</summary>
+          <div class="result-box" style="margin-top:0.75rem"><pre id="jsonOut"></pre></div>
+        </details>
+      </div>
+
+      <div id="toolHistory"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, mountToolHistory, setLoading, toast, t } from "../js/app.js";
+
+    mountShell("playtest-analyzer");
+    applyDomI18n(document);
+    mountToolHistory("playtest_analyzer");
+
+    const DRAFT_KEY = "gf_playtest_analyzer_draft";
+    let last = null;
+
+    const SAMPLE = {
+      game_name: "Dungeon Explorer",
+      sessions: [
+        {
+          session_id: "sess_001",
+          player_id: "player_001",
+          duration_seconds: 1200,
+          deaths: 3,
+          completion_time: 1080,
+          feedback: {
+            rating: 4,
+            comment: "Great game! The combat feels smooth, but the tutorial was confusing.",
+            tags: ["combat", "tutorial", "confusing"],
+          },
+          events: [
+            { type: "start", timestamp: 0 },
+            { type: "combat", timestamp: 100, duration: 45 },
+            { type: "death", timestamp: 145 },
+            { type: "respawn", timestamp: 150 },
+            { type: "combat", timestamp: 200, duration: 30 },
+            { type: "death", timestamp: 230 },
+            { type: "respawn", timestamp: 235 },
+            { type: "treasure", timestamp: 360 },
+            { type: "boss", timestamp: 500, duration: 120, name: "Boss 2" },
+            { type: "death", timestamp: 560 },
+            { type: "complete", timestamp: 620 },
+          ],
+        },
+        {
+          session_id: "sess_002",
+          player_id: "player_002",
+          duration_seconds: 1800,
+          deaths: 8,
+          completion_time: null,
+          feedback: {
+            rating: 2,
+            comment: "Way too hard! The second boss is impossible. I gave up after 20 tries.",
+            tags: ["difficulty", "boss", "frustrating"],
+          },
+          events: [
+            { type: "start", timestamp: 0 },
+            { type: "combat", timestamp: 100, duration: 30 },
+            { type: "death", timestamp: 130 },
+            { type: "boss", timestamp: 280, name: "Boss 2" },
+            { type: "death", timestamp: 300 },
+            { type: "death", timestamp: 310 },
+            { type: "quit", timestamp: 330 },
+          ],
+        },
+        {
+          session_id: "sess_003",
+          player_id: "player_003",
+          duration_seconds: 900,
+          deaths: 1,
+          completion_time: 880,
+          feedback: {
+            rating: 5,
+            comment: "Combat is awesome. Inventory UI is a bit confusing though.",
+            tags: ["combat", "inventory", "ui"],
+          },
+          events: [
+            { type: "start", timestamp: 0 },
+            { type: "combat", timestamp: 80, duration: 40 },
+            { type: "treasure", timestamp: 200 },
+            { type: "boss", timestamp: 400, name: "Boss 1" },
+            { type: "death", timestamp: 450 },
+            { type: "complete", timestamp: 500 },
+          ],
+        },
+      ],
+    };
+
+    function setJson(data) {
+      document.getElementById("playtestJson").value = JSON.stringify(data, null, 2);
+      if (data.game_name) document.getElementById("gameName").value = data.game_name;
+      updateStats(data);
+    }
+
+    function updateStats(data) {
+      const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+      const playtime = sessions.reduce((a, s) => a + (Number(s.duration_seconds) || 0), 0);
+      const ratings = sessions.map((s) => s?.feedback?.rating).filter((r) => r != null).map(Number);
+      const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : "—";
+      const hours = (playtime / 3600).toFixed(1);
+      document.getElementById("sessionStats").textContent = t("pta.stats", {
+        n: sessions.length,
+        hours,
+        rating: avg,
+      });
+    }
+
+    function readPayload() {
+      let data;
+      try {
+        data = JSON.parse(document.getElementById("playtestJson").value);
+      } catch {
+        throw new Error(t("pta.bad_json"));
+      }
+      if (!data || typeof data !== "object") throw new Error(t("pta.bad_json"));
+      data.game_name = document.getElementById("gameName").value.trim() || data.game_name || "Untitled Game";
+      data.lang = getLang() === "ru" ? "ru" : "en";
+      const pid = document.getElementById("projectSelect").value;
+      if (pid) data.project_id = pid;
+      if (!Array.isArray(data.sessions) || !data.sessions.length) {
+        throw new Error(t("pta.no_sessions"));
+      }
+      return data;
+    }
+
+    function renderBars(container, labels, values) {
+      const max = Math.max(...values.map(Number), 0.01);
+      container.innerHTML = `<div class="pta-bars">${labels.map((lab, i) => {
+        const v = Number(values[i] ?? 0);
+        const pct = Math.round((v / max) * 100);
+        return `<div class="pta-row"><span>${escapeHtml(String(lab))}</span><div class="track"><i style="width:${pct}%"></i></div><span class="val">${escapeHtml(String(v))}</span></div>`;
+      }).join("")}</div>`;
+    }
+
+    function renderHeat(container, grid) {
+      if (!Array.isArray(grid) || !grid.length) {
+        container.textContent = t("pta.no_heat");
+        return;
+      }
+      const flat = grid.flat();
+      const max = Math.max(...flat, 1);
+      const cols = grid[0].length;
+      container.innerHTML = `<div class="pta-heat" style="grid-template-columns:repeat(${cols},1fr)">${grid.map((row) =>
+        row.map((v) => {
+          const a = Math.min(0.95, 0.12 + (v / max) * 0.85);
+          return `<i style="background:color-mix(in srgb, var(--danger) ${Math.round(a * 100)}%, transparent)" title="${v}"></i>`;
+        }).join("")
+      ).join("")}</div>`;
+    }
+
+    function cardList(items, emptyKey) {
+      if (!items?.length) return `<p style="color:var(--muted)">${escapeHtml(t(emptyKey))}</p>`;
+      return items.map((item) => {
+        const sev = item.severity || "low";
+        const sevLabel = t(`pta.sev.${sev}`) !== `pta.sev.${sev}` ? t(`pta.sev.${sev}`) : sev;
+        const title = item.description || item.action || "";
+        const meta = item.location || item.target || "";
+        return `<div class="pta-issue" data-sev="${escapeHtml(sev)}">
+          <div class="pta-sev">${escapeHtml(sevLabel)}${meta ? ` · ${escapeHtml(String(meta))}` : ""}</div>
+          <div>${escapeHtml(String(title))}</div>
+        </div>`;
+      }).join("");
+    }
+
+    function fmtDuration(sec) {
+      const s = Number(sec) || 0;
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return `${m}:${String(r).padStart(2, "0")}`;
+    }
+
+    function renderResult(out) {
+      last = out;
+      document.getElementById("resultPanel").hidden = false;
+      const score = out.health_score ?? 0;
+      document.getElementById("scoreVal").textContent = `${score}/100`;
+      document.getElementById("scoreBar").style.width = `${score}%`;
+      document.getElementById("summary").textContent = out.summary_text || out.summary_narrative || "";
+      document.getElementById("jsonOut").textContent = JSON.stringify(out, null, 2);
+
+      const s = out.summary || {};
+      document.getElementById("metrics").innerHTML = [
+        [t("pta.m.sessions"), s.total_sessions ?? "—"],
+        [t("pta.m.duration"), fmtDuration(s.average_duration)],
+        [t("pta.m.deaths"), s.average_deaths ?? "—"],
+        [t("pta.m.completion"), `${s.completion_rate ?? 0}%`],
+        [t("pta.m.rating"), s.average_rating ? `${s.average_rating}/5` : "—"],
+        [t("pta.m.dropoff"), `${s.drop_off_rate ?? 0}%`],
+      ].map(([lab, val]) => `<div class="pta-metric"><span>${escapeHtml(lab)}</span><strong>${escapeHtml(String(val))}</strong></div>`).join("");
+
+      document.getElementById("insights").innerHTML = cardList(out.insights, "pta.no_insights");
+      document.getElementById("issues").innerHTML = cardList(out.issues, "pta.no_issues");
+      document.getElementById("recs").innerHTML = (out.recommendations || []).length
+        ? out.recommendations.map((r) => `<div class="pta-issue" data-sev="low"><div class="pta-sev">${escapeHtml(String(r.target || ""))}</div><div>${escapeHtml(String(r.description || ""))}</div></div>`).join("")
+        : `<p style="color:var(--muted)">${escapeHtml(t("pta.no_recs"))}</p>`;
+
+      const charts = document.getElementById("charts");
+      charts.innerHTML = "";
+      const viz = out.visualizations || [];
+      if (!viz.length) {
+        charts.innerHTML = `<p style="color:var(--muted)">${escapeHtml(t("pta.no_viz"))}</p>`;
+        return;
+      }
+      viz.forEach((v) => {
+        const el = document.createElement("div");
+        el.className = "pta-chart";
+        el.innerHTML = `<h3>${escapeHtml(v.title || v.type || "")}</h3><div class="body"></div>`;
+        const body = el.querySelector(".body");
+        if (v.type === "heatmap") {
+          const grid = typeof v.data === "string" ? JSON.parse(v.data) : v.data;
+          renderHeat(body, grid);
+        } else if (v.data?.labels && v.data?.values) {
+          renderBars(body, v.data.labels, v.data.values);
+        } else {
+          body.textContent = JSON.stringify(v.data);
+        }
+        charts.appendChild(el);
+      });
+    }
+
+    function exportText(out) {
+      const lines = [
+        `=== ${out.game_name || "Playtest"} ===`,
+        out.summary_text || "",
+        "",
+        "Insights:",
+        ...(out.insights || []).map((i) => `- [${i.severity}] ${i.description}`),
+        "",
+        "Issues:",
+        ...(out.issues || []).map((i) => `- [${i.severity}] ${i.description}`),
+        "",
+        "Recommendations:",
+        ...(out.recommendations || []).map((r) => `- ${r.target}: ${r.description}`),
+      ];
+      return lines.join("\n");
+    }
+
+    async function analyze() {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const payload = readPayload();
+        updateStats(payload);
+        const gen = await ToolsAPI.playtestAnalyze(payload);
+        renderResult(gen.output_data || {});
+        toast(t("pta.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("playtest_analyzer");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try { setJson(JSON.parse(saved)); } catch { setJson(structuredClone(SAMPLE)); }
+    } else {
+      setJson(structuredClone(SAMPLE));
+    }
+
+    ProjectsAPI.list().then((list) => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }).catch(() => {});
+
+    document.getElementById("playtestJson").addEventListener("input", () => {
+      try { updateStats(JSON.parse(document.getElementById("playtestJson").value)); } catch { /* ignore */ }
+    });
+
+    document.getElementById("loadSample").addEventListener("click", (e) => {
+      e.preventDefault();
+      setJson(structuredClone(SAMPLE));
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      toast(t("pta.sample_loaded"));
+    });
+    document.getElementById("loadFile").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        if (file.name.endsWith(".csv") || file.type.includes("csv")) {
+          toast(t("pta.csv_hint"), true);
+          return;
+        }
+        const data = JSON.parse(text);
+        setJson(data);
+        toast(t("pta.loaded"));
+      } catch (err) {
+        toast(err.message || t("pta.bad_json"), true);
+      } finally {
+        e.target.value = "";
+      }
+    });
+    document.getElementById("saveLocal").addEventListener("click", () => {
+      try {
+        const data = JSON.parse(document.getElementById("playtestJson").value);
+        data.game_name = document.getElementById("gameName").value.trim() || data.game_name;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        toast(t("pta.saved"));
+      } catch (err) {
+        toast(err.message || t("pta.bad_json"), true);
+      }
+    });
+    document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); analyze(); });
+    document.getElementById("reanalyze").addEventListener("click", () => analyze());
+    document.getElementById("dlJson").addEventListener("click", () => {
+      if (last) downloadJSON("playtest-analyzer.json", last);
+    });
+    document.getElementById("dlText").addEventListener("click", () => {
+      if (!last) return;
+      const blob = new Blob([exportText(last)], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "playtest-analyzer.txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  </script>
+</body>
+</html>

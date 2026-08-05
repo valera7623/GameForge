@@ -145,4 +145,22 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/localization" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/localization" />
   </url>
+  <url>
+    <loc>https://gameforge.website/tools/playtest-analyzer</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/playtest-analyzer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/playtest-analyzer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/playtest-analyzer" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/playtest-analyzer</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/playtest-analyzer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/playtest-analyzer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/playtest-analyzer" />
+  </url>
 </urlset>

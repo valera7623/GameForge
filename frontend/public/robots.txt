@@ -12,6 +12,10 @@ Disallow: /character-creator
 Disallow: /sound-designer
 Disallow: /playtester
 Disallow: /localization
+Disallow: /game-balancer
+Disallow: /level-analyzer
+Disallow: /store-description
+Disallow: /playtest-analyzer
 Disallow: /login
 Disallow: /register
 Disallow: /reset-password

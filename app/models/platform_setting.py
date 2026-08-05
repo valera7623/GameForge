@@ -31,6 +31,7 @@ DEFAULT_TOOLS = {
     "game_balancer": {"enabled": True, "display_name": "Game Balancer"},
     "level_analyzer": {"enabled": True, "display_name": "Level Analyzer"},
     "store_description": {"enabled": True, "display_name": "Store Description"},
+    "playtest_analyzer": {"enabled": True, "display_name": "AI Playtest Analyzer"},
 }
 
 DEFAULT_AI_MODELS = {
