@@ -1,4 +1,21 @@
 User-agent: *
 Allow: /
+Allow: /ru
+Allow: /tools
 
-Sitemap: /sitemap.xml
+Disallow: /dashboard
+Disallow: /team
+Disallow: /level-designer
+Disallow: /quest-generator
+Disallow: /texture-upscaler
+Disallow: /character-creator
+Disallow: /sound-designer
+Disallow: /playtester
+Disallow: /localization
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
+Disallow: /accept-invite
+Disallow: /api/
+
+Sitemap: https://gameforge.website/sitemap.xml

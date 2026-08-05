@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://gameforge.website/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/level-designer</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/level-designer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/level-designer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/level-designer" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/level-designer</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/level-designer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/level-designer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/level-designer" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/quest-generator</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/quest-generator" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/quest-generator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/quest-generator" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/quest-generator</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/quest-generator" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/quest-generator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/quest-generator" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/texture-upscaler</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/texture-upscaler" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/texture-upscaler" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/texture-upscaler" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/texture-upscaler</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/texture-upscaler" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/texture-upscaler" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/texture-upscaler" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/character-creator</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/character-creator" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/character-creator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/character-creator" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/character-creator</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/character-creator" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/character-creator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/character-creator" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/sound-designer</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/sound-designer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/sound-designer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/sound-designer" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/sound-designer</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/sound-designer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/sound-designer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/sound-designer" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/playtester</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/playtester" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/playtester" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/playtester" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/playtester</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/playtester" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/playtester" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/playtester" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/tools/localization</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/localization" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/localization" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/localization" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/localization</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/localization" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/localization" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/localization" />
+  </url>
+</urlset>
