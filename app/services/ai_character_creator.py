@@ -248,9 +248,8 @@ async def create_character(description: str, style: str = "fantasy", view: str =
 async def _openai_character(description: str, style: str, view: str) -> bytes:
     import base64
 
-    from app.services.openai_client import get_openai_client
+    from app.services.openai_client import image_generate
 
-    client = get_openai_client()
     prompt = _character_prompt(description, style, view)
     model = settings.OPENAI_IMAGE_MODEL
     size = _IMAGE_SIZE_BY_VIEW.get(view, "1024x1024")
@@ -264,7 +263,7 @@ async def _openai_character(description: str, style: str, view: str) -> bytes:
         kwargs["response_format"] = "b64_json"
     else:
         kwargs["quality"] = "medium"
-    resp = await client.images.generate(**kwargs)
+    resp = await image_generate(**kwargs)
     item = resp.data[0]
     b64 = getattr(item, "b64_json", None)
     if b64:

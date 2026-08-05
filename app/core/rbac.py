@@ -29,6 +29,9 @@ PERMISSIONS: dict[str, FrozenSet[UserRole]] = {
     "subscriptions:write": frozenset({UserRole.SUPER_ADMIN, UserRole.ADMIN}),
     "settings:read": STAFF_ROLES,
     "settings:write": frozenset({UserRole.SUPER_ADMIN}),
+    "logs:read": STAFF_ROLES,
+    "content:read": STAFF_ROLES,
+    "content:write": frozenset({UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER}),
 }
 
 

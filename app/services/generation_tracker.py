@@ -1,6 +1,7 @@
 """Track generations, XP, and achievements."""
 
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any, Optional
 from uuid import UUID
 
@@ -11,6 +12,8 @@ from sqlalchemy.orm import selectinload
 from app.models.achievement import Achievement, UserAchievement
 from app.models.generation import Generation, GenerationStatus, ToolType
 from app.models.user import User
+from app.services.ai_costing import estimate_cost_usd
+from app.services.openai_client import LlmUsage
 
 XP_PER_GENERATION = 10
 
@@ -49,6 +52,7 @@ async def create_generation(
     input_data: dict[str, Any],
     project_id: Optional[UUID] = None,
     title: Optional[str] = None,
+    client_ip: Optional[str] = None,
 ) -> Generation:
     gen = Generation(
         user_id=user.id,
@@ -57,10 +61,29 @@ async def create_generation(
         status=GenerationStatus.PROCESSING,
         title=title or tool.value.replace("_", " ").title(),
         input_data=input_data,
+        client_ip=client_ip,
     )
     db.add(gen)
     await db.flush()
     return gen
+
+
+def apply_usage_metrics(
+    generation: Generation,
+    *,
+    duration_ms: Optional[int] = None,
+    usage: Optional[LlmUsage] = None,
+    pricing: Optional[dict[str, Any]] = None,
+) -> None:
+    if duration_ms is not None:
+        generation.duration_ms = duration_ms
+    if usage is None:
+        return
+    generation.prompt_tokens = usage.prompt_tokens or None
+    generation.completion_tokens = usage.completion_tokens or None
+    generation.model_name = usage.model_name
+    cost = estimate_cost_usd(usage, pricing)
+    generation.cost_usd = cost if cost > 0 else Decimal("0")
 
 
 async def complete_generation(
@@ -69,6 +92,10 @@ async def complete_generation(
     user: User,
     output_data: dict[str, Any],
     asset_urls: Optional[list] = None,
+    *,
+    duration_ms: Optional[int] = None,
+    usage: Optional[LlmUsage] = None,
+    pricing: Optional[dict[str, Any]] = None,
 ) -> Generation:
     now = datetime.now(timezone.utc)
     ensure_monthly_counters(user, now)
@@ -78,6 +105,7 @@ async def complete_generation(
     generation.asset_urls = asset_urls
     generation.completed_at = now
     generation.xp_awarded = XP_PER_GENERATION
+    apply_usage_metrics(generation, duration_ms=duration_ms, usage=usage, pricing=pricing)
 
     user.xp += XP_PER_GENERATION
     user.xp_this_month = (user.xp_this_month or 0) + XP_PER_GENERATION
@@ -106,10 +134,18 @@ async def complete_generation(
     return generation
 
 
-async def fail_generation(db: AsyncSession, generation: Generation, error: str) -> Generation:
+async def fail_generation(
+    db: AsyncSession,
+    generation: Generation,
+    error: str,
+    *,
+    duration_ms: Optional[int] = None,
+) -> Generation:
     generation.status = GenerationStatus.FAILED
     generation.error_message = error
     generation.completed_at = datetime.now(timezone.utc)
+    if duration_ms is not None:
+        generation.duration_ms = duration_ms
     await db.flush()
     return generation
 

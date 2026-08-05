@@ -1,7 +1,9 @@
 """SQLAlchemy models package."""
 
 from app.models.achievement import Achievement, UserAchievement
+from app.models.content import ContentItem
 from app.models.generation import Generation
+from app.models.ops_log import ApiRequestLog, AuditLog, ErrorLog
 from app.models.organization import Organization, OrgInvite, OrgMembership
 from app.models.platform_setting import PlatformSetting
 from app.models.project import Project
@@ -22,4 +24,8 @@ __all__ = [
     "OrgInvite",
     "RefreshToken",
     "PlatformSetting",
+    "AuditLog",
+    "ErrorLog",
+    "ApiRequestLog",
+    "ContentItem",
 ]

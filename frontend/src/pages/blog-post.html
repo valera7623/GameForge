@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post — GameForge</title>
+  <meta name="description" content="GameForge blog post" />
+  <link rel="canonical" href="https://gameforge.website/blog/post" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/blog/post" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/blog/post" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .cms-wrap { max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .cms-wrap h1 { font-family: Orbitron, sans-serif; margin-bottom: .5rem; }
+    .cms-wrap article { margin: 1.5rem 0; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border, #3333); }
+    .cms-wrap .muted { opacity: .7; }
+    .cms-body h2 { margin-top: 1.25rem; }
+    .cms-nav { display:flex; gap:1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="cms-wrap">
+    <nav class="cms-nav">
+      <a href="/">GameForge</a>
+      <a href="/faq">FAQ</a>
+      <a href="/blog">Blog</a>
+      <a href="/ru/blog">RU</a>
+    </nav>
+    <h1>Post</h1>
+    <p class="muted" id="sub"></p>
+    <div id="content"></div>
+  </div>
+  <script type="module">
+const locale = "en";
+const API = "/api/v1";
+const slug = new URLSearchParams(location.search).get("slug");
+async function load() {
+  if (!slug) { location.href = locale === "ru" ? "/ru/blog" : "/blog"; return; }
+  const res = await fetch(`${API}/content/blog/${encodeURIComponent(slug)}?locale=${locale}`);
+  if (!res.ok) { document.getElementById("content").innerHTML = "<p>Not found</p>"; return; }
+  const i = await res.json();
+  document.title = (i.meta_title || i.title) + " — GameForge";
+  const md = document.querySelector('meta[name="description"]');
+  if (md && i.meta_description) md.setAttribute("content", i.meta_description);
+  document.querySelector("h1").textContent = i.title;
+  document.getElementById("sub").textContent = i.published_at || "";
+  document.getElementById("content").innerHTML = `<div class="cms-body">${i.body_html}</div>`;
+}
+load().catch(console.error);
+  </script>
+</body>
+</html>

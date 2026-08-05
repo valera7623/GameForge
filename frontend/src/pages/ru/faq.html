@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAQ — GameForge</title>
+  <meta name="description" content="Frequently asked questions about GameForge" />
+  <link rel="canonical" href="https://gameforge.website/ru/faq" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/faq" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/faq" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .cms-wrap { max-width: 44rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    .cms-wrap h1 { font-family: Orbitron, sans-serif; margin-bottom: .5rem; }
+    .cms-wrap article { margin: 1.5rem 0; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border, #3333); }
+    .cms-wrap .muted { opacity: .7; }
+    .cms-body h2 { margin-top: 1.25rem; }
+    .cms-nav { display:flex; gap:1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="cms-wrap">
+    <nav class="cms-nav">
+      <a href="/ru/">GameForge</a>
+      <a href="/ru/faq">FAQ</a>
+      <a href="/ru/blog">Blog</a>
+      <a href="/faq">EN</a>
+    </nav>
+    <h1>FAQ</h1>
+    <p class="muted" id="sub">Answers for game developers using GameForge</p>
+    <div id="content"></div>
+  </div>
+  <script type="module">
+const locale = "ru";
+const API = "/api/v1";
+async function load() {
+  const res = await fetch(`${API}/content/faq?locale=${locale}&page_size=50`);
+  const data = await res.json();
+  const el = document.getElementById("content");
+  if (!data.items?.length) { el.innerHTML = "<p class=\"muted\">No FAQ yet.</p>"; return; }
+  el.innerHTML = data.items.map(i => `<article><h2>${i.title}</h2><div class="cms-body">${i.body_html}</div></article>`).join("");
+}
+load().catch(console.error);
+  </script>
+</body>
+</html>

@@ -111,9 +111,7 @@ async def run_playtest(
 
 
 async def _openai_playtest(game_description: str, scenarios: List[str], focus: str) -> dict[str, Any]:
-    from app.services.openai_client import get_openai_client
-
-    client = get_openai_client()
+    from app.services.openai_client import chat_completion
     prompt = f"""You are a senior game QA analyst. Produce a JSON playtest report.
 Game: {game_description}
 Scenarios: {scenarios}
@@ -121,7 +119,7 @@ Focus: {focus}
 Include: overall_score (0-100), bugs[], balance[], ux[], scenario_results[], recommendations[].
 Respond with valid JSON only."""
 
-    resp = await client.chat.completions.create(
+    resp = await chat_completion(
         model=settings.OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,

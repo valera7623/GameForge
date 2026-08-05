@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Content — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.content.h1">Content</h1></div>
+      <a class="btn btn-primary" id="newBtn" href="/admin/content/edit" hidden data-i18n="admin.content.new">New</a></div>
+    <div class="admin-filters">
+      <select id="kind"><option value="">All</option><option>faq</option><option>blog</option><option>page</option></select>
+      <select id="locale"><option value="">All locales</option><option>en</option><option>ru</option></select>
+      <select id="status"><option value="">All status</option><option>draft</option><option>published</option></select>
+      <button class="btn btn-primary" id="go" data-i18n="admin.search">Search</button>
+    </div>
+    <div class="panel"><div class="admin-table-wrap"><table class="admin-table" id="tbl">
+      <thead><tr><th>Title</th><th>Kind</th><th>Locale</th><th>Status</th><th>Slug</th><th></th></tr></thead><tbody></tbody>
+    </table></div><div id="pager"></div></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, pagerHtml, t, canWriteContent } from "../../js/admin.js";
+(async () => {
+  const me = await requireStaff();
+  if (!me) throw new Error("staff");
+  mountAdminShell("content");
+  applyDomI18n(document);
+  if (canWriteContent(me.role)) document.getElementById("newBtn").hidden = false;
+  let page = 1;
+  async function load() {
+    const params = { page, page_size: 20 };
+    const kind = document.getElementById("kind").value;
+    const locale = document.getElementById("locale").value;
+    const status = document.getElementById("status").value;
+    if (kind) params.kind = kind;
+    if (locale) params.locale = locale;
+    if (status) params.status = status;
+    const data = await AdminAPI.content(params);
+    document.querySelector("#tbl tbody").innerHTML = data.items.map(c => `<tr>
+      <td>${escapeHtml(c.title)}</td><td>${escapeHtml(c.kind)}</td><td>${escapeHtml(c.locale)}</td>
+      <td>${escapeHtml(c.status)}</td><td class="admin-mono">${escapeHtml(c.slug)}</td>
+      <td><a class="btn btn-ghost" href="/admin/content/edit?id=${c.id}">${escapeHtml(t("admin.open"))}</a></td>
+    </tr>`).join("") || `<tr><td colspan="6">${escapeHtml(t("admin.empty"))}</td></tr>`;
+    document.getElementById("pager").innerHTML = pagerHtml(data.page, data.page_size, data.total);
+    document.querySelectorAll("#pager [data-page]").forEach(b => b.addEventListener("click", () => {
+      const p = Number(b.dataset.page); if (p >= 1) { page = p; load(); }
+    }));
+  }
+  document.getElementById("go").onclick = () => { page = 1; load(); };
+  load();
+})().catch(console.error);
+</script>
+</body>
+</html>

@@ -16,6 +16,9 @@ const NAV = [
   ["generations", "admin.nav.generations", "/admin/generations"],
   ["subscriptions", "admin.nav.subscriptions", "/admin/subscriptions"],
   ["tools", "admin.nav.tools", "/admin/tools"],
+  ["ai-models", "admin.nav.ai_models", "/admin/ai-models"],
+  ["content", "admin.nav.content", "/admin/content"],
+  ["logs", "admin.nav.logs", "/admin/logs"],
   ["settings", "admin.nav.settings", "/admin/settings"],
 ];
 
@@ -37,6 +40,10 @@ export function canWriteSettings(role) {
 
 export function canWriteSubs(role) {
   return role === "super_admin" || role === "admin";
+}
+
+export function canWriteContent(role) {
+  return role === "super_admin" || role === "admin" || role === "manager";
 }
 
 /** Guard: must be logged in + staff. Returns admin me payload or redirects. */
@@ -92,6 +99,35 @@ export const AdminAPI = {
   toggleTool: (name) => api(`/admin/tools/${name}/toggle`, { method: "POST", body: "{}" }),
   settings: () => api("/admin/settings"),
   saveSettings: (body) => api("/admin/settings", { method: "PUT", body: JSON.stringify(body) }),
+  aiModels: () => api("/admin/ai-models"),
+  saveAiModels: (models) => api("/admin/ai-models", { method: "PUT", body: JSON.stringify({ models }) }),
+  aiCosts: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/admin/ai-models/costs${q ? `?${q}` : ""}`);
+  },
+  logsAudit: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/admin/logs/audit${q ? `?${q}` : ""}`);
+  },
+  logsErrors: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/admin/logs/errors${q ? `?${q}` : ""}`);
+  },
+  logsApi: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/admin/logs/api${q ? `?${q}` : ""}`);
+  },
+  purgeLogs: () => api("/admin/logs/purge", { method: "POST", body: "{}" }),
+  content: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/admin/content${q ? `?${q}` : ""}`);
+  },
+  contentItem: (id) => api(`/admin/content/${id}`),
+  createContent: (body) => api("/admin/content", { method: "POST", body: JSON.stringify(body) }),
+  updateContent: (id, body) => api(`/admin/content/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  deleteContent: (id) => api(`/admin/content/${id}`, { method: "DELETE" }),
+  publishContent: (id) => api(`/admin/content/${id}/publish`, { method: "POST", body: "{}" }),
+  unpublishContent: (id) => api(`/admin/content/${id}/unpublish`, { method: "POST", body: "{}" }),
 };
 
 function adminSidebar(active) {

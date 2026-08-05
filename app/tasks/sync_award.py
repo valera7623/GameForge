@@ -12,7 +12,14 @@ from app.models.user import User
 from app.services.generation_tracker import ACHIEVEMENT_THRESHOLDS, XP_PER_GENERATION, current_month_key
 
 
-def award_generation_sync(session: Session, gen: Generation, user: User, result: dict) -> None:
+def award_generation_sync(
+    session: Session,
+    gen: Generation,
+    user: User,
+    result: dict,
+    *,
+    duration_ms: int | None = None,
+) -> None:
     now = datetime.now(timezone.utc)
     key = current_month_key(now)
     if getattr(user, "xp_month_key", None) != key:
@@ -24,6 +31,13 @@ def award_generation_sync(session: Session, gen: Generation, user: User, result:
     gen.asset_urls = [result.get("url")] if result.get("url") else result.get("asset_urls")
     gen.completed_at = now
     gen.xp_awarded = XP_PER_GENERATION
+    if duration_ms is not None:
+        gen.duration_ms = duration_ms
+    from app.models.platform_setting import DEFAULT_AI_MODELS
+    from app.services.generation_tracker import apply_usage_metrics
+    from app.services.openai_client import get_llm_usage
+
+    apply_usage_metrics(gen, duration_ms=duration_ms, usage=get_llm_usage(), pricing=DEFAULT_AI_MODELS)
     user.xp += XP_PER_GENERATION
     user.xp_this_month = (user.xp_this_month or 0) + XP_PER_GENERATION
     user.total_generations += 1
@@ -55,10 +69,14 @@ def refund_quota_sync(session: Session, user_id) -> None:
     )
 
 
-def fail_generation_sync(session: Session, gen: Generation, error: str) -> None:
+def fail_generation_sync(
+    session: Session, gen: Generation, error: str, *, duration_ms: int | None = None
+) -> None:
     gen.status = GenerationStatus.FAILED
     gen.error_message = error
     gen.completed_at = datetime.now(timezone.utc)
+    if duration_ms is not None:
+        gen.duration_ms = duration_ms
     refund_quota_sync(session, gen.user_id)
 
 

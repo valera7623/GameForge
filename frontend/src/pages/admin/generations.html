@@ -35,7 +35,7 @@
     </div>
     <div class="panel" id="statsPanel"><h2 data-i18n="admin.gens.stats">Stats</h2><div id="stats" class="muted"></div></div>
     <div class="panel"><div class="admin-table-wrap"><table class="admin-table" id="tbl">
-      <thead><tr><th>ID</th><th>User</th><th>Tool</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody></tbody>
+      <thead><tr><th>ID</th><th>User</th><th>Tool</th><th>Status</th><th>Cost</th><th>ms</th><th>Created</th><th></th></tr></thead><tbody></tbody>
     </table></div><div id="pager"></div></div>
   </main></div>
   <script type="module">
@@ -64,9 +64,11 @@ import { statusBadge } from "../../js/app.js";
           <td>${escapeHtml(g.user_email || g.user_id)}</td>
           <td>${escapeHtml(g.tool)}</td>
           <td>${statusBadge(g.status)}</td>
+          <td>${g.cost_usd != null ? "$"+Number(g.cost_usd).toFixed(4) : "—"}</td>
+          <td>${g.duration_ms != null ? g.duration_ms : "—"}</td>
           <td>${escapeHtml(g.created_at)}</td>
           <td><a class="btn btn-ghost" href="/admin/generation?id=${g.id}">${escapeHtml(t("admin.open"))}</a></td>
-        </tr>`).join("") || `<tr><td colspan="6">${escapeHtml(t("admin.empty"))}</td></tr>`;
+        </tr>`).join("") || `<tr><td colspan="8">${escapeHtml(t("admin.empty"))}</td></tr>`;
         document.getElementById("pager").innerHTML = pagerHtml(data.page, data.page_size, data.total);
         document.querySelectorAll("#pager [data-page]").forEach((b) => b.addEventListener("click", () => {
           const p = Number(b.dataset.page); if (p >= 1) { page = p; load(); }

@@ -87,6 +87,9 @@ nav:
   - Admin Guide:
       - admin-guide/index.md
       - Users and Roles: admin-guide/users.md
+      - Content CMS: admin-guide/content.md
+      - AI Models and Costs: admin-guide/logs-and-costs.md
+      - Ops Logs: admin-guide/ops-logs.md
       - Production Checklist: admin-guide/production.md
       - Monitoring: admin-guide/monitoring.md
       - Backup: admin-guide/backup.md

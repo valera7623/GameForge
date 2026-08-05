@@ -128,9 +128,7 @@ async def generate_level(
 
 
 async def _openai_level(description: str, width: int, height: int, style: str) -> dict[str, Any]:
-    from app.services.openai_client import get_openai_client
-
-    client = get_openai_client()
+    from app.services.openai_client import chat_completion
     prompt = f"""Generate a game level as JSON only (no markdown).
 Description: {description}
 Size: {width}x{height}, style: {style}
@@ -143,7 +141,7 @@ Schema: {{
 }}
 Keep tiles as a compact {height}x{width} grid. Respond with valid JSON only."""
 
-    resp = await client.chat.completions.create(
+    resp = await chat_completion(
         model=settings.OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.7,

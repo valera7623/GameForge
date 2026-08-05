@@ -105,15 +105,13 @@ async def generate_quest(
 
 
 async def _openai_quest(setting: str, quest_type: str, length: str, tone: str) -> dict[str, Any]:
-    from app.services.openai_client import get_openai_client
-
-    client = get_openai_client()
+    from app.services.openai_client import chat_completion
     prompt = f"""Create a game quest as JSON only.
 Setting: {setting}, type: {quest_type}, length: {length}, tone: {tone}
 Include: title, description, objectives[], dialogues[], rewards, branching, export hints.
 Respond with valid JSON only."""
 
-    resp = await client.chat.completions.create(
+    resp = await chat_completion(
         model=settings.OPENAI_MODEL,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.8,

@@ -12,6 +12,7 @@ from app.database import Base
 # Setting keys
 SETTING_GENERAL = "general"
 SETTING_TOOLS = "tools"
+SETTING_AI_MODELS = "ai_models"
 
 DEFAULT_GENERAL = {
     "app_name": "GameForge",
@@ -27,6 +28,16 @@ DEFAULT_TOOLS = {
     "sound_designer": {"enabled": True, "display_name": "Sound Designer"},
     "playtester": {"enabled": True, "display_name": "Playtester"},
     "localization": {"enabled": True, "display_name": "Localization"},
+}
+
+DEFAULT_AI_MODELS = {
+    "openai_chat": {"model": "gpt-4o-mini", "input_per_1m": 0.15, "output_per_1m": 0.60},
+    "openai_image": {"model": "dall-e-3", "per_image": 0.04},
+    "stability_audio": {"per_call": 0.02},
+    "replicate_musicgen": {"per_call": 0.01},
+    "elevenlabs": {"per_call": 0.03},
+    "stability_image": {"per_call": 0.02},
+    "realesrgan": {"per_call": 0.005},
 }
 
 

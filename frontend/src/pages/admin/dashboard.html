@@ -48,6 +48,7 @@ import { statusBadge } from "../../js/app.js";
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.gens"))}</div><div class="value">${data.generations_total}</div></div>
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.revenue"))}</div><div class="value">$${data.revenue_usd_estimate}</div></div>
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.activity"))}</div><div class="value">${data.activity_pct}%</div></div>
+        <div class="stat"><div class="label">${escapeHtml(t("admin.dash.ai_spend"))}</div><div class="value">$${(data.ai_spend_usd_7d || 0).toFixed(4)}</div></div>
       `;
       const max = Math.max(1, ...data.generations_last_7_days.map((d) => d.count));
       document.getElementById("chart").innerHTML = data.generations_last_7_days.map((d) =>

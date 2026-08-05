@@ -25,6 +25,7 @@ celery_app = Celery(
         "app.tasks.upscale_task",
         "app.tasks.character_task",
         "app.tasks.sound_task",
+        "app.tasks.purge_logs_task",
     ],
 )
 
@@ -37,4 +38,10 @@ celery_app.conf.update(
     task_track_started=True,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    beat_schedule={
+        "purge-ops-logs-daily": {
+            "task": "tasks.purge_ops_logs",
+            "schedule": 86400.0,  # every 24h
+        },
+    },
 )

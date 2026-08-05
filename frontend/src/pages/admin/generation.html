@@ -41,6 +41,8 @@ import { statusBadge } from "../../js/app.js";
       document.getElementById("box").innerHTML = `
         <p>${statusBadge(g.status)} · user <a href="/admin/user?id=${g.user_id}">${escapeHtml(g.user_email || g.user_id)}</a></p>
         <p class="muted">${escapeHtml(g.created_at)} → ${escapeHtml(g.completed_at || "—")}</p>
+        <p>IP: ${escapeHtml(g.client_ip || "—")} · Duration: ${g.duration_ms != null ? g.duration_ms + " ms" : "—"} · Model: ${escapeHtml(g.model_name || "—")}</p>
+        <p>Tokens: ${g.prompt_tokens ?? "—"} / ${g.completion_tokens ?? "—"} · Cost: ${g.cost_usd != null ? "$" + Number(g.cost_usd).toFixed(6) : "—"}</p>
         ${g.error_message ? `<p class="error-text">${escapeHtml(g.error_message)}</p>` : ""}
         <h3>Input</h3><pre class="admin-mono">${escapeHtml(JSON.stringify(g.input_data, null, 2))}</pre>
         <h3>Output</h3><pre class="admin-mono">${escapeHtml(JSON.stringify(g.output_data, null, 2))}</pre>

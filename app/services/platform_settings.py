@@ -9,8 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.generation import ToolType
 from app.models.platform_setting import (
+    DEFAULT_AI_MODELS,
     DEFAULT_GENERAL,
     DEFAULT_TOOLS,
+    SETTING_AI_MODELS,
     SETTING_GENERAL,
     SETTING_TOOLS,
     PlatformSetting,
@@ -56,6 +58,13 @@ async def get_tools_settings(db: AsyncSession) -> dict[str, Any]:
             "display_name": entry.get("display_name") or default.get("display_name") or name,
         }
     return out
+
+
+async def get_ai_models_settings(db: AsyncSession) -> dict[str, Any]:
+    from app.services.ai_costing import merge_ai_models
+
+    raw = await get_setting(db, SETTING_AI_MODELS, DEFAULT_AI_MODELS)
+    return merge_ai_models(raw)
 
 
 async def is_tool_enabled(db: AsyncSession, tool: ToolType | str) -> bool:

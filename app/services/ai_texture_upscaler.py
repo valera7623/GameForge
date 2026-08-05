@@ -69,6 +69,12 @@ async def upscale_texture(
 
     url = upload_bytes(result_bytes, f"upscaled_{scale}x_{filename}", "image/png", "textures")
     result_img = Image.open(io.BytesIO(result_bytes))
+    from app.services.openai_client import record_provider_call
+
+    if provider == "realesrgan":
+        record_provider_call("realesrgan", "realesrgan")
+    elif provider == "stability":
+        record_provider_call("stability_image", "stability-upscale")
 
     return {
         "original_size": {"width": orig_w, "height": orig_h},

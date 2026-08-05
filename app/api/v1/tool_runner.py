@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Awaitable, Callable, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.rate_limiter import rate_limit
+from app.core.rate_limiter import _client_ip, rate_limit
 from app.deps import refund_generation_quota, reserve_generation_quota
 from app.models.generation import Generation, ToolType
 from app.models.user import User
 from app.schemas import GenerationResponse
 from app.services.generation_tracker import complete_generation, create_generation, fail_generation
-from app.services.platform_settings import is_tool_enabled
+from app.services.openai_client import begin_llm_usage, get_llm_usage, reset_llm_usage
+from app.services.ops_logs import record_error
+from app.services.platform_settings import get_ai_models_settings, is_tool_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -70,17 +73,44 @@ async def run_tool(
         input_data,
         project_id=project_id,
         title=title,
+        client_ip=_client_ip(request),
     )
+    begin_llm_usage()
+    t0 = time.perf_counter()
     try:
         output = await run()
+        duration_ms = int((time.perf_counter() - t0) * 1000)
         urls = asset_urls_from(output) if asset_urls_from else None
-        gen = await complete_generation(db, gen, user, output, asset_urls=urls)
+        pricing = await get_ai_models_settings(db)
+        gen = await complete_generation(
+            db,
+            gen,
+            user,
+            output,
+            asset_urls=urls,
+            duration_ms=duration_ms,
+            usage=get_llm_usage(),
+            pricing=pricing,
+        )
     except Exception as exc:
+        duration_ms = int((time.perf_counter() - t0) * 1000)
         logger.exception("Tool %s failed for user %s", tool.value, user.id)
-        await fail_generation(db, gen, str(exc))
+        await fail_generation(db, gen, str(exc), duration_ms=duration_ms)
+        await record_error(
+            db,
+            source="generation",
+            message=str(exc),
+            status_code=502,
+            path=str(request.url.path),
+            user_id=user.id,
+            generation_id=gen.id,
+            request_id=getattr(request.state, "request_id", None),
+        )
         await refund_generation_quota(user, db)
         await db.commit()
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+    finally:
+        reset_llm_usage()
 
     return generation_to_response(gen)
 
@@ -107,6 +137,7 @@ async def enqueue_tool(
         input_data,
         project_id=project_id,
         title=title,
+        client_ip=_client_ip(request),
     )
     try:
         enqueue(gen)
@@ -114,6 +145,16 @@ async def enqueue_tool(
     except Exception as exc:
         logger.exception("Failed to enqueue %s", tool.value)
         await fail_generation(db, gen, str(exc))
+        await record_error(
+            db,
+            source="generation",
+            message=str(exc),
+            status_code=502,
+            path=str(request.url.path),
+            user_id=user.id,
+            generation_id=gen.id,
+            request_id=getattr(request.state, "request_id", None),
+        )
         await refund_generation_quota(user, db)
         await db.commit()
         raise HTTPException(status_code=502, detail=str(exc)) from exc

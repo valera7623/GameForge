@@ -25,9 +25,11 @@ from app.api.v1 import (
     sound_designer,
     texture_upscaler,
 )
+from app.api.v1 import content as public_content
 from app.api.v1.admin import router as admin_router
 from app.config import get_settings, validate_settings
 from app.database import init_db
+from app.middleware.api_request_log import ApiRequestLogMiddleware
 
 settings = get_settings()
 logger = logging.getLogger("gamedev")
@@ -114,6 +116,7 @@ app = FastAPI(
 )
 
 app.add_middleware(RequestIdMiddleware)
+app.add_middleware(ApiRequestLogMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
@@ -137,6 +140,7 @@ app.include_router(localization.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)
+app.include_router(public_content.router, prefix=prefix)
 
 local_assets = Path("/tmp/gamedev-assets")
 local_assets.mkdir(parents=True, exist_ok=True)

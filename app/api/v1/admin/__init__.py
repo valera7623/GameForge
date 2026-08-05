@@ -11,6 +11,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.api.v1.admin import ai_models as admin_ai_models
+from app.api.v1.admin import content as admin_content
+from app.api.v1.admin import logs as admin_logs
 from app.api.v1.admin.schemas import (
     AdminGenerationListOut,
     AdminGenerationOut,
@@ -42,6 +45,7 @@ from app.models.platform_setting import SETTING_GENERAL, SETTING_TOOLS
 from app.models.subscription import PlanType, Subscription, SubscriptionStatus
 from app.models.user import User, UserRole
 from app.services.billing_service import PLANS
+from app.services.ops_logs import record_audit
 from app.services.platform_settings import (
     get_general_settings,
     get_tools_settings,
@@ -50,6 +54,10 @@ from app.services.platform_settings import (
 
 settings = get_settings()
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+router.include_router(admin_ai_models.router)
+router.include_router(admin_logs.router)
+router.include_router(admin_content.router)
 
 
 def _user_out(user: User) -> AdminUserOut:
@@ -85,6 +93,12 @@ def _gen_out(gen: Generation, email: Optional[str] = None) -> AdminGenerationOut
         project_id=gen.project_id,
         created_at=gen.created_at,
         completed_at=gen.completed_at,
+        client_ip=gen.client_ip,
+        duration_ms=gen.duration_ms,
+        prompt_tokens=gen.prompt_tokens,
+        completion_tokens=gen.completion_tokens,
+        cost_usd=float(gen.cost_usd) if gen.cost_usd is not None else None,
+        model_name=gen.model_name,
     )
 
 
@@ -169,6 +183,11 @@ async def dashboard(
         for u in recent.scalars().all()
     ]
 
+    spend_q = await db.execute(
+        select(func.coalesce(func.sum(Generation.cost_usd), 0)).where(Generation.created_at >= since)
+    )
+    ai_spend = float(spend_q.scalar() or 0)
+
     return DashboardOut(
         users_total=users_total,
         generations_total=generations_total,
@@ -176,6 +195,7 @@ async def dashboard(
         activity_pct=activity_pct,
         generations_last_7_days=series,
         recent_users=recent_users,
+        ai_spend_usd_7d=round(ai_spend, 4),
     )
 
 
@@ -273,6 +293,9 @@ async def block_user(
         raise HTTPException(status_code=403, detail="Cannot block super_admin")
     target.is_active = False
     await db.flush()
+    await record_audit(
+        db, actor_id=actor.id, action="user.block", target_type="user", target_id=str(target.id)
+    )
     return _user_out(target)
 
 
@@ -290,6 +313,9 @@ async def unblock_user(
         raise HTTPException(status_code=404, detail="User not found")
     target.is_active = True
     await db.flush()
+    await record_audit(
+        db, actor_id=actor.id, action="user.unblock", target_type="user", target_id=str(target.id)
+    )
     return _user_out(target)
 
 
@@ -309,6 +335,9 @@ async def delete_user(
         raise HTTPException(status_code=403, detail="Cannot delete super_admin")
     await db.delete(target)
     await db.flush()
+    await record_audit(
+        db, actor_id=actor.id, action="user.delete", target_type="user", target_id=str(user_id)
+    )
     return {"ok": True, "id": str(user_id)}
 
 
@@ -339,6 +368,14 @@ async def set_user_role(
 
     target.role = new_role
     await db.flush()
+    await record_audit(
+        db,
+        actor_id=actor.id,
+        action="user.role",
+        target_type="user",
+        target_id=str(target.id),
+        meta={"role": new_role.value},
+    )
     return _user_out(target)
 
 
@@ -558,6 +595,14 @@ async def toggle_tool(
     tools[name]["enabled"] = not tools[name]["enabled"]
     await set_setting(db, SETTING_TOOLS, tools)
     meta = tools[name]
+    await record_audit(
+        db,
+        actor_id=actor.id,
+        action="tool.toggle",
+        target_type="tool",
+        target_id=name,
+        meta={"enabled": meta["enabled"]},
+    )
     return AdminToolOut(name=name, display_name=meta["display_name"], enabled=meta["enabled"])
 
 
@@ -607,6 +652,7 @@ async def put_settings(
     if body.notes is not None:
         general["notes"] = body.notes
     await set_setting(db, SETTING_GENERAL, general)
+    await record_audit(db, actor_id=actor.id, action="settings.update", target_type="platform_setting", target_id="general")
     return GeneralSettingsOut(
         app_name=general.get("app_name") or "GameForge",
         domain=general.get("domain") or "gameforge.website",

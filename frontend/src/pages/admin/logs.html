@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Logs — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.logs.h1">Logs</h1><p data-i18n="admin.logs.sub">Retention 30 days</p></div>
+      <button class="btn btn-ghost" id="purge" hidden data-i18n="admin.logs.purge">Purge old</button></div>
+    <div class="admin-filters">
+      <button class="btn btn-primary tab" data-tab="audit">Audit</button>
+      <button class="btn btn-ghost tab" data-tab="errors">Errors</button>
+      <button class="btn btn-ghost tab" data-tab="api">API</button>
+    </div>
+    <div class="panel"><div class="admin-table-wrap"><table class="admin-table" id="tbl"><thead></thead><tbody></tbody></table></div><div id="pager"></div></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, pagerHtml, t, canWriteSettings } from "../../js/admin.js";
+import { toast } from "../../js/app.js";
+(async () => {
+  const me = await requireStaff();
+  if (!me) throw new Error("staff");
+  mountAdminShell("logs");
+  applyDomI18n(document);
+  if (canWriteSettings(me.role)) {
+    const p = document.getElementById("purge");
+    p.hidden = false;
+    p.onclick = async () => { try { const r = await AdminAPI.purgeLogs(); toast(JSON.stringify(r.deleted)); load(); } catch(e){ toast(e.message,true);} };
+  }
+  let tab = "audit", page = 1;
+  document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
+    tab = b.dataset.tab; page = 1;
+    document.querySelectorAll(".tab").forEach(x => x.className = "btn " + (x.dataset.tab===tab?"btn-primary":"btn-ghost") + " tab");
+    load();
+  });
+  async function load() {
+    let data;
+    if (tab === "audit") data = await AdminAPI.logsAudit({ page, page_size: 30 });
+    else if (tab === "errors") data = await AdminAPI.logsErrors({ page, page_size: 30 });
+    else data = await AdminAPI.logsApi({ page, page_size: 30 });
+    const thead = document.querySelector("#tbl thead");
+    const tbody = document.querySelector("#tbl tbody");
+    if (tab === "audit") {
+      thead.innerHTML = "<tr><th>When</th><th>Action</th><th>Target</th><th>Actor</th><th>IP</th></tr>";
+      tbody.innerHTML = data.items.map(r => `<tr><td>${escapeHtml(r.created_at)}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml((r.target_type||"")+" "+(r.target_id||""))}</td><td class="admin-mono">${escapeHtml(r.actor_id||"")}</td><td>${escapeHtml(r.ip||"")}</td></tr>`).join("") || `<tr><td colspan="5">${escapeHtml(t("admin.empty"))}</td></tr>`;
+    } else if (tab === "errors") {
+      thead.innerHTML = "<tr><th>When</th><th>Source</th><th>Status</th><th>Message</th><th>Path</th></tr>";
+      tbody.innerHTML = data.items.map(r => `<tr><td>${escapeHtml(r.created_at)}</td><td>${escapeHtml(r.source)}</td><td>${r.status_code||""}</td><td>${escapeHtml(r.message)}</td><td>${escapeHtml(r.path||"")}</td></tr>`).join("") || `<tr><td colspan="5">${escapeHtml(t("admin.empty"))}</td></tr>`;
+    } else {
+      thead.innerHTML = "<tr><th>When</th><th>Method</th><th>Path</th><th>Status</th><th>ms</th><th>IP</th></tr>";
+      tbody.innerHTML = data.items.map(r => `<tr><td>${escapeHtml(r.created_at)}</td><td>${escapeHtml(r.method)}</td><td>${escapeHtml(r.path)}</td><td>${r.status_code}</td><td>${r.duration_ms}</td><td>${escapeHtml(r.ip||"")}</td></tr>`).join("") || `<tr><td colspan="6">${escapeHtml(t("admin.empty"))}</td></tr>`;
+    }
+    document.getElementById("pager").innerHTML = pagerHtml(data.page, data.page_size, data.total);
+    document.querySelectorAll("#pager [data-page]").forEach(b => b.addEventListener("click", () => {
+      const p = Number(b.dataset.page); if (p >= 1) { page = p; load(); }
+    }));
+  }
+  load();
+})().catch(console.error);
+</script>
+</body>
+</html>

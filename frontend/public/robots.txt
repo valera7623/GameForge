@@ -20,3 +20,4 @@ Disallow: /admin
 Disallow: /api/
 
 Sitemap: https://gameforge.website/sitemap.xml
+Sitemap: https://gameforge.website/api/v1/content/sitemap-cms.xml

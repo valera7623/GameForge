@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Edit content — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.content.edit">Edit content</h1></div>
+      <a class="btn btn-ghost" href="/admin/content">← List</a></div>
+    <div class="panel admin-kv" id="form"></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t, canWriteContent } from "../../js/admin.js";
+import { toast } from "../../js/app.js";
+(async () => {
+  const me = await requireStaff();
+  if (!me) throw new Error("staff");
+  mountAdminShell("content");
+  applyDomI18n(document);
+  const write = canWriteContent(me.role);
+  const id = new URLSearchParams(location.search).get("id");
+  let item = id ? await AdminAPI.contentItem(id) : { kind: "faq", slug: "", locale: "en", title: "", body_md: "", excerpt: "", meta_title: "", meta_description: "", sort_order: 0, status: "draft" };
+  const f = document.getElementById("form");
+  const ro = write ? "" : "disabled";
+  f.innerHTML = `
+    <label>Kind<select id="kind" ${ro}>${["faq","blog","page"].map(k=>`<option ${item.kind===k?"selected":""}>${k}</option>`).join("")}</select></label>
+    <label>Locale<select id="locale" ${ro}><option ${item.locale==="en"?"selected":""}>en</option><option ${item.locale==="ru"?"selected":""}>ru</option></select></label>
+    <label>Slug<input id="slug" ${ro} value="${escapeHtml(item.slug||"")}" /></label>
+    <label>Title<input id="title" ${ro} value="${escapeHtml(item.title||"")}" /></label>
+    <label>Excerpt<input id="excerpt" ${ro} value="${escapeHtml(item.excerpt||"")}" /></label>
+    <label>Meta title<input id="meta_title" ${ro} value="${escapeHtml(item.meta_title||"")}" /></label>
+    <label>Meta description<input id="meta_description" ${ro} value="${escapeHtml(item.meta_description||"")}" /></label>
+    <label>Sort order<input id="sort_order" type="number" ${ro} value="${item.sort_order||0}" /></label>
+    <label>Body (markdown)<textarea id="body_md" rows="14" ${ro} style="width:100%">${escapeHtml(item.body_md||"")}</textarea></label>
+    <p class="muted">Status: ${escapeHtml(item.status||"draft")}</p>
+    ${write ? `<div class="admin-actions">
+      <button class="btn btn-primary" id="save">${escapeHtml(t("admin.save"))}</button>
+      ${id ? `<button class="btn btn-ghost" id="pub">${item.status==="published"?"Unpublish":"Publish"}</button>
+      <button class="btn btn-ghost" id="del">${escapeHtml(t("admin.delete"))}</button>` : ""}
+    </div>` : ""}`;
+  if (!write) return;
+  document.getElementById("save").onclick = async () => {
+    const body = {
+      kind: document.getElementById("kind").value,
+      slug: document.getElementById("slug").value,
+      locale: document.getElementById("locale").value,
+      title: document.getElementById("title").value,
+      body_md: document.getElementById("body_md").value,
+      excerpt: document.getElementById("excerpt").value || null,
+      meta_title: document.getElementById("meta_title").value || null,
+      meta_description: document.getElementById("meta_description").value || null,
+      sort_order: Number(document.getElementById("sort_order").value)||0,
+    };
+    try {
+      if (id) { await AdminAPI.updateContent(id, body); toast("Saved"); }
+      else { const c = await AdminAPI.createContent(body); location.href = "/admin/content/edit?id="+c.id; }
+    } catch(e) { toast(e.message, true); }
+  };
+  if (id) {
+    document.getElementById("pub").onclick = async () => {
+      try {
+        if (item.status === "published") await AdminAPI.unpublishContent(id);
+        else await AdminAPI.publishContent(id);
+        location.reload();
+      } catch(e) { toast(e.message, true); }
+    };
+    document.getElementById("del").onclick = async () => {
+      if (!confirm("Delete?")) return;
+      try { await AdminAPI.deleteContent(id); location.href="/admin/content"; } catch(e){ toast(e.message,true);}
+    };
+  }
+})().catch(console.error);
+</script>
+</body>
+</html>

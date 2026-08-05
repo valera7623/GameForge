@@ -7,9 +7,9 @@
 | `user` | Standard tools, own projects |
 | `enterprise` | Legacy enterprise platform role (plan usually on subscription) |
 | `support` | Admin panel: read users, generations, dashboard |
-| `manager` | Same read access as support |
+| `manager` | Admin panel: read + content CMS write |
 | `admin` | Manage users (block/edit/role except `super_admin`), tools, subscriptions |
-| `super_admin` | Full admin panel including platform settings |
+| `super_admin` | Full admin panel including platform settings and AI pricing |
 
 Studio **organization** roles (`owner` / `admin` / `member`) are separate from global `UserRole`.
 
@@ -26,6 +26,9 @@ API prefix: `/api/v1/admin/*` (cookie session, same as the app).
 | Generations | `/admin/generations` |
 | Subscriptions | `/admin/subscriptions` |
 | Tools on/off | `/admin/tools` |
+| AI models / costs | `/admin/ai-models` |
+| Content CMS | `/admin/content` |
+| Ops logs | `/admin/logs` |
 | Settings | `/admin/settings` (super_admin write) |
 
 Disabled tools return **503** on generation endpoints.

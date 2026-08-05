@@ -142,9 +142,7 @@ async def localize(
 async def _openai_localize(
     texts: Dict[str, str], source_lang: str, target_langs: List[str]
 ) -> Dict[str, Dict[str, str]]:
-    from app.services.openai_client import get_openai_client
-
-    client = get_openai_client()
+    from app.services.openai_client import chat_completion
     langs = ", ".join(target_langs)
     keys = list(texts.keys())
     prompt = f"""You are a professional game localization translator.
@@ -174,7 +172,7 @@ Source strings ({source_lang}):
 {json.dumps(texts, ensure_ascii=False, indent=2)}
 """
 
-    resp = await client.chat.completions.create(
+    resp = await chat_completion(
         model=settings.OPENAI_MODEL,
         messages=[
             {

@@ -22,6 +22,7 @@ class DashboardOut(BaseModel):
     activity_pct: float
     generations_last_7_days: list[dict[str, Any]]
     recent_users: list[dict[str, Any]]
+    ai_spend_usd_7d: float = 0.0
 
 
 class AdminUserOut(BaseModel):
@@ -69,6 +70,12 @@ class AdminGenerationOut(BaseModel):
     project_id: Optional[UUID] = None
     created_at: datetime
     completed_at: Optional[datetime] = None
+    client_ip: Optional[str] = None
+    duration_ms: Optional[int] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    cost_usd: Optional[float] = None
+    model_name: Optional[str] = None
 
 
 class AdminGenerationListOut(BaseModel):
@@ -130,3 +137,136 @@ class GeneralSettingsUpdate(BaseModel):
     app_name: Optional[str] = None
     domain: Optional[str] = None
     notes: Optional[str] = None
+
+
+class AiModelsOut(BaseModel):
+    models: dict[str, Any]
+
+
+class AiModelsUpdate(BaseModel):
+    models: dict[str, Any]
+
+
+class AiCostsOut(BaseModel):
+    total_usd: float
+    by_tool: list[dict[str, Any]]
+    by_day: list[dict[str, Any]]
+    by_model: list[dict[str, Any]]
+
+
+class AuditLogOut(BaseModel):
+    id: UUID
+    actor_id: Optional[UUID] = None
+    action: str
+    target_type: Optional[str] = None
+    target_id: Optional[str] = None
+    meta: dict[str, Any] = Field(default_factory=dict)
+    ip: Optional[str] = None
+    created_at: datetime
+
+
+class AuditLogListOut(BaseModel):
+    items: list[AuditLogOut]
+    total: int
+    page: int
+    page_size: int
+
+
+class ErrorLogOut(BaseModel):
+    id: UUID
+    source: str
+    message: str
+    status_code: Optional[int] = None
+    path: Optional[str] = None
+    user_id: Optional[UUID] = None
+    generation_id: Optional[UUID] = None
+    request_id: Optional[str] = None
+    created_at: datetime
+
+
+class ErrorLogListOut(BaseModel):
+    items: list[ErrorLogOut]
+    total: int
+    page: int
+    page_size: int
+
+
+class ApiRequestLogOut(BaseModel):
+    id: UUID
+    method: str
+    path: str
+    status_code: int
+    duration_ms: int
+    user_id: Optional[UUID] = None
+    ip: Optional[str] = None
+    request_id: Optional[str] = None
+    created_at: datetime
+
+
+class ApiRequestLogListOut(BaseModel):
+    items: list[ApiRequestLogOut]
+    total: int
+    page: int
+    page_size: int
+
+
+class PurgeLogsOut(BaseModel):
+    deleted: dict[str, int]
+
+
+class ContentItemOut(BaseModel):
+    id: UUID
+    kind: str
+    slug: str
+    locale: str
+    title: str
+    body_md: str
+    body_html: str = ""
+    excerpt: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    status: str
+    sort_order: int = 0
+    published_at: Optional[datetime] = None
+    author_id: Optional[UUID] = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ContentItemListOut(BaseModel):
+    items: list[ContentItemOut]
+    total: int
+    page: int
+    page_size: int
+
+
+class ContentItemCreate(BaseModel):
+    kind: str
+    slug: str
+    locale: str = "en"
+    title: str
+    body_md: str = ""
+    excerpt: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    sort_order: int = 0
+
+
+class ContentItemUpdate(BaseModel):
+    slug: Optional[str] = None
+    locale: Optional[str] = None
+    title: Optional[str] = None
+    body_md: Optional[str] = None
+    excerpt: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class SitemapUrlOut(BaseModel):
+    loc: str
+    lastmod: Optional[str] = None
+
+
+class SitemapUrlsOut(BaseModel):
+    urls: list[SitemapUrlOut]

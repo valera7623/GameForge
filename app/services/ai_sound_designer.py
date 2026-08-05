@@ -130,6 +130,14 @@ async def generate_sound(
 
     filename = f"{kind}_{mood}.{fmt}"
     url = upload_bytes(audio_bytes, filename, content_type, "audio")
+    from app.services.openai_client import record_provider_call
+
+    if provider and "stable" in str(provider):
+        record_provider_call("stability_audio", str(provider))
+    elif provider == "musicgen":
+        record_provider_call("replicate_musicgen", "musicgen")
+    elif provider == "elevenlabs":
+        record_provider_call("elevenlabs", "elevenlabs")
     return {
         "description": description,
         "kind": kind,
