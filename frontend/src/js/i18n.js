@@ -55,6 +55,9 @@ const DICT = {
     "admin.search": "Search",
     "admin.open": "Open",
     "admin.save": "Save",
+    "admin.delete": "Delete",
+    "admin.delete_confirm": "Delete user {email}? This cannot be undone.",
+    "admin.deleted": "User deleted",
     "admin.empty": "Nothing here yet.",
 
     "common.loading": "Loading…",
@@ -375,6 +378,9 @@ const DICT = {
     "admin.search": "Поиск",
     "admin.open": "Открыть",
     "admin.save": "Сохранить",
+    "admin.delete": "Удалить",
+    "admin.delete_confirm": "Удалить пользователя {email}? Это нельзя отменить.",
+    "admin.deleted": "Пользователь удалён",
     "admin.empty": "Пока пусто.",
 
     "common.loading": "Загрузка…",

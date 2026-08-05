@@ -293,6 +293,25 @@ async def unblock_user(
     return _user_out(target)
 
 
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: UUID,
+    actor: User = Depends(require_permission("users:write")),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.id == user_id))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.id == actor.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    if target.role == UserRole.SUPER_ADMIN and actor.role != UserRole.SUPER_ADMIN:
+        raise HTTPException(status_code=403, detail="Cannot delete super_admin")
+    await db.delete(target)
+    await db.flush()
+    return {"ok": True, "id": str(user_id)}
+
+
 @router.post("/users/{user_id}/role", response_model=AdminUserOut)
 async def set_user_role(
     user_id: UUID,

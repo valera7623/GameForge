@@ -71,6 +71,7 @@ export const AdminAPI = {
   updateUser: (id, body) => api(`/admin/users/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   blockUser: (id) => api(`/admin/users/${id}/block`, { method: "POST", body: "{}" }),
   unblockUser: (id) => api(`/admin/users/${id}/unblock`, { method: "POST", body: "{}" }),
+  deleteUser: (id) => api(`/admin/users/${id}`, { method: "DELETE" }),
   setRole: (id, role) => api(`/admin/users/${id}/role`, { method: "POST", body: JSON.stringify({ role }) }),
   generations: (params = {}) => {
     const q = new URLSearchParams(params).toString();

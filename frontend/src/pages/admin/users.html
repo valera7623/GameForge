@@ -65,7 +65,8 @@ import { toast } from "../../js/app.js";
           <td><span class="admin-dot ${u.is_active ? "on" : "off"}"></span>${u.is_active ? "active" : "blocked"}</td>
           <td class="admin-actions">
             <a class="btn btn-ghost" href="/admin/user?id=${u.id}">${escapeHtml(t("admin.open"))}</a>
-            ${write ? `<button type="button" class="btn btn-ghost" data-act="${u.is_active ? "block" : "unblock"}" data-id="${u.id}">${u.is_active ? "Block" : "Unblock"}</button>` : ""}
+            ${write ? `<button type="button" class="btn btn-ghost" data-act="${u.is_active ? "block" : "unblock"}" data-id="${u.id}">${u.is_active ? "Block" : "Unblock"}</button>
+            <button type="button" class="btn btn-ghost" data-act="delete" data-id="${u.id}" data-email="${escapeHtml(u.email)}">${escapeHtml(t("admin.delete"))}</button>` : ""}
           </td>
         </tr>`).join("") || `<tr><td colspan="6">${escapeHtml(t("admin.empty"))}</td></tr>`;
         document.getElementById("pager").innerHTML = pagerHtml(data.page, data.page_size, data.total);
@@ -75,9 +76,18 @@ import { toast } from "../../js/app.js";
         }));
         document.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", async () => {
           try {
-            if (b.dataset.act === "block") await AdminAPI.blockUser(b.dataset.id);
-            else await AdminAPI.unblockUser(b.dataset.id);
-            toast("OK");
+            if (b.dataset.act === "delete") {
+              const email = b.dataset.email || b.dataset.id;
+              if (!confirm(t("admin.delete_confirm", { email }))) return;
+              await AdminAPI.deleteUser(b.dataset.id);
+              toast(t("admin.deleted"));
+            } else if (b.dataset.act === "block") {
+              await AdminAPI.blockUser(b.dataset.id);
+              toast("OK");
+            } else {
+              await AdminAPI.unblockUser(b.dataset.id);
+              toast("OK");
+            }
             load();
           } catch (e) { toast(e.message, true); }
         }));
