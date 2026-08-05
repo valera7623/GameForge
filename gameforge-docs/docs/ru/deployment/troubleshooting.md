@@ -1,4 +1,4 @@
-# Troubleshooting
+# Устранение неполадок
 
 ## Frontend unhealthy
 

@@ -48,9 +48,54 @@ plugins:
           default: true
           name: English
           build: true
+          site_name: GameForge Documentation
+          site_description: AI Game Dev Toolkit — Documentation
         - locale: ru
           name: Русский
           build: true
+          site_name: Документация GameForge
+          site_description: AI Game Dev Toolkit — документация
+          nav_translations:
+            Home: Главная
+            Getting Started: Быстрый старт
+            Architecture: Архитектура
+            User Guide: Руководство пользователя
+            Dashboard: Дашборд
+            Projects: Проекты
+            Tools: Инструменты
+            Team: Команда
+            Billing: Биллинг
+            Admin Guide: Руководство администратора
+            Users and Roles: Пользователи и роли
+            Content CMS: Контент (CMS)
+            AI Models and Costs: ИИ-модели и затраты
+            Ops Logs: Операционные логи
+            Production Checklist: Чеклист продакшена
+            Monitoring: Мониторинг
+            Backup: Резервное копирование
+            Developer Guide: Руководство разработчика
+            API Overview: Обзор API
+            Auth: Авторизация
+            Tool Endpoints: Эндпоинты инструментов
+            Deployment: Развёртывание
+            Docker: Docker (локально)
+            VPS: VPS (продакшен)
+            Troubleshooting: Устранение неполадок
+          theme:
+            language: ru
+            palette:
+              - scheme: default
+                primary: indigo
+                accent: cyan
+                toggle:
+                  icon: material/brightness-7
+                  name: Переключить на тёмную тему
+              - scheme: slate
+                primary: indigo
+                accent: cyan
+                toggle:
+                  icon: material/brightness-4
+                  name: Переключить на светлую тему
   - mermaid2
 
 markdown_extensions:

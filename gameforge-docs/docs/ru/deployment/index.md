@@ -8,7 +8,7 @@
 |----------|------|
 | [Docker](docker.md) | Compose-профили, локальный стек |
 | [VPS](vps.md) | Caddy, DNS, публичный S3, CI |
-| [Troubleshooting](troubleshooting.md) | Частые проблемы |
+| [Устранение неполадок](troubleshooting.md) | Частые проблемы |
 
 ## Режимы
 

@@ -1,4 +1,4 @@
-# Чеклист production
+# Чеклист продакшена
 
 При `APP_ENV=production` (см. `.env.example`):
 

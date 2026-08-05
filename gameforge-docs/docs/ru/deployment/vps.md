@@ -1,4 +1,4 @@
-# VPS (production)
+# VPS (продакшен)
 
 Референс: **https://gameforge.website** на Linux VPS с Docker.
 
@@ -41,4 +41,4 @@ Workflow **Deploy** только после успешного **CI** на `main
 
 ## Чеклист
 
-[Админ → Чеклист production](../admin-guide/production.md).
+[Админ → Чеклист продакшена](../admin-guide/production.md).
