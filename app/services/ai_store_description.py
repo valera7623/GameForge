@@ -53,6 +53,22 @@ def _norm_lang(lang: str | None) -> str:
     return code if code in ("en", "ru", "es", "fr", "de", "ja", "pt", "zh") else "en"
 
 
+def _has_cyrillic(text: str | None) -> bool:
+    return bool(re.search(r"[А-Яа-яЁё]", text or ""))
+
+
+def _audience_label(audience: str, lang: str) -> str:
+    key = str(audience or "players").lower().strip()
+    if lang == "ru":
+        return {
+            "hardcore": "хардкорных игроков",
+            "casual": "казуальных игроков",
+            "family": "семейную аудиторию",
+            "players": "игроков",
+        }.get(key, audience or "игроков")
+    return key or "players"
+
+
 def _norm_platform(platform: str | None) -> str:
     p = str(platform or "steam").lower().replace(" ", "").replace("_", "")
     aliases = {
@@ -86,32 +102,44 @@ def _features(game: dict[str, Any]) -> list[str]:
     raw = game.get("key_features") or []
     feats = [str(f).strip() for f in raw if str(f).strip()]
     usp = str(game.get("usp") or "").strip()
-    if usp and usp not in feats:
-        feats.insert(0, usp)
-    # Ensure at least a few
+    lang = _norm_lang(game.get("language") or game.get("lang"))
     genre = str(game.get("genre") or "Adventure")
-    defaults = {
-        "en": [
+
+    # Prefer Cyrillic inputs for RU output; otherwise regenerate in Russian.
+    if lang == "ru":
+        cyr_feats = [f for f in feats if _has_cyrillic(f)]
+        if usp and _has_cyrillic(usp) and usp not in cyr_feats:
+            cyr_feats.insert(0, usp)
+        feats = cyr_feats
+        defaults = [
+            f"Увлекательный геймплей в жанре {genre}",
+            "Глубокая прогрессия и система наград",
+            "Высокая реиграбельность",
+            "Запоминающийся арт и звук",
+        ]
+        if usp and not _has_cyrillic(usp):
+            # Keep USP as a feature label framed in Russian
+            framed = f"Уникальная механика: {usp}"
+            if framed not in feats:
+                feats.insert(0, framed)
+    else:
+        if usp and usp not in feats:
+            feats.insert(0, usp)
+        defaults = [
             f"Engaging {genre} gameplay",
             "Polished controls and feedback",
             "Replayable challenges",
             "Distinctive art and audio",
-        ],
-        "ru": [
-            f"Увлекательный геймплей в жанре {genre}",
-            "Отточенное управление и отклик",
-            "Высокая реиграбельность",
-            "Запоминающийся арт и звук",
-        ],
-    }
-    lang = _norm_lang(game.get("language") or game.get("lang"))
-    base = defaults.get(lang, defaults["en"])
+        ]
+
     while len(feats) < 4:
-        nxt = base[len(feats) % len(base)]
+        nxt = defaults[len(feats) % len(defaults)]
         if nxt not in feats:
             feats.append(nxt)
         else:
-            feats.append(f"{genre} highlight #{len(feats)+1}")
+            feats.append(
+                f"{genre} — акцент #{len(feats)+1}" if lang == "ru" else f"{genre} highlight #{len(feats)+1}"
+            )
     return feats[:8]
 
 
@@ -119,6 +147,7 @@ def _tags(game: dict[str, Any]) -> list[str]:
     genre = str(game.get("genre") or "Adventure")
     platform = str(game.get("platform") or "PC")
     audience = str(game.get("target_audience") or "casual")
+    lang = _norm_lang(game.get("language") or game.get("lang"))
     parts = re.split(r"[,/|&]+", genre)
     tags = [p.strip().title() for p in parts if p.strip()]
     extras = {
@@ -131,6 +160,29 @@ def _tags(game: dict[str, Any]) -> list[str]:
         tags.append("Singleplayer")
     if "mobile" in platform.lower():
         tags.extend(["Mobile", "Touch Controls"])
+
+    if lang == "ru":
+        ru_map = {
+            "action": "Экшен",
+            "rpg": "RPG",
+            "adventure": "Приключения",
+            "strategy": "Стратегия",
+            "simulation": "Симулятор",
+            "puzzle": "Головоломка",
+            "horror": "Хоррор",
+            "indie": "Инди",
+            "challenging": "Сложность",
+            "skill-based": "Скилл",
+            "family friendly": "Для семьи",
+            "easy to learn": "Легко освоить",
+            "co-op": "Кооп",
+            "singleplayer": "Одиночная игра",
+            "mobile": "Мобильная",
+            "touch controls": "Сенсорное управление",
+            "action rpg": "Action RPG",
+        }
+        tags = [ru_map.get(t.lower(), t) for t in tags]
+
     # Dedup preserve order
     seen = set()
     out = []
@@ -145,12 +197,25 @@ def _tags(game: dict[str, Any]) -> list[str]:
 
 def _short_desc(game: dict[str, Any], tone: str, lang: str, limit: int) -> str:
     name = str(game.get("game_name") or game.get("name") or "Your Game")
+    genre = str(game.get("genre") or "game")
     desc = str(game.get("description") or "").strip()
     usp = str(game.get("usp") or "").strip()
     opener_map = _OPENERS.get(lang, _OPENERS["en"])
-    opener = opener_map.get(tone, opener_map["epic"]).format(
-        name=name, genre=str(game.get("genre") or "game")
-    )
+    opener = opener_map.get(tone, opener_map["epic"]).format(name=name, genre=genre)
+
+    if lang == "ru":
+        if desc and _has_cyrillic(desc):
+            body = desc
+            if usp and _has_cyrillic(usp) and usp.lower() not in desc.lower():
+                body = f"{_clip(desc, max(40, limit // 2))} {usp}"
+        else:
+            hook = usp if usp and _has_cyrillic(usp) else ""
+            body = f"{opener} {hook}".strip() if hook else (
+                f"{opener} Жанр: {genre}."
+                + (f" Фишка — {usp}." if usp else "")
+            )
+        return _clip(body, limit)
+
     body = desc or usp or opener
     if desc and usp and usp.lower() not in desc.lower():
         body = f"{_clip(desc, max(40, limit // 2))} {usp}"
@@ -167,9 +232,17 @@ def _long_desc(game: dict[str, Any], tone: str, lang: str, feats: list[str]) -> 
     audience = str(game.get("target_audience") or "players")
     opener_map = _OPENERS.get(lang, _OPENERS["en"])
     opener = opener_map.get(tone, opener_map["epic"]).format(name=name, genre=genre)
+    aud = _audience_label(audience, lang)
 
     if lang == "ru":
-        mid = desc or f"{name} — это {genre} с акцентом на {usp or 'уникальный геймплей'}."
+        if desc and _has_cyrillic(desc):
+            mid = desc
+        else:
+            focus = usp if usp else "уникальный геймплей"
+            mid = (
+                f"{name} — это {genre} с акцентом на {focus}. "
+                f"Исследуйте мир, прокачивайтесь и возвращайтесь за новыми победами."
+            )
         feat_block = "\n".join(f"• {f}" for f in feats[:6])
         closing = {
             "epic": "Сможете ли вы пройти путь до конца?",
@@ -181,10 +254,10 @@ def _long_desc(game: dict[str, Any], tone: str, lang: str, feats: list[str]) -> 
         return (
             f"{opener}\n\n{mid}\n\n"
             f"Ключевые особенности:\n{feat_block}\n\n"
-            f"Для аудитории: {audience}.\n\n{closing}"
+            f"Для аудитории: {aud}.\n\n{closing}"
         )
 
-    mid = desc or f"{name} is a {genre} built around {usp or 'memorableable gameplay loops'}."
+    mid = desc or f"{name} is a {genre} built around {usp or 'memorable gameplay loops'}."
     feat_block = "\n".join(f"• {f}" for f in feats[:6])
     closing = {
         "epic": "Will you rise to the challenge?",
@@ -196,7 +269,7 @@ def _long_desc(game: dict[str, Any], tone: str, lang: str, feats: list[str]) -> 
     return (
         f"{opener}\n\n{mid}\n\n"
         f"Key features:\n{feat_block}\n\n"
-        f"Made for {audience} players.\n\n{closing}"
+        f"Made for {aud} players.\n\n{closing}"
     )
 
 

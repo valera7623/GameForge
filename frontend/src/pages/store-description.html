@@ -171,7 +171,7 @@ Permadeath with progression</textarea>
     const DRAFT_KEY = "gf_store_description_draft";
     let last = null;
 
-    const SAMPLE = {
+    const SAMPLE_EN = {
       game_name: "Dungeon Explorer",
       genre: "Action RPG",
       platform: "PC",
@@ -185,9 +185,35 @@ Permadeath with progression</textarea>
         "Permadeath with progression",
       ],
       target_platform: "steam",
-      language: getLang() === "ru" ? "ru" : "en",
+      language: "en",
       tone: "epic",
     };
+
+    const SAMPLE_RU = {
+      game_name: "Dungeon Explorer",
+      genre: "Action RPG",
+      platform: "PC",
+      target_audience: "hardcore",
+      usp: "Процедурные подземелья и глубокая RPG-система",
+      description: "Нырните в бесконечное подземелье, где каждый забег уникален. Сражайтесь с монстрами, ищите лут и раскрывайте тайны Глубин.",
+      key_features: [
+        "Процедурно генерируемые подземелья",
+        "Глубокая RPG-механика",
+        "Сотни предметов и способностей",
+        "Перманентная смерть с прогрессией",
+      ],
+      target_platform: "steam",
+      language: "ru",
+      tone: "epic",
+    };
+
+    function sampleForUi() {
+      return getLang() === "ru" ? structuredClone(SAMPLE_RU) : structuredClone(SAMPLE_EN);
+    }
+
+    function uiLanguage() {
+      return getLang() === "ru" ? "ru" : (document.getElementById("language").value || "en");
+    }
 
     function fillForm(data) {
       document.getElementById("gameName").value = data.game_name || "";
@@ -198,7 +224,8 @@ Permadeath with progression</textarea>
       document.getElementById("description").value = data.description || "";
       document.getElementById("featuresInput").value = (data.key_features || []).join("\n");
       document.getElementById("targetPlatform").value = data.target_platform || "steam";
-      document.getElementById("language").value = data.language || "en";
+      // Russian UI always generates Russian store copy (same pattern as Game Balancer).
+      document.getElementById("language").value = getLang() === "ru" ? "ru" : (data.language || "en");
       document.getElementById("tone").value = data.tone || "epic";
     }
 
@@ -214,7 +241,7 @@ Permadeath with progression</textarea>
         description: document.getElementById("description").value.trim(),
         key_features: features,
         target_platform: document.getElementById("targetPlatform").value,
-        language: document.getElementById("language").value,
+        language: uiLanguage(),
         tone: document.getElementById("tone").value,
       };
       const pid = document.getElementById("projectSelect").value;
@@ -253,13 +280,12 @@ Permadeath with progression</textarea>
 
     const saved = localStorage.getItem(DRAFT_KEY);
     if (saved) {
-      try { fillForm(JSON.parse(saved)); } catch { fillForm(SAMPLE); }
+      try { fillForm(JSON.parse(saved)); } catch { fillForm(sampleForUi()); }
     } else {
-      fillForm(SAMPLE);
+      fillForm(sampleForUi());
     }
-    // Prefer UI language if form language empty sync
-    if (!document.getElementById("language").value) {
-      document.getElementById("language").value = getLang() === "ru" ? "ru" : "en";
+    if (getLang() === "ru") {
+      document.getElementById("language").value = "ru";
     }
 
     ProjectsAPI.list().then((list) => {
@@ -274,9 +300,7 @@ Permadeath with progression</textarea>
 
     document.getElementById("loadSample").addEventListener("click", (e) => {
       e.preventDefault();
-      const sample = structuredClone(SAMPLE);
-      sample.language = getLang() === "ru" ? "ru" : "en";
-      fillForm(sample);
+      fillForm(sampleForUi());
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       toast(t("store.sample_loaded"));
     });

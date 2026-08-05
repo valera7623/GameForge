@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from httpx import AsyncClient
 
@@ -49,6 +51,12 @@ def test_generate_store_description_ru():
     result = generate_store_description(data)
     assert result["language"] == "ru"
     assert result["call_to_action"]
+    # English inputs must still produce Russian marketing copy (not pasted EN desc).
+    assert re.search(r"[А-Яа-яЁё]", result["short_description"])
+    assert re.search(r"[А-Яа-яЁё]", result["long_description"])
+    assert "Dive into" not in result["short_description"]
+    assert "Dive into" not in result["long_description"]
+    assert re.search(r"[А-Яа-яЁё]", result["call_to_action"])
 
 
 def test_google_play_short_limit():
