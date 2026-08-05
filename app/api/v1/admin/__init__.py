@@ -6,22 +6,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.config import get_settings
-from app.core.rbac import (
-    PERMISSIONS,
-    can_assign_role,
-    require_permission,
-    require_staff,
-)
-from app.database import get_db
-from app.models.generation import Generation, GenerationStatus, ToolType
-from app.models.subscription import PlanType, Subscription, SubscriptionStatus
-from app.models.user import User, UserRole
 from app.api.v1.admin.schemas import (
     AdminGenerationListOut,
     AdminGenerationOut,
@@ -40,13 +29,24 @@ from app.api.v1.admin.schemas import (
     GeneralSettingsUpdate,
     GenerationStatsOut,
 )
+from app.config import get_settings
+from app.core.rbac import (
+    PERMISSIONS,
+    can_assign_role,
+    require_permission,
+    require_staff,
+)
+from app.database import get_db
+from app.models.generation import Generation, GenerationStatus, ToolType
+from app.models.platform_setting import SETTING_GENERAL, SETTING_TOOLS
+from app.models.subscription import PlanType, Subscription, SubscriptionStatus
+from app.models.user import User, UserRole
 from app.services.billing_service import PLANS
 from app.services.platform_settings import (
     get_general_settings,
     get_tools_settings,
     set_setting,
 )
-from app.models.platform_setting import SETTING_GENERAL, SETTING_TOOLS
 
 settings = get_settings()
 router = APIRouter(prefix="/admin", tags=["admin"])

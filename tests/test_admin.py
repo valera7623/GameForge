@@ -6,10 +6,10 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.core.security import hash_password
 from app.models.subscription import PlanType, Subscription, SubscriptionStatus
 from app.models.user import User, UserRole
-from app.config import get_settings
 
 settings = get_settings()
 
