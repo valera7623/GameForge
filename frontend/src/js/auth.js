@@ -34,12 +34,6 @@ export async function login(email, password) {
   setTokens(tokens.access_token, tokens.refresh_token);
   const me = await AuthAPI.me();
   localStorage.setItem("gf_user", JSON.stringify(me));
-  try {
-    const { syncMetrikaBadge } = await import("./analytics.js");
-    syncMetrikaBadge();
-  } catch {
-    /* ignore */
-  }
   return me;
 }
 
@@ -48,12 +42,6 @@ export async function register(email, password, full_name) {
   setTokens(tokens.access_token, tokens.refresh_token);
   const me = await AuthAPI.me();
   localStorage.setItem("gf_user", JSON.stringify(me));
-  try {
-    const { syncMetrikaBadge } = await import("./analytics.js");
-    syncMetrikaBadge();
-  } catch {
-    /* ignore */
-  }
   return me;
 }
 
