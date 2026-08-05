@@ -107,6 +107,7 @@ async def create_content(
     )
     db.add(item)
     await db.flush()
+    await db.refresh(item)
     await record_audit(
         db,
         actor_id=user.id,
@@ -148,6 +149,7 @@ async def update_content(
     for k, v in data.items():
         setattr(item, k, v)
     await db.flush()
+    await db.refresh(item)
     await record_audit(
         db,
         actor_id=user.id,
@@ -190,6 +192,7 @@ async def publish_content(
     item.status = ContentStatus.PUBLISHED.value
     item.published_at = datetime.now(timezone.utc)
     await db.flush()
+    await db.refresh(item)
     await record_audit(
         db,
         actor_id=user.id,
@@ -211,6 +214,7 @@ async def unpublish_content(
         raise HTTPException(404, detail="Not found")
     item.status = ContentStatus.DRAFT.value
     await db.flush()
+    await db.refresh(item)
     await record_audit(
         db,
         actor_id=user.id,

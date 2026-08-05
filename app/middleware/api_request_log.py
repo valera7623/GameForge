@@ -38,7 +38,12 @@ class ApiRequestLogMiddleware(BaseHTTPMiddleware):
             duration_ms = int((time.perf_counter() - t0) * 1000)
             status_code = response.status_code if response is not None else 500
             try:
-                await _persist_log(request, api_path, status_code, duration_ms)
+                # Global AsyncSessionLocal is bound to the app engine loop; pytest-asyncio
+                # uses a fresh loop per test — skip persist to avoid MissingGreenlet.
+                from app.config import get_settings
+
+                if get_settings().APP_ENV.lower() != "test":
+                    await _persist_log(request, api_path, status_code, duration_ms)
             except Exception:
                 logger.exception("Failed to persist API request log")
 

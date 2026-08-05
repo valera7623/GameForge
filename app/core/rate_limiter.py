@@ -50,6 +50,8 @@ def _client_ip(request: Request) -> str:
 
 
 async def rate_limit(request: Request, limit: Optional[int] = None) -> None:
+    if settings.APP_ENV.lower() == "test":
+        return
     limit = limit or settings.RATE_LIMIT_PER_MINUTE
     client = _client_ip(request)
     key = f"rl:{client}:{request.url.path}"
