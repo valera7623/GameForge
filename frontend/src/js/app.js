@@ -6,23 +6,10 @@ import { applyTheme, bindThemeToggles, getTheme } from "./theme.js";
 import { applyDomI18n, getLang, setLang, t } from "./i18n.js";
 import { getDocsUrl } from "./docs.js";
 import { initAnalytics } from "./analytics.js";
-import { bootSkeletons } from "../components/skeleton/skeleton.js";
 
 initAnalytics();
 
 export { t, getLang, applyDomI18n };
-export {
-  bootSkeletons,
-  mountContentSkeleton,
-  renderSkeletonVariant,
-  resolveSkeletonVariant,
-  renderDashboardSkeleton,
-  renderAgentsSkeleton,
-  renderDetailSkeleton,
-  renderListPageSkeleton,
-  renderTableSkeleton,
-  SKELETON_SETTINGS,
-} from "../components/skeleton/skeleton.js";
 
 
 export function escapeHtml(s) {
@@ -273,7 +260,6 @@ export function mountShell(activePage) {
   applyTheme(getTheme());
   bindThemeToggles(shell);
   bindMobileNav();
-  bootSkeletons();
   document.getElementById("langBtn")?.addEventListener("click", () => {
     setLang(getLang() === "ru" ? "en" : "ru");
     location.reload();

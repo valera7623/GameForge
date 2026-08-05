@@ -23,7 +23,7 @@
   <div class="app-shell">
     <main class="main-panel">
       <div class="page-header"><div><h1 data-i18n="admin.dash.h1">Dashboard</h1><p data-i18n="admin.dash.sub">Platform overview</p></div></div>
-      <div id="dashSkeleton" class="skeleton-content-host" aria-busy="true" aria-live="polite"></div>
+      <div class="loader visible" id="loader"><div class="spinner"></div></div>
       <div id="content" hidden>
         <div class="stats-row" id="stats"></div>
         <div class="panel"><h2 data-i18n="admin.dash.chart">Generations (7 days)</h2><div class="admin-chart" id="chart"></div></div>
@@ -34,25 +34,15 @@
   <script type="module">
 import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t } from "../../js/admin.js";
 import { statusBadge } from "../../js/app.js";
-import { renderDashboardSkeleton, SKELETON_SETTINGS } from "../../components/skeleton/skeleton.js";
 
 (async () => {
       const me = await requireStaff();
       if (!me) throw new Error("staff");
       mountAdminShell("");
       applyDomI18n(document);
-      const sk = document.getElementById("dashSkeleton");
-      const shownAt = performance.now();
-      if (sk) sk.innerHTML = renderDashboardSkeleton();
       const data = await AdminAPI.dashboard();
-      const wait = Math.max(0, SKELETON_SETTINGS.min_display_ms - (performance.now() - shownAt));
-      await new Promise((r) => setTimeout(r, wait));
-      if (sk) {
-        sk.hidden = true;
-        sk.innerHTML = "";
-      }
+      document.getElementById("loader").classList.remove("visible");
       document.getElementById("content").hidden = false;
-      document.getElementById("content").classList.add("skeleton-base");
       document.getElementById("stats").innerHTML = `
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.users"))}</div><div class="value">${data.users_total}</div></div>
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.gens"))}</div><div class="value">${data.generations_total}</div></div>

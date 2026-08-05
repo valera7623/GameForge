@@ -13,23 +13,6 @@
       var th = localStorage.getItem("gf_theme") || "light";
       document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
       if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
-      try {
-        var raw = sessionStorage.getItem("gf_skeleton_nav");
-        if (!raw) return;
-        var data = JSON.parse(raw);
-        if (!data || Date.now() - (data.at || 0) > 8000) return;
-        var s = document.createElement("style");
-        s.textContent = "#gfSkeletonBoot{position:fixed;inset:0;z-index:10000;background:var(--bg,#f6f7fb);padding:1.5rem}[data-theme=dark] #gfSkeletonBoot{background:#0b0d12}#gfSkeletonBoot .b,#gfSkeletonBoot .box{background:rgba(128,128,128,.28);animation:gfSkP 1.5s ease-in-out infinite}#gfSkeletonBoot .b{height:12px;border-radius:999px;margin:.5rem 0}#gfSkeletonBoot .box{height:80px;border-radius:8px;margin:1rem 0}#gfSkeletonBoot .g{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}@keyframes gfSkP{0%,100%{opacity:.55}50%{opacity:1}}";
-        document.head.appendChild(s);
-        document.addEventListener("DOMContentLoaded", function () {
-          if (document.getElementById("gfSkeletonBoot")) return;
-          var el = document.createElement("div");
-          el.id = "gfSkeletonBoot";
-          el.setAttribute("aria-busy", "true");
-          el.innerHTML = '<div class="b" style="width:40%;height:18px"></div><div class="b" style="width:25%"></div><div class="g"><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div></div><div class="box" style="height:200px"></div>';
-          document.body.appendChild(el);
-        });
-      } catch (e) {}
     })();
   </script>
 </head>
@@ -49,27 +32,7 @@
         </div>
       </div>
 
-      <div id="dashSkeleton" class="skeleton-content-host" aria-busy="true" aria-live="polite">
-        <div class="skeleton-base">
-          <div class="skeleton-row" style="margin-bottom:1.25rem">
-            <span class="skeleton-circle lg skeleton-wave"></span>
-            <div class="skeleton-col">
-              <span class="skeleton-line lg w-50 skeleton-wave"></span>
-              <span class="skeleton-line w-30 sm skeleton-wave"></span>
-            </div>
-          </div>
-          <div class="stats skeleton-base">
-            <div class="stat" style="min-height:80px"><span class="skeleton-line w-50 sm skeleton-wave"></span><span class="skeleton-line w-40 lg skeleton-wave" style="margin-top:0.75rem"></span></div>
-            <div class="stat" style="min-height:80px"><span class="skeleton-line w-50 sm skeleton-wave"></span><span class="skeleton-line w-40 lg skeleton-wave" style="margin-top:0.75rem"></span></div>
-            <div class="stat" style="min-height:80px"><span class="skeleton-line w-50 sm skeleton-wave"></span><span class="skeleton-line w-40 lg skeleton-wave" style="margin-top:0.75rem"></span></div>
-            <div class="stat" style="min-height:80px"><span class="skeleton-line w-50 sm skeleton-wave"></span><span class="skeleton-line w-40 lg skeleton-wave" style="margin-top:0.75rem"></span></div>
-          </div>
-          <div class="skeleton-panel" style="margin-top:1rem">
-            <span class="skeleton-line w-30 skeleton-wave"></span>
-            <div class="skeleton-box skeleton-wave" style="height:300px;min-height:300px;margin-top:0.75rem"></div>
-          </div>
-        </div>
-      </div>
+      <div class="loader visible" id="dashLoader"><div class="spinner"></div> <span data-i18n="common.loading">Loading…</span></div>
       <div id="dashContent" hidden>
       <div class="stats-row" id="stats"></div>
 
@@ -113,8 +76,7 @@
   <script type="module">
     import { requireAuth } from "../js/auth.js";
     import { BillingAPI, DashboardAPI, ProjectsAPI, downloadAuthed } from "../js/api.js";
-    import { applyDomI18n, escapeHtml, mountShell, showModal, statusBadge, toast, t } from "../js/app.js";
-    import { renderDashboardSkeleton, SKELETON_SETTINGS } from "../components/skeleton/skeleton.js";
+    import { applyDomI18n, escapeHtml, mountShell, setLoading, showModal, statusBadge, toast, t } from "../js/app.js";
 
     if (!requireAuth()) throw new Error("auth");
     mountShell("dashboard");
@@ -126,27 +88,10 @@
     }
 
     async function load() {
-      const sk = document.getElementById("dashSkeleton");
-      const content = document.getElementById("dashContent");
-      const shownAt = performance.now();
-      if (sk) {
-        sk.hidden = false;
-        if (!sk.querySelector(".skeleton-base")) {
-          sk.innerHTML = renderDashboardSkeleton();
-        }
-      }
-      content.hidden = true;
+      setLoading(document.getElementById("dashLoader"), true);
       try {
         const [stats, projects] = await Promise.all([DashboardAPI.stats(), ProjectsAPI.list()]);
-        const wait = Math.max(0, SKELETON_SETTINGS.min_display_ms - (performance.now() - shownAt));
-        await new Promise((r) => setTimeout(r, wait));
-        if (sk) {
-          sk.hidden = true;
-          sk.innerHTML = "";
-          sk.removeAttribute("aria-busy");
-        }
-        content.hidden = false;
-        content.classList.add("skeleton-base");
+        document.getElementById("dashContent").hidden = false;
         document.getElementById("welcome").textContent = t("dash.welcome", {
           plan: stats.plan,
           rank: stats.leaderboard_rank,
@@ -219,13 +164,8 @@
             } catch (e) { toast(e.message, true); }
           });
         });
-      } catch (e) {
-        const skEl = document.getElementById("dashSkeleton");
-        if (skEl) {
-          skEl.hidden = true;
-          skEl.innerHTML = "";
-        }
-        throw e;
+      } finally {
+        setLoading(document.getElementById("dashLoader"), false);
       }
     }
 

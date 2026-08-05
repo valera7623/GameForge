@@ -1,5 +1,3 @@
-@import "../components/skeleton/skeleton.css";
-
 /* Default: light theme */
 :root,
 [data-theme="light"] {
