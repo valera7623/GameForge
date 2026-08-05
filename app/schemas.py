@@ -364,6 +364,109 @@ class ReviewAnalyzerRequest(BaseModel):
         return self
 
 
+class DiscordConfigureRequest(BaseModel):
+    bot_name: str = Field(default="GameForge Bot", max_length=120)
+    guild_id: str = Field(default="", max_length=64)
+    channel_id: str = Field(default="", max_length=64)
+    bot_token: Optional[str] = Field(default=None, max_length=300)
+    prefix: str = Field(default="!", max_length=8)
+    moderation_enabled: bool = True
+    welcome_enabled: bool = True
+    analytics_enabled: bool = True
+    moderation: dict = Field(default_factory=dict)
+    welcome: dict = Field(default_factory=dict)
+    analytics: dict = Field(default_factory=dict)
+    game_info: dict = Field(default_factory=dict)
+    mark_connected: Optional[bool] = None
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+
+class DiscordCommandCreate(BaseModel):
+    command: str = Field(..., max_length=64)
+    description: str = Field(default="", max_length=300)
+    usage: str = Field(default="", max_length=120)
+    response: str = Field(default="", max_length=4000)
+    category: str = Field(default="custom", max_length=32)
+    is_active: bool = True
+
+
+class DiscordCommandUpdate(BaseModel):
+    description: Optional[str] = Field(default=None, max_length=300)
+    usage: Optional[str] = Field(default=None, max_length=120)
+    response: Optional[str] = Field(default=None, max_length=4000)
+    category: Optional[str] = Field(default=None, max_length=32)
+    is_active: Optional[bool] = None
+
+
+class DiscordCommandOut(BaseModel):
+    id: UUID
+    command: str
+    description: str
+    usage: str
+    response: str
+    category: str
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
+class DiscordStatusOut(BaseModel):
+    id: Optional[UUID] = None
+    bot_name: str
+    guild_id: str
+    channel_id: str
+    prefix: str
+    token_masked: Optional[str] = None
+    has_token: bool = False
+    moderation_enabled: bool = True
+    welcome_enabled: bool = True
+    analytics_enabled: bool = True
+    moderation: dict = Field(default_factory=dict)
+    welcome: dict = Field(default_factory=dict)
+    analytics: dict = Field(default_factory=dict)
+    game_info: dict = Field(default_factory=dict)
+    is_connected: bool = False
+    status: str = "offline"
+    status_label: str = ""
+    stats: dict = Field(default_factory=dict)
+    commands: List[DiscordCommandOut] = Field(default_factory=list)
+    updated_at: Optional[str] = None
+
+
+class DiscordModerateRequest(BaseModel):
+    content: str = Field(..., max_length=4000)
+    user_id: Optional[str] = Field(default=None, max_length=64)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+
+class DiscordSimulateCommandRequest(BaseModel):
+    command: str = Field(..., max_length=64)
+    args: str = Field(default="", max_length=500)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+
+class DiscordAnalyzeRequest(BaseModel):
+    project_id: Optional[UUID] = None
+    bot_name: str = Field(default="Discord Bot", max_length=120)
+    messages: List[Any] = Field(default_factory=list)
+    moderation: dict = Field(default_factory=dict)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+    def to_payload(self) -> dict:
+        return {
+            "bot_name": self.bot_name,
+            "messages": self.messages,
+            "moderation": self.moderation,
+            "lang": self.lang,
+        }
+
+    @model_validator(mode="after")
+    def _require_messages(self) -> "DiscordAnalyzeRequest":
+        if not self.messages:
+            raise ValueError("Provide at least one community message sample")
+        return self
+
+
 class LocalizationRequest(BaseModel):
     project_id: Optional[UUID] = None
     texts: dict[str, str]  # key -> source text

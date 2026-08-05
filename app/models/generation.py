@@ -31,6 +31,7 @@ class ToolType(str, enum.Enum):
     PLAYTEST_ANALYZER = "playtest_analyzer"
     TRAILER_SCRIPT = "trailer_script"
     REVIEW_ANALYZER = "review_analyzer"
+    DISCORD_BOT = "discord_bot"
 
 
 class GenerationStatus(str, enum.Enum):

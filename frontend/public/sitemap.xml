@@ -199,4 +199,22 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/review-analyzer" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/review-analyzer" />
   </url>
+  <url>
+    <loc>https://gameforge.website/tools/discord-bot</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/discord-bot" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/discord-bot" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/discord-bot" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/discord-bot</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/discord-bot" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/discord-bot" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/discord-bot" />
+  </url>
 </urlset>

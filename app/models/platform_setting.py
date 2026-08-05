@@ -34,6 +34,7 @@ DEFAULT_TOOLS = {
     "playtest_analyzer": {"enabled": True, "display_name": "AI Playtest Analyzer"},
     "trailer_script": {"enabled": True, "display_name": "AI Trailer Script"},
     "review_analyzer": {"enabled": True, "display_name": "AI Review Analyzer"},
+    "discord_bot": {"enabled": True, "display_name": "AI Discord Bot"},
 }
 
 DEFAULT_AI_MODELS = {

@@ -2,6 +2,7 @@
 
 from app.models.achievement import Achievement, UserAchievement
 from app.models.content import ContentItem
+from app.models.discord_bot import DiscordBotCommand, DiscordBotConfig, DiscordBotMessage, DiscordBotUser
 from app.models.generation import Generation
 from app.models.ops_log import ApiRequestLog, AuditLog, ErrorLog
 from app.models.organization import Organization, OrgInvite, OrgMembership
@@ -28,4 +29,8 @@ __all__ = [
     "ErrorLog",
     "ApiRequestLog",
     "ContentItem",
+    "DiscordBotConfig",
+    "DiscordBotCommand",
+    "DiscordBotMessage",
+    "DiscordBotUser",
 ]

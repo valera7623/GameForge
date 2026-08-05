@@ -121,6 +121,7 @@ export const ToolsAPI = {
   playtestAnalyze: (body) => api("/playtest-analyzer", { method: "POST", body: JSON.stringify(body) }),
   trailerScript: (body) => api("/trailer-script", { method: "POST", body: JSON.stringify(body) }),
   reviewAnalyze: (body) => api("/review-analyzer", { method: "POST", body: JSON.stringify(body) }),
+  discordAnalyze: (body) => api("/discord-bot/analyze", { method: "POST", body: JSON.stringify(body) }),
   upscale: async (file, scale, enhance, projectId) => {
     const fd = new FormData();
     fd.append("file", file);
@@ -129,6 +130,18 @@ export const ToolsAPI = {
     if (projectId) fd.append("project_id", projectId);
     return api("/texture-upscaler", { method: "POST", body: fd, headers: {} });
   },
+};
+
+export const DiscordBotAPI = {
+  status: (lang = "en") => api(`/discord-bot/status?lang=${encodeURIComponent(lang)}`),
+  configure: (body) => api("/discord-bot/configure", { method: "POST", body: JSON.stringify(body) }),
+  commands: () => api("/discord-bot/commands"),
+  createCommand: (body) => api("/discord-bot/command", { method: "POST", body: JSON.stringify(body) }),
+  updateCommand: (id, body) => api(`/discord-bot/command/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  deleteCommand: (id) => api(`/discord-bot/command/${id}`, { method: "DELETE" }),
+  moderate: (body) => api("/discord-bot/moderate", { method: "POST", body: JSON.stringify(body) }),
+  simulateCommand: (body) => api("/discord-bot/simulate-command", { method: "POST", body: JSON.stringify(body) }),
+  analytics: (lang = "en") => api(`/discord-bot/analytics?lang=${encodeURIComponent(lang)}`),
 };
 
 export const DashboardAPI = {

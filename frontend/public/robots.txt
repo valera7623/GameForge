@@ -18,6 +18,7 @@ Disallow: /store-description
 Disallow: /playtest-analyzer
 Disallow: /trailer-script
 Disallow: /review-analyzer
+Disallow: /discord-bot
 Disallow: /login
 Disallow: /register
 Disallow: /reset-password

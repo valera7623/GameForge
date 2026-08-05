@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="disc.title">Discord Bot — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .disc-status { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; margin:0.5rem 0 1rem; }
+    .disc-pill { border:1px solid var(--border); border-radius:999px; padding:0.25rem 0.75rem; font-size:0.85rem; background:var(--bg); }
+    .disc-pill[data-on="true"] { border-color: color-mix(in srgb, var(--ok) 55%, var(--border)); }
+    .disc-metrics { display:grid; gap:0.75rem; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); margin:0.75rem 0; }
+    .disc-metric { border:1px solid var(--border); border-radius:8px; padding:0.75rem; background:var(--bg); }
+    .disc-metric span { display:block; color:var(--muted); font-size:0.75rem; }
+    .disc-cmd { border:1px solid var(--border); border-radius:8px; padding:0.65rem 0.8rem; margin:0.4rem 0; background:var(--bg-elevated); display:grid; grid-template-columns:110px 1fr; gap:0.5rem; }
+    .disc-charts { display:grid; gap:1rem; }
+    @media (min-width:900px) { .disc-charts { grid-template-columns:1fr 1fr; } }
+    .disc-chart { border:1px solid var(--border); border-radius:8px; padding:0.9rem; background:var(--bg); }
+    .disc-bars { display:flex; flex-direction:column; gap:0.4rem; }
+    .disc-row { display:grid; grid-template-columns:90px 1fr 48px; gap:0.5rem; align-items:center; font-size:0.85rem; }
+    .disc-row .track { height:8px; border-radius:999px; background:color-mix(in srgb, var(--border) 70%, transparent); overflow:hidden; }
+    .disc-row .track > i { display:block; height:100%; background:var(--accent); border-radius:999px; }
+    #messagesJson { min-height:140px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:0.85rem; }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="disc.h1">AI Discord Bot</h1>
+        <p data-i18n="disc.sub">Configure moderation, commands, welcome messages, and community analytics.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="disc.step1">Step 1: Configure bot</h2>
+        <form id="configForm" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="disc.bot_name">Bot name</span><input id="botName" value="Dungeon Explorer Bot" /></label>
+            <label><span data-i18n="disc.prefix">Prefix</span><input id="prefix" value="!" maxlength="4" /></label>
+          </div>
+          <div class="form-row">
+            <label><span data-i18n="disc.guild">Server ID</span><input id="guildId" placeholder="123456789" /></label>
+            <label><span data-i18n="disc.channel">Channel ID</span><input id="channelId" placeholder="123456789" /></label>
+          </div>
+          <label><span data-i18n="disc.token">Bot token</span>
+            <input id="botToken" type="password" autocomplete="off" placeholder="••••••••" />
+          </label>
+          <p style="color:var(--muted);font-size:0.85rem;margin:0" data-i18n="disc.token_hint">Token is encrypted at rest and never shown in full.</p>
+
+          <h3 data-i18n="disc.moderation">Moderation</h3>
+          <div class="form-row">
+            <label><input type="checkbox" id="modEnabled" checked /> <span data-i18n="disc.mod_enable">Enable moderation</span></label>
+            <label><input type="checkbox" id="autoDelete" checked /> <span data-i18n="disc.auto_delete">Auto-delete spam</span></label>
+          </div>
+          <div class="form-row">
+            <label><span data-i18n="disc.warn_threshold">Warn threshold</span><input id="warnThreshold" type="number" min="1" max="20" value="3" /></label>
+            <label><span data-i18n="disc.timeout">Timeout (sec)</span><input id="timeoutDur" type="number" min="10" max="86400" value="300" /></label>
+          </div>
+
+          <h3 data-i18n="disc.welcome">Welcome</h3>
+          <label><input type="checkbox" id="welcomeEnabled" checked /> <span data-i18n="disc.welcome_enable">Enable welcome message</span></label>
+          <label><span data-i18n="disc.welcome_msg">Message</span>
+            <input id="welcomeMsg" value="Welcome {user} to the Dungeon Explorer community! 🎮" />
+          </label>
+
+          <label><span data-i18n="disc.game_desc">Game description</span>
+            <textarea id="gameDesc" rows="2">Procedural dungeon crawler with deep RPG systems.</textarea>
+          </label>
+
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-primary" type="submit" data-i18n="disc.save">Save configuration</button>
+            <button class="btn btn-ghost" type="button" id="connectBtn" data-i18n="disc.connect">Mark connected</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h2 data-i18n="disc.status">Bot status</h2>
+        <div class="disc-status">
+          <span class="disc-pill" id="statusPill" data-on="false">—</span>
+          <span id="tokenMask" style="color:var(--muted);font-size:0.9rem"></span>
+        </div>
+        <div class="disc-metrics" id="statsMetrics"></div>
+        <h3 data-i18n="disc.commands">Commands</h3>
+        <div id="commandsList"></div>
+        <div class="form-row" style="margin-top:0.75rem">
+          <label><span data-i18n="disc.new_cmd">New command</span><input id="newCmd" placeholder="loot" /></label>
+          <label><span data-i18n="disc.new_desc">Description</span><input id="newDesc" placeholder="Daily loot tip" /></label>
+        </div>
+        <label><span data-i18n="disc.new_resp">Response</span><input id="newResp" placeholder="Check the weekly chest in town!" /></label>
+        <div class="actions"><button class="btn btn-ghost" type="button" id="addCmd" data-i18n="disc.add_cmd">Add command</button></div>
+      </div>
+
+      <div class="panel">
+        <h2 data-i18n="disc.preview">Preview</h2>
+        <div class="form-row">
+          <label><span data-i18n="disc.mod_test">Test moderation</span>
+            <input id="modText" placeholder="FREE NITRO http://scam.test" />
+          </label>
+          <button class="btn btn-ghost" type="button" id="modBtn" data-i18n="disc.run_mod">Check message</button>
+        </div>
+        <p id="modOut" style="color:var(--muted)"></p>
+        <div class="form-row">
+          <label><span data-i18n="disc.sim_cmd">Simulate command</span>
+            <input id="simCmd" value="roll" />
+          </label>
+          <label><span data-i18n="disc.sim_args">Args</span>
+            <input id="simArgs" value="d20" />
+          </label>
+          <button class="btn btn-ghost" type="button" id="simBtn" data-i18n="disc.run_sim">Run</button>
+        </div>
+        <pre id="simOut" class="result-box" style="white-space:pre-wrap;min-height:2rem"></pre>
+      </div>
+
+      <div class="panel">
+        <h2 data-i18n="disc.analytics">Analytics</h2>
+        <label><span data-i18n="disc.messages">Sample messages (JSON array)</span>
+          <textarea id="messagesJson"></textarea>
+        </label>
+        <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+          <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="disc.sample">Load sample</button>
+          <button class="btn btn-primary" type="button" id="analyzeBtn" data-i18n="disc.analyze">Analyze community</button>
+        </div>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="disc.loading">Analyzing…</span></div>
+        <p id="summary" style="color:var(--muted)"></p>
+        <div class="disc-charts" id="charts"></div>
+        <div id="recs"></div>
+      </div>
+
+      <div id="toolHistory"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { DiscordBotAPI, ToolsAPI } from "../js/api.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, setLoading, toast, t } from "../js/app.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+
+    mountShell("discord-bot");
+    applyDomI18n(document);
+    mountToolHistory("discord_bot");
+
+    const SAMPLE_MSGS = [
+      "Looking for dungeon co-op tonight!",
+      "Amazing patch, combat feels smooth.",
+      "FREE NITRO http://scam.example discord.gg/spam",
+      "This boss is unfair and the inventory UI is a mess.",
+      "Спасибо за ивент, было круто!",
+    ];
+
+    function lang() { return getLang() === "ru" ? "ru" : "en"; }
+
+    function fillConfig(st) {
+      if (!st) return;
+      document.getElementById("botName").value = st.bot_name || "";
+      document.getElementById("prefix").value = st.prefix || "!";
+      document.getElementById("guildId").value = st.guild_id || "";
+      document.getElementById("channelId").value = st.channel_id || "";
+      document.getElementById("botToken").value = "";
+      document.getElementById("botToken").placeholder = st.token_masked || "••••••••";
+      document.getElementById("modEnabled").checked = !!st.moderation_enabled;
+      document.getElementById("welcomeEnabled").checked = !!st.welcome_enabled;
+      const mod = st.moderation || {};
+      document.getElementById("autoDelete").checked = mod.auto_delete !== false;
+      document.getElementById("warnThreshold").value = mod.warn_threshold ?? 3;
+      document.getElementById("timeoutDur").value = mod.timeout_duration ?? 300;
+      document.getElementById("welcomeMsg").value = (st.welcome && st.welcome.message) || "";
+      document.getElementById("gameDesc").value = (st.game_info && st.game_info.description) || "";
+      renderStatus(st);
+    }
+
+    function renderStatus(st) {
+      const pill = document.getElementById("statusPill");
+      pill.textContent = st.status_label || st.status || "—";
+      pill.dataset.on = st.status === "online" || st.status === "ready" ? "true" : "false";
+      document.getElementById("tokenMask").textContent = st.token_masked
+        ? `${t("disc.token_saved")}: ${st.token_masked}` : t("disc.token_missing");
+      const s = st.stats || {};
+      document.getElementById("statsMetrics").innerHTML = [
+        [t("disc.m.messages"), s.messages ?? 0],
+        [t("disc.m.moderation"), s.moderation_actions ?? 0],
+        [t("disc.m.commands"), s.commands_run ?? 0],
+        [t("disc.m.warnings"), s.warnings ?? 0],
+        [t("disc.m.users"), s.users ?? 0],
+      ].map(([a, b]) => `<div class="disc-metric"><span>${escapeHtml(a)}</span><strong>${escapeHtml(String(b))}</strong></div>`).join("");
+      const cmds = st.commands || [];
+      document.getElementById("commandsList").innerHTML = cmds.length
+        ? cmds.map((c) => `<div class="disc-cmd"><strong>${escapeHtml((st.prefix || "!") + c.command)}</strong><span>${escapeHtml(c.description || "")}</span></div>`).join("")
+        : `<p style="color:var(--muted)">${escapeHtml(t("disc.no_cmds"))}</p>`;
+    }
+
+    function readConfigPayload(markConnected) {
+      const token = document.getElementById("botToken").value.trim();
+      const body = {
+        bot_name: document.getElementById("botName").value.trim() || "GameForge Bot",
+        guild_id: document.getElementById("guildId").value.trim(),
+        channel_id: document.getElementById("channelId").value.trim(),
+        prefix: document.getElementById("prefix").value.trim() || "!",
+        moderation_enabled: document.getElementById("modEnabled").checked,
+        welcome_enabled: document.getElementById("welcomeEnabled").checked,
+        analytics_enabled: true,
+        moderation: {
+          enabled: document.getElementById("modEnabled").checked,
+          auto_delete: document.getElementById("autoDelete").checked,
+          warn_threshold: Number(document.getElementById("warnThreshold").value) || 3,
+          timeout_duration: Number(document.getElementById("timeoutDur").value) || 300,
+        },
+        welcome: {
+          enabled: document.getElementById("welcomeEnabled").checked,
+          message: document.getElementById("welcomeMsg").value,
+          channel_id: document.getElementById("channelId").value.trim(),
+        },
+        game_info: {
+          name: document.getElementById("botName").value.replace(/ Bot$/i, "").trim() || "Game",
+          description: document.getElementById("gameDesc").value.trim(),
+        },
+        lang: lang(),
+      };
+      if (token) body.bot_token = token;
+      if (markConnected != null) body.mark_connected = markConnected;
+      return body;
+    }
+
+    function renderBars(el, labels, values) {
+      const max = Math.max(...values.map(Number), 0.01);
+      el.innerHTML = `<div class="disc-bars">${labels.map((lab, i) => {
+        const v = Number(values[i] ?? 0);
+        const pct = Math.round((v / max) * 100);
+        return `<div class="disc-row"><span>${escapeHtml(String(lab))}</span><div class="track"><i style="width:${pct}%"></i></div><span>${escapeHtml(String(v))}</span></div>`;
+      }).join("")}</div>`;
+    }
+
+    async function refresh() {
+      const st = await DiscordBotAPI.status(lang());
+      fillConfig(st);
+    }
+
+    document.getElementById("messagesJson").value = JSON.stringify(SAMPLE_MSGS, null, 2);
+
+    document.getElementById("configForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const st = await DiscordBotAPI.configure(readConfigPayload());
+        fillConfig(st);
+        toast(t("disc.saved"));
+        mountToolHistory("discord_bot");
+      } catch (err) { toast(err.message || String(err), true); }
+    });
+
+    document.getElementById("connectBtn").addEventListener("click", async () => {
+      try {
+        const st = await DiscordBotAPI.configure(readConfigPayload(true));
+        fillConfig(st);
+        toast(t("disc.connected"));
+      } catch (err) { toast(err.message || String(err), true); }
+    });
+
+    document.getElementById("addCmd").addEventListener("click", async () => {
+      try {
+        await DiscordBotAPI.createCommand({
+          command: document.getElementById("newCmd").value.trim(),
+          description: document.getElementById("newDesc").value.trim(),
+          response: document.getElementById("newResp").value.trim(),
+        });
+        document.getElementById("newCmd").value = "";
+        document.getElementById("newDesc").value = "";
+        document.getElementById("newResp").value = "";
+        toast(t("disc.cmd_added"));
+        await refresh();
+      } catch (err) { toast(err.message || String(err), true); }
+    });
+
+    document.getElementById("modBtn").addEventListener("click", async () => {
+      try {
+        const r = await DiscordBotAPI.moderate({ content: document.getElementById("modText").value, lang: lang() });
+        document.getElementById("modOut").textContent = `${r.flagged ? "⚠" : "✓"} ${r.action}: ${r.description}`;
+        await refresh();
+      } catch (err) { toast(err.message || String(err), true); }
+    });
+
+    document.getElementById("simBtn").addEventListener("click", async () => {
+      try {
+        const r = await DiscordBotAPI.simulateCommand({
+          command: document.getElementById("simCmd").value,
+          args: document.getElementById("simArgs").value,
+          lang: lang(),
+        });
+        document.getElementById("simOut").textContent = r.response || JSON.stringify(r);
+        await refresh();
+      } catch (err) { toast(err.message || String(err), true); }
+    });
+
+    document.getElementById("loadSample").addEventListener("click", () => {
+      document.getElementById("messagesJson").value = JSON.stringify(SAMPLE_MSGS, null, 2);
+      toast(t("disc.sample_loaded"));
+    });
+
+    document.getElementById("analyzeBtn").addEventListener("click", async () => {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        let messages = JSON.parse(document.getElementById("messagesJson").value);
+        if (!Array.isArray(messages)) throw new Error(t("disc.bad_json"));
+        const gen = await ToolsAPI.discordAnalyze({
+          bot_name: document.getElementById("botName").value.trim() || "Discord Bot",
+          messages,
+          lang: lang(),
+        });
+        const out = gen.output_data || {};
+        document.getElementById("summary").textContent = out.summary_text || "";
+        const charts = document.getElementById("charts");
+        charts.innerHTML = "";
+        (out.visualizations || []).forEach((v) => {
+          if (!v.data?.labels) return;
+          const el = document.createElement("div");
+          el.className = "disc-chart";
+          el.innerHTML = `<h3>${escapeHtml(v.title || "")}</h3><div class="body"></div>`;
+          renderBars(el.querySelector(".body"), v.data.labels, v.data.values);
+          charts.appendChild(el);
+        });
+        document.getElementById("recs").innerHTML = (out.recommendations || [])
+          .map((r) => `<div class="disc-cmd"><strong>${escapeHtml(r.target || "")}</strong><span>${escapeHtml(r.description || "")}</span></div>`).join("");
+        toast(t("disc.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("discord_bot");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    });
+
+    refresh().catch((err) => toast(err.message || String(err), true));
+  </script>
+</body>
+</html>

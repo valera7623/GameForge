@@ -120,6 +120,7 @@ const ROUTES = [
   ["playtest-analyzer", "nav.playtest_analyzer"],
   ["trailer-script", "nav.trailer"],
   ["review-analyzer", "nav.review"],
+  ["discord-bot", "nav.discord"],
   ["team", "nav.team"],
 ];
 
@@ -137,6 +138,7 @@ const TOOL_ROUTES = [
   ["playtest-analyzer", "nav.playtest_analyzer", "dash.tool.pta_d"],
   ["trailer-script", "nav.trailer", "dash.tool.trail_d"],
   ["review-analyzer", "nav.review", "dash.tool.rev_d"],
+  ["discord-bot", "nav.discord", "dash.tool.disc_d"],
 ];
 
 export function sidebarHTML(active) {
