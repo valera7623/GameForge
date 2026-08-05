@@ -30,6 +30,7 @@ class ToolType(str, enum.Enum):
     STORE_DESCRIPTION = "store_description"
     PLAYTEST_ANALYZER = "playtest_analyzer"
     TRAILER_SCRIPT = "trailer_script"
+    REVIEW_ANALYZER = "review_analyzer"
 
 
 class GenerationStatus(str, enum.Enum):

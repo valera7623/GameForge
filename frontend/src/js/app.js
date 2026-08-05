@@ -119,6 +119,7 @@ const ROUTES = [
   ["store-description", "nav.store"],
   ["playtest-analyzer", "nav.playtest_analyzer"],
   ["trailer-script", "nav.trailer"],
+  ["review-analyzer", "nav.review"],
   ["team", "nav.team"],
 ];
 
@@ -135,6 +136,7 @@ const TOOL_ROUTES = [
   ["store-description", "nav.store", "dash.tool.store_d"],
   ["playtest-analyzer", "nav.playtest_analyzer", "dash.tool.pta_d"],
   ["trailer-script", "nav.trailer", "dash.tool.trail_d"],
+  ["review-analyzer", "nav.review", "dash.tool.rev_d"],
 ];
 
 export function sidebarHTML(active) {

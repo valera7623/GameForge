@@ -181,4 +181,22 @@
     <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/trailer-script" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/trailer-script" />
   </url>
+  <url>
+    <loc>https://gameforge.website/tools/review-analyzer</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/review-analyzer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/review-analyzer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/review-analyzer" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/ru/tools/review-analyzer</loc>
+    <lastmod>2026-08-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/tools/review-analyzer" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/review-analyzer" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/review-analyzer" />
+  </url>
 </urlset>

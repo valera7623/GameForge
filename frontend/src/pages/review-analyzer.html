@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="rev.title">Review Analyzer — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .rev-score { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; margin:0.75rem 0 1.25rem; }
+    .rev-score strong { font-family: Orbitron, sans-serif; font-size:1.6rem; }
+    .rev-bar { flex:1; min-width:160px; height:10px; border-radius:999px; background:color-mix(in srgb, var(--border) 80%, transparent); overflow:hidden; }
+    .rev-bar > i { display:block; height:100%; border-radius:999px; background:var(--accent); width:0%; transition:width .4s ease; }
+    .rev-metrics { display:grid; gap:0.75rem; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); margin:0.75rem 0 1.25rem; }
+    .rev-metric { border:1px solid var(--border); border-radius:8px; padding:0.75rem; background:var(--bg); }
+    .rev-metric span { display:block; color:var(--muted); font-size:0.75rem; }
+    .rev-card { border:1px solid var(--border); border-radius:8px; padding:0.75rem 0.9rem; margin:0.5rem 0; background:var(--bg-elevated); }
+    .rev-card[data-sev="high"] { border-color:color-mix(in srgb, var(--danger) 55%, var(--border)); }
+    .rev-card[data-sev="medium"] { border-color:color-mix(in srgb, var(--warn) 55%, var(--border)); }
+    .rev-card[data-sev="low"] { border-color:color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .rev-sev { font-size:0.75rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+    .rev-charts { display:grid; gap:1rem; margin-top:1rem; }
+    @media (min-width:900px) { .rev-charts { grid-template-columns:1fr 1fr; } }
+    .rev-chart { border:1px solid var(--border); border-radius:8px; padding:0.9rem; background:var(--bg); }
+    .rev-chart h3 { margin:0 0 0.75rem; font-size:0.95rem; }
+    .rev-bars { display:flex; flex-direction:column; gap:0.45rem; }
+    .rev-row { display:grid; grid-template-columns:110px 1fr 48px; gap:0.5rem; align-items:center; font-size:0.85rem; }
+    .rev-row .track { height:8px; border-radius:999px; background:color-mix(in srgb, var(--border) 70%, transparent); overflow:hidden; }
+    .rev-row .track > i { display:block; height:100%; background:var(--accent); border-radius:999px; }
+    .rev-row .val { text-align:right; color:var(--muted); font-variant-numeric:tabular-nums; }
+    #reviewsJson { min-height:260px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:0.85rem; }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="rev.h1">AI Review Analyzer</h1>
+        <p data-i18n="rev.sub">Find sentiment, top issues, praises, and trends in player reviews.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="rev.step1">Step 1: Upload reviews</h2>
+        <form id="form" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="rev.game_name">Game name</span>
+              <input id="gameName" value="Dungeon Explorer" required />
+            </label>
+            <label><span data-i18n="rev.source">Source</span>
+              <select id="source">
+                <option value="steam">Steam</option>
+                <option value="appstore">App Store</option>
+                <option value="googleplay">Google Play</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <label><span data-i18n="common.project">Project</span>
+              <select id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
+            </label>
+          </div>
+          <label><span data-i18n="rev.json">Reviews data (JSON)</span>
+            <textarea id="reviewsJson" spellcheck="false"></textarea>
+          </label>
+          <p id="reviewStats" style="color:var(--muted);font-size:0.9rem;margin:0"></p>
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="rev.sample">Load sample</button>
+            <button class="btn btn-ghost" type="button" id="loadFile" data-i18n="rev.load">Load from JSON</button>
+            <input type="file" id="fileInput" accept="application/json,.json,.csv,text/csv" hidden />
+            <button class="btn btn-ghost" type="button" id="saveLocal" data-i18n="rev.save">Save draft</button>
+            <button class="btn btn-primary" type="submit" data-i18n="rev.analyze">Analyze</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="rev.loading">Analyzing reviews…</span></div>
+      </div>
+
+      <div class="panel" id="resultPanel" hidden>
+        <h2 data-i18n="rev.step2">Step 2: Results</h2>
+        <div class="rev-score">
+          <div><span data-i18n="rev.score_label">Review health</span><br /><strong id="scoreVal">—</strong></div>
+          <div class="rev-bar" aria-hidden="true"><i id="scoreBar"></i></div>
+        </div>
+        <div class="rev-metrics" id="metrics"></div>
+        <p id="summary" style="color:var(--muted)"></p>
+
+        <h3 data-i18n="rev.issues">Top issues</h3>
+        <div id="issues"></div>
+        <h3 data-i18n="rev.praises">Top praises</h3>
+        <div id="praises"></div>
+        <h3 data-i18n="rev.cats">Categories</h3>
+        <div id="cats"></div>
+        <h3 data-i18n="rev.recs">Recommendations</h3>
+        <div id="recs"></div>
+        <h3 data-i18n="rev.viz">Visualizations</h3>
+        <div class="rev-charts" id="charts"></div>
+
+        <div class="actions" style="margin-top:1rem;flex-wrap:wrap;gap:0.5rem">
+          <button class="btn btn-ghost" id="dlJson" data-i18n="rev.export">Export JSON</button>
+          <button class="btn btn-ghost" id="dlText" data-i18n="rev.export_text">Export report</button>
+          <button class="btn btn-ghost" id="reanalyze" data-i18n="rev.reanalyze">Re-analyze</button>
+        </div>
+        <details style="margin-top:1rem">
+          <summary data-i18n="rev.raw">Raw JSON</summary>
+          <div class="result-box" style="margin-top:0.75rem"><pre id="jsonOut"></pre></div>
+        </details>
+      </div>
+
+      <div id="toolHistory"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, setLoading, toast, t } from "../js/app.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+
+    mountShell("review-analyzer");
+    applyDomI18n(document);
+    mountToolHistory("review_analyzer");
+
+    const DRAFT_KEY = "gf_review_analyzer_draft";
+    let last = null;
+
+    const SAMPLE = {
+      game_name: "Dungeon Explorer",
+      source: "steam",
+      reviews: [
+        {
+          review_id: "rev_001",
+          rating: 5,
+          text: "Amazing game! The combat is smooth and the dungeons are procedurally generated perfectly. I've played for 50 hours and still finding new things. Highly recommend!",
+          date: "2026-08-01",
+          language: "en",
+        },
+        {
+          review_id: "rev_002",
+          rating: 2,
+          text: "Too hard. The second boss is completely unfair. I died 20 times and gave up. The tutorial is also confusing.",
+          date: "2026-08-02",
+          language: "en",
+        },
+        {
+          review_id: "rev_003",
+          rating: 4,
+          text: "Great concept, but the inventory UI is a mess. I can't find what I'm looking for. Also, some enemies are way too strong for early levels.",
+          date: "2026-08-03",
+          language: "en",
+        },
+        {
+          review_id: "rev_004",
+          rating: 3,
+          text: "Игра неплохая, но босс 2 слишком сложный. Много багов в инвентаре. В целом играть можно.",
+          date: "2026-08-04",
+          language: "ru",
+        },
+      ],
+    };
+
+    function setJson(data) {
+      document.getElementById("reviewsJson").value = JSON.stringify(data, null, 2);
+      if (data.game_name) document.getElementById("gameName").value = data.game_name;
+      if (data.source) document.getElementById("source").value = data.source;
+      updateStats(data);
+    }
+
+    function updateStats(data) {
+      const reviews = Array.isArray(data?.reviews) ? data.reviews : [];
+      const ratings = reviews.map((r) => r?.rating).filter((r) => r != null).map(Number);
+      const avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : "—";
+      document.getElementById("reviewStats").textContent = t("rev.stats", { n: reviews.length, rating: avg });
+    }
+
+    function readPayload() {
+      let data;
+      try {
+        data = JSON.parse(document.getElementById("reviewsJson").value);
+      } catch {
+        throw new Error(t("rev.bad_json"));
+      }
+      if (!data || typeof data !== "object") throw new Error(t("rev.bad_json"));
+      // Allow paste of bare array
+      if (Array.isArray(data)) data = { reviews: data };
+      data.game_name = document.getElementById("gameName").value.trim() || data.game_name || "Untitled Game";
+      data.source = document.getElementById("source").value || data.source || "custom";
+      data.lang = getLang() === "ru" ? "ru" : "en";
+      const pid = document.getElementById("projectSelect").value;
+      if (pid) data.project_id = pid;
+      if (!Array.isArray(data.reviews) || !data.reviews.length) throw new Error(t("rev.no_reviews"));
+      return data;
+    }
+
+    function renderBars(container, labels, values) {
+      const max = Math.max(...values.map(Number), 0.01);
+      container.innerHTML = `<div class="rev-bars">${labels.map((lab, i) => {
+        const v = Number(values[i] ?? 0);
+        const pct = Math.round((v / max) * 100);
+        return `<div class="rev-row"><span>${escapeHtml(String(lab))}</span><div class="track"><i style="width:${pct}%"></i></div><span class="val">${escapeHtml(String(v))}</span></div>`;
+      }).join("")}</div>`;
+    }
+
+    function cards(items, emptyKey, labelKey) {
+      if (!items?.length) return `<p style="color:var(--muted)">${escapeHtml(t(emptyKey))}</p>`;
+      return items.map((item) => {
+        const sev = item.severity || "low";
+        const title = item[labelKey] || item.description || item.issue || item.praise || "";
+        const meta = item.mentions != null ? `${item.mentions} ${t("rev.mentions")}` : (item.count != null ? `${item.count}` : "");
+        return `<div class="rev-card" data-sev="${escapeHtml(sev)}">
+          <div class="rev-sev">${escapeHtml(t(`rev.sev.${sev}`) !== `rev.sev.${sev}` ? t(`rev.sev.${sev}`) : sev)}${meta ? ` · ${escapeHtml(meta)}` : ""}</div>
+          <div>${escapeHtml(String(title))}</div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderResult(out) {
+      last = out;
+      document.getElementById("resultPanel").hidden = false;
+      const score = out.health_score ?? 0;
+      document.getElementById("scoreVal").textContent = `${score}/100`;
+      document.getElementById("scoreBar").style.width = `${score}%`;
+      document.getElementById("summary").textContent = out.summary_text || "";
+      document.getElementById("jsonOut").textContent = JSON.stringify(out, null, 2);
+
+      const s = out.summary || {};
+      const sent = out.sentiments || {};
+      document.getElementById("metrics").innerHTML = [
+        [t("rev.m.reviews"), s.total_reviews ?? "—"],
+        [t("rev.m.rating"), s.average_rating ?? "—"],
+        [t("rev.m.pos"), `${sent.positive ?? 0}%`],
+        [t("rev.m.neu"), `${sent.neutral ?? 0}%`],
+        [t("rev.m.neg"), `${sent.negative ?? 0}%`],
+      ].map(([lab, val]) => `<div class="rev-metric"><span>${escapeHtml(lab)}</span><strong>${escapeHtml(String(val))}</strong></div>`).join("");
+
+      document.getElementById("issues").innerHTML = cards(out.top_issues, "rev.no_issues", "issue");
+      document.getElementById("praises").innerHTML = cards(out.top_praises, "rev.no_praises", "praise");
+      document.getElementById("cats").innerHTML = (out.categories || []).length
+        ? out.categories.map((c) => `<div class="rev-card" data-sev="low"><div class="rev-sev">${escapeHtml(String(c.trend || ""))} · ${escapeHtml(String(c.count || 0))}</div><div><strong>${escapeHtml(c.name || "")}</strong> — ${escapeHtml(String(c.sentiment ?? ""))}/5</div></div>`).join("")
+        : `<p style="color:var(--muted)">${escapeHtml(t("rev.no_cats"))}</p>`;
+      document.getElementById("recs").innerHTML = (out.recommendations || []).length
+        ? out.recommendations.map((r) => `<div class="rev-card" data-sev="low"><div class="rev-sev">${escapeHtml(String(r.target || ""))}</div><div>${escapeHtml(String(r.description || ""))}</div></div>`).join("")
+        : `<p style="color:var(--muted)">${escapeHtml(t("rev.no_recs"))}</p>`;
+
+      const charts = document.getElementById("charts");
+      charts.innerHTML = "";
+      (out.visualizations || []).forEach((v) => {
+        if (!v.data?.labels?.length) return;
+        const el = document.createElement("div");
+        el.className = "rev-chart";
+        el.innerHTML = `<h3>${escapeHtml(v.title || "")}</h3><div class="body"></div>`;
+        renderBars(el.querySelector(".body"), v.data.labels, v.data.values);
+        charts.appendChild(el);
+      });
+      if (!charts.children.length) charts.innerHTML = `<p style="color:var(--muted)">${escapeHtml(t("rev.no_viz"))}</p>`;
+    }
+
+    async function analyze() {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const payload = readPayload();
+        updateStats(payload);
+        const gen = await ToolsAPI.reviewAnalyze(payload);
+        renderResult(gen.output_data || {});
+        toast(t("rev.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("review_analyzer");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try { setJson(JSON.parse(saved)); } catch { setJson(structuredClone(SAMPLE)); }
+    } else {
+      setJson(structuredClone(SAMPLE));
+    }
+
+    ProjectsAPI.list().then((list) => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }).catch(() => {});
+
+    document.getElementById("reviewsJson").addEventListener("input", () => {
+      try { updateStats(JSON.parse(document.getElementById("reviewsJson").value)); } catch { /* ignore */ }
+    });
+    document.getElementById("loadSample").addEventListener("click", (e) => {
+      e.preventDefault();
+      setJson(structuredClone(SAMPLE));
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      toast(t("rev.sample_loaded"));
+    });
+    document.getElementById("loadFile").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        if (file.name.endsWith(".csv") || file.type.includes("csv")) {
+          toast(t("rev.csv_hint"), true);
+          return;
+        }
+        const data = JSON.parse(await file.text());
+        setJson(Array.isArray(data) ? { reviews: data, game_name: document.getElementById("gameName").value } : data);
+        toast(t("rev.loaded"));
+      } catch (err) {
+        toast(err.message || t("rev.bad_json"), true);
+      } finally {
+        e.target.value = "";
+      }
+    });
+    document.getElementById("saveLocal").addEventListener("click", () => {
+      try {
+        const data = JSON.parse(document.getElementById("reviewsJson").value);
+        data.game_name = document.getElementById("gameName").value.trim() || data.game_name;
+        data.source = document.getElementById("source").value;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+        toast(t("rev.saved"));
+      } catch (err) {
+        toast(err.message || t("rev.bad_json"), true);
+      }
+    });
+    document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); analyze(); });
+    document.getElementById("reanalyze").addEventListener("click", () => analyze());
+    document.getElementById("dlJson").addEventListener("click", () => { if (last) downloadJSON("review-analyzer.json", last); });
+    document.getElementById("dlText").addEventListener("click", () => {
+      if (!last) return;
+      const blob = new Blob([last.export_text || JSON.stringify(last, null, 2)], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "review-analyzer.txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  </script>
+</body>
+</html>

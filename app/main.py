@@ -29,6 +29,7 @@ from app.api.v1 import (
     store_description,
     texture_upscaler,
     trailer_script,
+    review_analyzer,
 )
 from app.api.v1 import content as public_content
 from app.api.v1.admin import router as admin_router
@@ -147,6 +148,7 @@ app.include_router(level_analyzer.router, prefix=prefix)
 app.include_router(store_description.router, prefix=prefix)
 app.include_router(playtest_analyzer.router, prefix=prefix)
 app.include_router(trailer_script.router, prefix=prefix)
+app.include_router(review_analyzer.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)

@@ -33,6 +33,7 @@ DEFAULT_TOOLS = {
     "store_description": {"enabled": True, "display_name": "Store Description"},
     "playtest_analyzer": {"enabled": True, "display_name": "AI Playtest Analyzer"},
     "trailer_script": {"enabled": True, "display_name": "AI Trailer Script"},
+    "review_analyzer": {"enabled": True, "display_name": "AI Review Analyzer"},
 }
 
 DEFAULT_AI_MODELS = {

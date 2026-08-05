@@ -120,6 +120,7 @@ export const ToolsAPI = {
   storeDescription: (body) => api("/store-description", { method: "POST", body: JSON.stringify(body) }),
   playtestAnalyze: (body) => api("/playtest-analyzer", { method: "POST", body: JSON.stringify(body) }),
   trailerScript: (body) => api("/trailer-script", { method: "POST", body: JSON.stringify(body) }),
+  reviewAnalyze: (body) => api("/review-analyzer", { method: "POST", body: JSON.stringify(body) }),
   upscale: async (file, scale, enhance, projectId) => {
     const fd = new FormData();
     fd.append("file", file);

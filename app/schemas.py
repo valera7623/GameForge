@@ -340,6 +340,30 @@ class TrailerScriptRequest(BaseModel):
         return self
 
 
+class ReviewAnalyzerRequest(BaseModel):
+    """Player reviews dump for sentiment / issue analysis."""
+
+    project_id: Optional[UUID] = None
+    game_name: str = Field(default="Untitled Game", max_length=200)
+    source: str = Field(default="custom", pattern="^(steam|appstore|googleplay|custom)$")
+    reviews: List[dict] = Field(default_factory=list)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+    def to_payload(self) -> dict:
+        return {
+            "game_name": self.game_name,
+            "source": self.source,
+            "reviews": self.reviews,
+            "lang": self.lang,
+        }
+
+    @model_validator(mode="after")
+    def _require_reviews(self) -> "ReviewAnalyzerRequest":
+        if not self.reviews:
+            raise ValueError("Provide at least one review")
+        return self
+
+
 class LocalizationRequest(BaseModel):
     project_id: Optional[UUID] = None
     texts: dict[str, str]  # key -> source text

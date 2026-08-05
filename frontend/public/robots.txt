@@ -17,6 +17,7 @@ Disallow: /level-analyzer
 Disallow: /store-description
 Disallow: /playtest-analyzer
 Disallow: /trailer-script
+Disallow: /review-analyzer
 Disallow: /login
 Disallow: /register
 Disallow: /reset-password

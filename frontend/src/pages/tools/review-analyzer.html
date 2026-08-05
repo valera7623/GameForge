@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Review Analyzer — Player Feedback Insights — GameForge</title>
+  <meta name="description" content="Analyze Steam and store reviews for sentiment, top issues, praises, category trends, and design recommendations." />
+  <link rel="canonical" href="https://gameforge.website/tools/review-analyzer" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/tools/review-analyzer" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/review-analyzer" />
+  <meta property="og:title" content="AI Review Analyzer — GameForge" />
+  <meta property="og:url" content="https://gameforge.website/tools/review-analyzer" />
+  <meta property="og:image" content="https://gameforge.website/og-image.png" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body class="page-landing page-tool">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <header class="topnav">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
+    <nav>
+      <a href="/#tools">Tools</a>
+      <a class="btn-icon" href="/ru/tools/review-analyzer" lang="ru">RU</a>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
+      <a href="/login" class="btn btn-ghost">Sign in</a>
+      <a href="/register" class="btn btn-primary">Start free</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero tool-hero">
+      <p class="tool-kicker"><span class="tool-icon" aria-hidden="true">⭐</span> GameForge</p>
+      <h1>AI Review Analyzer for Player Feedback</h1>
+      <p class="lede">Turn review dumps into sentiment mix, top issues, praises, trends, and actionable design recommendations.</p>
+      <div class="cta-row">
+        <a href="/register" class="btn btn-primary btn-lg">Analyze reviews</a>
+        <a href="/#tools" class="btn btn-ghost btn-lg">All tools</a>
+      </div>
+    </section>
+  </main>
+  <script type="module">
+    import { applyTheme, bindThemeToggles, getTheme } from "../../js/theme.js";
+    applyTheme(getTheme());
+    bindThemeToggles(document);
+  </script>
+</body>
+</html>
