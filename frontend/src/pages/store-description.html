@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="store.title">Store Description — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .store-block {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem 1rem;
+      background: var(--bg-elevated); margin: 0.65rem 0;
+    }
+    .store-block h3 { margin: 0 0 0.45rem; font-size: 0.95rem; }
+    .store-block .body { white-space: pre-wrap; color: var(--text); line-height: 1.45; }
+    .store-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .store-tags span {
+      border: 1px solid var(--border); border-radius: 999px; padding: 0.2rem 0.65rem;
+      font-size: 0.8rem; color: var(--muted);
+    }
+    #featuresInput { min-height: 100px; font-family: inherit; }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="store.h1">AI Store Description</h1>
+        <p data-i18n="store.sub">Generate Steam, App Store, Google Play, and Epic listing copy in seconds.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="store.step1">Step 1: Enter game info</h2>
+        <form id="form" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="store.game_name">Game name</span>
+              <input name="game_name" id="gameName" required value="Dungeon Explorer" />
+            </label>
+            <label><span data-i18n="store.genre">Genre</span>
+              <input name="genre" id="genre" value="Action RPG" />
+            </label>
+          </div>
+          <div class="form-row">
+            <label><span data-i18n="store.platform">Platform</span>
+              <select name="platform" id="platform">
+                <option value="PC">PC</option>
+                <option value="Mobile">Mobile</option>
+                <option value="Console">Console</option>
+                <option value="Multi">Multi</option>
+              </select>
+            </label>
+            <label><span data-i18n="store.audience">Target audience</span>
+              <select name="target_audience" id="audience">
+                <option value="casual">Casual</option>
+                <option value="hardcore" selected>Hardcore</option>
+                <option value="family">Family</option>
+              </select>
+            </label>
+          </div>
+          <label><span data-i18n="store.usp">USP</span>
+            <input name="usp" id="usp" value="Procedurally generated dungeons with deep RPG mechanics" />
+          </label>
+          <label><span data-i18n="store.desc">Description</span>
+            <textarea name="description" id="description" rows="4">Dive into an endless dungeon where every run is unique. Fight monsters, find loot, and discover the secrets of the Deep.</textarea>
+          </label>
+          <label><span data-i18n="store.features">Key features (one per line)</span>
+            <textarea id="featuresInput" rows="5">Procedurally generated dungeons
+Deep RPG mechanics
+Hundreds of items and abilities
+Permadeath with progression</textarea>
+          </label>
+          <div class="form-row">
+            <label><span data-i18n="store.target">Target store</span>
+              <select name="target_platform" id="targetPlatform">
+                <option value="steam">Steam</option>
+                <option value="appstore">App Store</option>
+                <option value="googleplay">Google Play</option>
+                <option value="epic">Epic Games Store</option>
+              </select>
+            </label>
+            <label><span data-i18n="store.language">Language</span>
+              <select name="language" id="language">
+                <option value="en">English</option>
+                <option value="ru">Русский</option>
+                <option value="es">Español</option>
+                <option value="de">Deutsch</option>
+                <option value="fr">Français</option>
+                <option value="ja">日本語</option>
+              </select>
+            </label>
+            <label><span data-i18n="store.tone">Tone</span>
+              <select name="tone" id="tone">
+                <option value="epic">Epic</option>
+                <option value="mysterious">Mysterious</option>
+                <option value="fun">Fun</option>
+                <option value="serious">Serious</option>
+                <option value="retro">Retro</option>
+              </select>
+            </label>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
+            </label>
+          </div>
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="store.sample">Load sample</button>
+            <button class="btn btn-ghost" type="button" id="saveLocal" data-i18n="store.save">Save draft</button>
+            <button class="btn btn-primary" type="submit" data-i18n="store.generate">Generate</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="store.loading">Writing store copy…</span></div>
+      </div>
+
+      <div class="panel" id="resultPanel" hidden>
+        <h2 data-i18n="store.step2">Step 2: Results</h2>
+        <div class="store-block">
+          <h3 data-i18n="store.short">Short description</h3>
+          <div class="body" id="shortOut"></div>
+        </div>
+        <div class="store-block">
+          <h3 data-i18n="store.long">Long description</h3>
+          <div class="body" id="longOut"></div>
+        </div>
+        <div class="store-block">
+          <h3 data-i18n="store.features_out">Key features</h3>
+          <ul id="featsOut"></ul>
+        </div>
+        <div class="store-block">
+          <h3 data-i18n="store.tags">Tags</h3>
+          <div class="store-tags" id="tagsOut"></div>
+        </div>
+        <div class="store-block">
+          <h3 data-i18n="store.cta">Call to action</h3>
+          <div class="body" id="ctaOut"></div>
+        </div>
+        <div class="store-block" id="steamBlock" hidden>
+          <h3 data-i18n="store.steam_html">Steam HTML</h3>
+          <div class="result-box"><pre id="steamOut"></pre></div>
+        </div>
+        <div class="actions" style="margin-top:1rem;flex-wrap:wrap;gap:0.5rem">
+          <button class="btn btn-ghost" id="copyAll" data-i18n="store.copy">Copy all</button>
+          <button class="btn btn-ghost" id="dlJson" data-i18n="store.export_json">Export JSON</button>
+          <button class="btn btn-ghost" id="dlText" data-i18n="store.export_text">Export text</button>
+          <button class="btn btn-ghost" id="regen" data-i18n="store.regen">Regenerate</button>
+        </div>
+      </div>
+
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, setLoading, toast, t } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("store-description");
+    applyDomI18n(document);
+    mountToolHistory("store_description");
+
+    const DRAFT_KEY = "gf_store_description_draft";
+    let last = null;
+
+    const SAMPLE = {
+      game_name: "Dungeon Explorer",
+      genre: "Action RPG",
+      platform: "PC",
+      target_audience: "hardcore",
+      usp: "Procedurally generated dungeons with deep RPG mechanics",
+      description: "Dive into an endless dungeon where every run is unique. Fight monsters, find loot, and discover the secrets of the Deep.",
+      key_features: [
+        "Procedurally generated dungeons",
+        "Deep RPG mechanics",
+        "Hundreds of items and abilities",
+        "Permadeath with progression",
+      ],
+      target_platform: "steam",
+      language: getLang() === "ru" ? "ru" : "en",
+      tone: "epic",
+    };
+
+    function fillForm(data) {
+      document.getElementById("gameName").value = data.game_name || "";
+      document.getElementById("genre").value = data.genre || "";
+      document.getElementById("platform").value = data.platform || "PC";
+      document.getElementById("audience").value = data.target_audience || "casual";
+      document.getElementById("usp").value = data.usp || "";
+      document.getElementById("description").value = data.description || "";
+      document.getElementById("featuresInput").value = (data.key_features || []).join("\n");
+      document.getElementById("targetPlatform").value = data.target_platform || "steam";
+      document.getElementById("language").value = data.language || "en";
+      document.getElementById("tone").value = data.tone || "epic";
+    }
+
+    function readPayload() {
+      const features = document.getElementById("featuresInput").value
+        .split("\n").map((s) => s.replace(/^[\s•\-\*]+/, "").trim()).filter(Boolean);
+      const body = {
+        game_name: document.getElementById("gameName").value.trim(),
+        genre: document.getElementById("genre").value.trim() || "Adventure",
+        platform: document.getElementById("platform").value,
+        target_audience: document.getElementById("audience").value,
+        usp: document.getElementById("usp").value.trim(),
+        description: document.getElementById("description").value.trim(),
+        key_features: features,
+        target_platform: document.getElementById("targetPlatform").value,
+        language: document.getElementById("language").value,
+        tone: document.getElementById("tone").value,
+      };
+      const pid = document.getElementById("projectSelect").value;
+      if (pid) body.project_id = pid;
+      return body;
+    }
+
+    function renderResult(out) {
+      last = out;
+      document.getElementById("resultPanel").hidden = false;
+      document.getElementById("shortOut").textContent = out.short_description || "";
+      document.getElementById("longOut").textContent = out.long_description || "";
+      document.getElementById("ctaOut").textContent = out.call_to_action || "";
+      document.getElementById("featsOut").innerHTML = (out.key_features || [])
+        .map((f) => `<li>${escapeHtml(f)}</li>`).join("");
+      document.getElementById("tagsOut").innerHTML = (out.tags || [])
+        .map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
+      const steam = out.steam_description || "";
+      document.getElementById("steamBlock").hidden = !steam;
+      document.getElementById("steamOut").textContent = steam;
+    }
+
+    async function generate() {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const gen = await ToolsAPI.storeDescription(readPayload());
+        renderResult(gen.output_data || {});
+        toast(t("store.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("store_description");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try { fillForm(JSON.parse(saved)); } catch { fillForm(SAMPLE); }
+    } else {
+      fillForm(SAMPLE);
+    }
+    // Prefer UI language if form language empty sync
+    if (!document.getElementById("language").value) {
+      document.getElementById("language").value = getLang() === "ru" ? "ru" : "en";
+    }
+
+    ProjectsAPI.list().then((list) => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }).catch(() => {});
+
+    document.getElementById("loadSample").addEventListener("click", (e) => {
+      e.preventDefault();
+      const sample = structuredClone(SAMPLE);
+      sample.language = getLang() === "ru" ? "ru" : "en";
+      fillForm(sample);
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      toast(t("store.sample_loaded"));
+    });
+    document.getElementById("saveLocal").addEventListener("click", () => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(readPayload()));
+        toast(t("store.saved"));
+      } catch (err) { toast(err.message, true); }
+    });
+    document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); generate(); });
+    document.getElementById("regen").addEventListener("click", () => generate());
+    document.getElementById("dlJson").addEventListener("click", () => {
+      if (last) downloadJSON("store-description.json", last);
+    });
+    document.getElementById("dlText").addEventListener("click", () => {
+      if (!last) return;
+      const blob = new Blob([last.export_text || JSON.stringify(last, null, 2)], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "store-description.txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    document.getElementById("copyAll").addEventListener("click", async () => {
+      if (!last) return;
+      try {
+        await navigator.clipboard.writeText(last.export_text || JSON.stringify(last, null, 2));
+        toast(t("store.copied"));
+      } catch {
+        toast(t("store.copy_fail"), true);
+      }
+    });
+  </script>
+</body>
+</html>

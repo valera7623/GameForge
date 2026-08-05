@@ -242,6 +242,42 @@ class LevelAnalyzerCompareRequest(BaseModel):
     lang: str = Field(default="en", pattern="^(en|ru)$")
 
 
+class StoreDescriptionRequest(BaseModel):
+    """Game marketing brief for store listing copy."""
+
+    project_id: Optional[UUID] = None
+    game_name: str = Field(default="Untitled Game", max_length=200)
+    genre: str = Field(default="Adventure", max_length=120)
+    platform: str = Field(default="PC", max_length=64)
+    target_audience: str = Field(default="casual", max_length=64)
+    usp: str = Field(default="", max_length=500)
+    description: str = Field(default="", max_length=4000)
+    key_features: List[str] = Field(default_factory=list)
+    target_platform: str = Field(default="steam", pattern="^(steam|appstore|googleplay|epic)$")
+    language: str = Field(default="en", max_length=16)
+    tone: str = Field(default="epic", pattern="^(epic|mysterious|fun|serious|retro)$")
+
+    def to_game_data(self) -> dict:
+        return {
+            "game_name": self.game_name,
+            "genre": self.genre,
+            "platform": self.platform,
+            "target_audience": self.target_audience,
+            "usp": self.usp,
+            "description": self.description,
+            "key_features": self.key_features,
+            "target_platform": self.target_platform,
+            "language": self.language,
+            "tone": self.tone,
+        }
+
+    @model_validator(mode="after")
+    def _require_brief(self) -> "StoreDescriptionRequest":
+        if not (self.game_name.strip() and (self.description.strip() or self.usp.strip() or self.key_features)):
+            raise ValueError("Provide game_name and at least description, usp, or key_features")
+        return self
+
+
 class LocalizationRequest(BaseModel):
     project_id: Optional[UUID] = None
     texts: dict[str, str]  # key -> source text

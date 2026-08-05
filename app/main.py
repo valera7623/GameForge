@@ -25,6 +25,7 @@ from app.api.v1 import (
     projects,
     quest_generator,
     sound_designer,
+    store_description,
     texture_upscaler,
 )
 from app.api.v1 import content as public_content
@@ -141,6 +142,7 @@ app.include_router(playtester.router, prefix=prefix)
 app.include_router(localization.router, prefix=prefix)
 app.include_router(game_balancer.router, prefix=prefix)
 app.include_router(level_analyzer.router, prefix=prefix)
+app.include_router(store_description.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)

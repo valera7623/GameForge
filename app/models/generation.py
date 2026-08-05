@@ -27,6 +27,7 @@ class ToolType(str, enum.Enum):
     LOCALIZATION = "localization"
     GAME_BALANCER = "game_balancer"
     LEVEL_ANALYZER = "level_analyzer"
+    STORE_DESCRIPTION = "store_description"
 
 
 class GenerationStatus(str, enum.Enum):
