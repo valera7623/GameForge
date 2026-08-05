@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="trail.title">Trailer Script — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .trail-scene {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.85rem 1rem; margin: 0.6rem 0;
+      background: var(--bg-elevated);
+    }
+    .trail-scene h3 { margin: 0 0 0.35rem; font-size: 0.95rem; }
+    .trail-meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.5rem; }
+    .trail-scene dl { margin: 0; display: grid; gap: 0.35rem; }
+    .trail-scene dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .trail-scene dd { margin: 0; font-size: 0.9rem; }
+    .trail-structure {
+      display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem;
+    }
+    .trail-structure span {
+      border: 1px solid var(--border); border-radius: 999px; padding: 0.25rem 0.7rem;
+      font-size: 0.8rem; background: var(--bg);
+    }
+    .trail-block {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem;
+      margin: 0.75rem 0; background: var(--bg);
+    }
+    .trail-block h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+    #featuresInput { min-height: 90px; }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="trail.h1">AI Trailer Script</h1>
+        <p data-i18n="trail.sub">Generate scene-by-scene trailer scripts with VO, overlays, and sound cues.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="trail.step1">Step 1: Enter game info</h2>
+        <form id="form" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="trail.game_name">Game name</span>
+              <input id="gameName" required />
+            </label>
+            <label><span data-i18n="trail.genre">Genre</span>
+              <input id="genre" value="Action RPG" />
+            </label>
+          </div>
+          <div class="form-row">
+            <label><span data-i18n="trail.type">Trailer type</span>
+              <select id="trailerType">
+                <option value="launch">Launch</option>
+                <option value="gameplay">Gameplay</option>
+                <option value="story">Story</option>
+                <option value="teaser">Teaser</option>
+                <option value="feature">Feature</option>
+              </select>
+            </label>
+            <label><span data-i18n="trail.duration">Duration (sec)</span>
+              <input id="duration" type="number" min="15" max="180" value="60" />
+            </label>
+            <label><span data-i18n="trail.tone">Tone</span>
+              <select id="tone">
+                <option value="epic">Epic</option>
+                <option value="mysterious">Mysterious</option>
+                <option value="fun">Fun</option>
+                <option value="dramatic">Dramatic</option>
+                <option value="retro">Retro</option>
+              </select>
+            </label>
+          </div>
+          <label><span data-i18n="trail.desc">Description</span>
+            <textarea id="description" rows="3"></textarea>
+          </label>
+          <label><span data-i18n="trail.features">Key features (one per line)</span>
+            <textarea id="featuresInput"></textarea>
+          </label>
+          <div class="form-row">
+            <label><span data-i18n="trail.platform">Platform</span>
+              <input id="platform" value="PC, Console" />
+            </label>
+            <label><span data-i18n="trail.release">Release date</span>
+              <input id="releaseDate" placeholder="2026-09-15" />
+            </label>
+            <label><span data-i18n="common.project">Project</span>
+              <select id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
+            </label>
+          </div>
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="trail.sample">Load sample</button>
+            <button class="btn btn-ghost" type="button" id="saveLocal" data-i18n="trail.save">Save draft</button>
+            <button class="btn btn-primary" type="submit" data-i18n="trail.generate">Generate script</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="trail.loading">Writing trailer script…</span></div>
+      </div>
+
+      <div class="panel" id="resultPanel" hidden>
+        <h2 data-i18n="trail.step2">Step 2: Results</h2>
+        <h3 id="resultTitle"></h3>
+        <p id="resultMeta" style="color:var(--muted)"></p>
+        <div class="trail-structure" id="structureOut"></div>
+        <div id="scenesOut"></div>
+
+        <div class="trail-block">
+          <h3 data-i18n="trail.vo">Voiceover script</h3>
+          <div id="voOut"></div>
+          <p id="voStyle" style="color:var(--muted);font-size:0.85rem;margin:0.5rem 0 0"></p>
+        </div>
+        <div class="trail-block">
+          <h3 data-i18n="trail.overlays">Text overlays</h3>
+          <div id="overlaysOut"></div>
+        </div>
+        <div class="trail-block">
+          <h3 data-i18n="trail.sound">Sound design</h3>
+          <div id="soundOut"></div>
+        </div>
+
+        <div class="actions" style="margin-top:1rem;flex-wrap:wrap;gap:0.5rem">
+          <button class="btn btn-ghost" id="copyAll" data-i18n="trail.copy">Copy script</button>
+          <button class="btn btn-ghost" id="dlJson" data-i18n="trail.export_json">Export JSON</button>
+          <button class="btn btn-ghost" id="dlText" data-i18n="trail.export_text">Export text</button>
+          <button class="btn btn-ghost" id="regen" data-i18n="trail.regen">Regenerate</button>
+        </div>
+      </div>
+
+      <div id="toolHistory"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, setLoading, toast, t } from "../js/app.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+
+    mountShell("trailer-script");
+    applyDomI18n(document);
+    mountToolHistory("trailer_script");
+
+    const DRAFT_KEY = "gf_trailer_script_draft";
+    let last = null;
+
+    const SAMPLE_EN = {
+      game_name: "Dungeon Explorer",
+      genre: "Action RPG",
+      description: "Procedurally generated dungeon crawler with deep RPG mechanics",
+      trailer_type: "launch",
+      duration: 60,
+      tone: "epic",
+      key_features: [
+        "Procedurally generated dungeons",
+        "Deep RPG mechanics",
+        "Hundreds of items and abilities",
+        "Permadeath with progression",
+      ],
+      platform: "PC, Console",
+      release_date: "2026-09-15",
+    };
+
+    const SAMPLE_RU = {
+      game_name: "Dungeon Explorer",
+      genre: "Action RPG",
+      description: "Процедурный данжен-краулер с глубокой RPG-системой",
+      trailer_type: "launch",
+      duration: 60,
+      tone: "epic",
+      key_features: [
+        "Процедурные подземелья",
+        "Глубокая RPG-механика",
+        "Сотни предметов и способностей",
+        "Перманентная смерть с прогрессией",
+      ],
+      platform: "PC, Console",
+      release_date: "2026-09-15",
+    };
+
+    function sampleForUi() {
+      return getLang() === "ru" ? structuredClone(SAMPLE_RU) : structuredClone(SAMPLE_EN);
+    }
+
+    function fillForm(data) {
+      document.getElementById("gameName").value = data.game_name || "";
+      document.getElementById("genre").value = data.genre || "Adventure";
+      document.getElementById("trailerType").value = data.trailer_type || "launch";
+      document.getElementById("duration").value = data.duration || 60;
+      document.getElementById("tone").value = data.tone || "epic";
+      document.getElementById("description").value = data.description || "";
+      document.getElementById("featuresInput").value = (data.key_features || []).join("\n");
+      document.getElementById("platform").value = data.platform || "PC";
+      document.getElementById("releaseDate").value = data.release_date || "";
+    }
+
+    function readPayload() {
+      const features = document.getElementById("featuresInput").value
+        .split("\n").map((s) => s.replace(/^[\s•\-\*]+/, "").trim()).filter(Boolean);
+      const body = {
+        game_name: document.getElementById("gameName").value.trim(),
+        genre: document.getElementById("genre").value.trim() || "Adventure",
+        description: document.getElementById("description").value.trim(),
+        trailer_type: document.getElementById("trailerType").value,
+        duration: Number(document.getElementById("duration").value) || 60,
+        tone: document.getElementById("tone").value,
+        key_features: features,
+        platform: document.getElementById("platform").value.trim(),
+        release_date: document.getElementById("releaseDate").value.trim(),
+        lang: getLang() === "ru" ? "ru" : "en",
+      };
+      const pid = document.getElementById("projectSelect").value;
+      if (pid) body.project_id = pid;
+      return body;
+    }
+
+    function renderResult(out) {
+      last = out;
+      document.getElementById("resultPanel").hidden = false;
+      document.getElementById("resultTitle").textContent = out.title || "";
+      document.getElementById("resultMeta").textContent = t("trail.meta", {
+        duration: out.duration ?? "—",
+        type: out.trailer_type || "—",
+        tone: out.tone || "—",
+      });
+      document.getElementById("structureOut").innerHTML = Object.entries(out.structure || {})
+        .map(([k, v]) => `<span>${escapeHtml(k)}: ${escapeHtml(String(v))}</span>`).join("");
+
+      document.getElementById("scenesOut").innerHTML = (out.scenes || []).map((s) => `
+        <article class="trail-scene">
+          <h3>${escapeHtml(s.timecode || "")} · ${escapeHtml(s.title || "")}</h3>
+          <div class="trail-meta">${escapeHtml(String(s.duration_seconds || ""))}s</div>
+          <dl>
+            <dt>${escapeHtml(t("trail.visual"))}</dt><dd>${escapeHtml(s.visual || "")}</dd>
+            <dt>${escapeHtml(t("trail.action"))}</dt><dd>${escapeHtml(s.action || "")}</dd>
+            <dt>${escapeHtml(t("trail.vo_line"))}</dt><dd>${escapeHtml(s.voiceover || "")}</dd>
+            <dt>${escapeHtml(t("trail.overlay"))}</dt><dd>${escapeHtml(s.text_overlay || "—")}</dd>
+            <dt>${escapeHtml(t("trail.sfx"))}</dt><dd>${escapeHtml(s.sound || "")}</dd>
+          </dl>
+        </article>`).join("");
+
+      const vo = out.voiceover || {};
+      document.getElementById("voOut").textContent = vo.full_text || "";
+      document.getElementById("voStyle").textContent = vo.voice_style
+        ? `${t("trail.voice_style")}: ${vo.voice_style}` : "";
+
+      document.getElementById("overlaysOut").innerHTML = (out.text_overlays || []).length
+        ? `<ul>${(out.text_overlays || []).map((o) => `<li><strong>${escapeHtml(o.time || "")}</strong> — ${escapeHtml(o.text || "")}</li>`).join("")}</ul>`
+        : `<p style="color:var(--muted)">${escapeHtml(t("trail.no_overlays"))}</p>`;
+
+      const sd = out.sound_design || {};
+      document.getElementById("soundOut").innerHTML = `
+        <p><strong>${escapeHtml(t("trail.music"))}:</strong> ${escapeHtml(sd.music || "")}</p>
+        <p><strong>${escapeHtml(t("trail.ambient"))}:</strong> ${escapeHtml(sd.ambient || "")}</p>
+        <p><strong>${escapeHtml(t("trail.key_sounds"))}:</strong> ${escapeHtml((sd.key_sounds || []).join(" · ") || "—")}</p>`;
+    }
+
+    async function generate() {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const gen = await ToolsAPI.trailerScript(readPayload());
+        renderResult(gen.output_data || {});
+        toast(t("trail.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("trailer_script");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try { fillForm(JSON.parse(saved)); } catch { fillForm(sampleForUi()); }
+    } else {
+      fillForm(sampleForUi());
+    }
+
+    ProjectsAPI.list().then((list) => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }).catch(() => {});
+
+    document.getElementById("loadSample").addEventListener("click", (e) => {
+      e.preventDefault();
+      fillForm(sampleForUi());
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      toast(t("trail.sample_loaded"));
+    });
+    document.getElementById("saveLocal").addEventListener("click", () => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(readPayload()));
+        toast(t("trail.saved"));
+      } catch (err) { toast(err.message, true); }
+    });
+    document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); generate(); });
+    document.getElementById("regen").addEventListener("click", () => generate());
+    document.getElementById("dlJson").addEventListener("click", () => {
+      if (last) downloadJSON("trailer-script.json", last);
+    });
+    document.getElementById("dlText").addEventListener("click", () => {
+      if (!last) return;
+      const blob = new Blob([last.export_text || JSON.stringify(last, null, 2)], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "trailer-script.txt";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    document.getElementById("copyAll").addEventListener("click", async () => {
+      if (!last) return;
+      try {
+        await navigator.clipboard.writeText(last.export_text || JSON.stringify(last, null, 2));
+        toast(t("trail.copied"));
+      } catch {
+        toast(t("trail.copy_fail"), true);
+      }
+    });
+  </script>
+</body>
+</html>

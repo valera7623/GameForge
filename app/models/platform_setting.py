@@ -32,6 +32,7 @@ DEFAULT_TOOLS = {
     "level_analyzer": {"enabled": True, "display_name": "Level Analyzer"},
     "store_description": {"enabled": True, "display_name": "Store Description"},
     "playtest_analyzer": {"enabled": True, "display_name": "AI Playtest Analyzer"},
+    "trailer_script": {"enabled": True, "display_name": "AI Trailer Script"},
 }
 
 DEFAULT_AI_MODELS = {

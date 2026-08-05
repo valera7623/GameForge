@@ -300,6 +300,46 @@ class PlaytestAnalyzerRequest(BaseModel):
         return self
 
 
+class TrailerScriptRequest(BaseModel):
+    """Game brief for trailer / promo video script generation."""
+
+    project_id: Optional[UUID] = None
+    game_name: str = Field(default="Untitled Game", max_length=200)
+    genre: str = Field(default="Adventure", max_length=120)
+    description: str = Field(default="", max_length=4000)
+    trailer_type: str = Field(default="launch", pattern="^(launch|gameplay|story|teaser|feature)$")
+    duration: int = Field(default=60, ge=15, le=180)
+    tone: str = Field(default="epic", pattern="^(epic|mysterious|fun|dramatic|retro)$")
+    key_features: List[str] = Field(default_factory=list)
+    target_audience: str = Field(default="", max_length=120)
+    platform: str = Field(default="PC", max_length=120)
+    release_date: str = Field(default="", max_length=64)
+    urls: dict = Field(default_factory=dict)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+    def to_game_data(self) -> dict:
+        return {
+            "game_name": self.game_name,
+            "genre": self.genre,
+            "description": self.description,
+            "trailer_type": self.trailer_type,
+            "duration": self.duration,
+            "tone": self.tone,
+            "key_features": self.key_features,
+            "target_audience": self.target_audience,
+            "platform": self.platform,
+            "release_date": self.release_date,
+            "urls": self.urls,
+            "lang": self.lang,
+        }
+
+    @model_validator(mode="after")
+    def _require_brief(self) -> "TrailerScriptRequest":
+        if not (self.game_name.strip() and (self.description.strip() or self.key_features)):
+            raise ValueError("Provide game_name and at least description or key_features")
+        return self
+
+
 class LocalizationRequest(BaseModel):
     project_id: Optional[UUID] = None
     texts: dict[str, str]  # key -> source text
