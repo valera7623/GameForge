@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>User — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.user.h1">User</h1><p id="sub"></p></div>
+      <a class="btn btn-ghost" href="/admin/users">← Users</a></div>
+    <div class="loader visible" id="loader"><div class="spinner"></div></div>
+    <div id="content" hidden class="panel admin-kv"></div>
+    <div class="panel" id="gensPanel" hidden><h2 data-i18n="admin.user.gens">Generations</h2><div id="gens"></div></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t, canWriteUsers } from "../../js/admin.js";
+import { toast, statusBadge } from "../../js/app.js";
+
+(async () => {
+      const me = await requireStaff();
+      if (!me) throw new Error("staff");
+      mountAdminShell("users");
+      applyDomI18n(document);
+      const id = new URLSearchParams(location.search).get("id");
+      if (!id) { location.href = "/admin/users"; throw new Error("id"); }
+      const u = await AdminAPI.user(id);
+      document.getElementById("loader").classList.remove("visible");
+      document.getElementById("content").hidden = false;
+      document.getElementById("sub").textContent = u.email;
+      const write = canWriteUsers(me.role);
+      document.getElementById("content").innerHTML = `
+        <p><strong>Role:</strong> ${escapeHtml(u.role)} · <strong>Plan:</strong> ${escapeHtml(u.plan || "—")}</p>
+        <p><strong>Status:</strong> ${u.is_active ? "active" : "blocked"} · gens ${u.generations_this_month}/${u.generations_limit}</p>
+        <p><strong>Created:</strong> ${escapeHtml(u.created_at)} · <strong>Last login:</strong> ${escapeHtml(u.last_login_at || "—")}</p>
+        ${write ? `
+          <label>Full name<input id="fullName" value="${escapeHtml(u.full_name || "")}" /></label>
+          <label>Role
+            <select id="role">
+              ${["super_admin","admin","manager","support","user","enterprise"].map((r) =>
+                `<option value="${r}" ${u.role===r?"selected":""}>${r}</option>`).join("")}
+            </select>
+          </label>
+          <div class="admin-actions">
+            <button class="btn btn-primary" id="saveBtn">${escapeHtml(t("admin.save"))}</button>
+            <button class="btn btn-ghost" id="toggleBtn">${u.is_active ? "Block" : "Unblock"}</button>
+          </div>` : ""}
+      `;
+      if (write) {
+        document.getElementById("saveBtn").onclick = async () => {
+          try {
+            await AdminAPI.updateUser(id, { full_name: document.getElementById("fullName").value });
+            const role = document.getElementById("role").value;
+            if (role !== u.role) await AdminAPI.setRole(id, role);
+            toast("Saved");
+            location.reload();
+          } catch (e) { toast(e.message, true); }
+        };
+        document.getElementById("toggleBtn").onclick = async () => {
+          try {
+            if (u.is_active) await AdminAPI.blockUser(id);
+            else await AdminAPI.unblockUser(id);
+            location.reload();
+          } catch (e) { toast(e.message, true); }
+        };
+      }
+      const gens = await AdminAPI.userGenerations(id, { page_size: 10 });
+      document.getElementById("gensPanel").hidden = false;
+      document.getElementById("gens").innerHTML = gens.items.map((g) =>
+        `<div><a href="/admin/generation?id=${g.id}">${escapeHtml(g.tool)}</a> ${statusBadge(g.status)} <span class="muted">${escapeHtml(g.created_at)}</span></div>`
+      ).join("") || `<p class="muted">${escapeHtml(t("admin.empty"))}</p>`;
+})().catch((e) => { console.error(e); });
+</script>
+</body></html>

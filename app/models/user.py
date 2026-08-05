@@ -22,7 +22,10 @@ if TYPE_CHECKING:
 
 
 class UserRole(str, enum.Enum):
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
+    MANAGER = "manager"
+    SUPPORT = "support"
     USER = "user"
     ENTERPRISE = "enterprise"
 
@@ -46,6 +49,7 @@ class User(Base):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     reset_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     reset_token_expires: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()

@@ -40,6 +40,22 @@ async def _ensure_columns(conn) -> None:
     patches = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS xp_this_month INTEGER DEFAULT 0",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS xp_month_key VARCHAR(7)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ",
+        """
+        DO $$ BEGIN
+          ALTER TYPE \"UserRole\" ADD VALUE IF NOT EXISTS 'super_admin';
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$
+        """,
+        """
+        DO $$ BEGIN
+          ALTER TYPE \"UserRole\" ADD VALUE IF NOT EXISTS 'manager';
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$
+        """,
+        """
+        DO $$ BEGIN
+          ALTER TYPE \"UserRole\" ADD VALUE IF NOT EXISTS 'support';
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$
+        """,
     ]
     for sql in patches:
         await conn.execute(text(sql))

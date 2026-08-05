@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Generation — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.gen.h1">Generation</h1><p id="sub"></p></div>
+      <a class="btn btn-ghost" href="/admin/generations">← List</a></div>
+    <div class="panel" id="box"></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n } from "../../js/admin.js";
+import { statusBadge } from "../../js/app.js";
+
+(async () => {
+      const me = await requireStaff();
+      if (!me) throw new Error("staff");
+      mountAdminShell("generations");
+      applyDomI18n(document);
+      const id = new URLSearchParams(location.search).get("id");
+      if (!id) { location.href = "/admin/generations"; throw new Error("id"); }
+      const g = await AdminAPI.generation(id);
+      document.getElementById("sub").textContent = g.tool;
+      document.getElementById("box").innerHTML = `
+        <p>${statusBadge(g.status)} · user <a href="/admin/user?id=${g.user_id}">${escapeHtml(g.user_email || g.user_id)}</a></p>
+        <p class="muted">${escapeHtml(g.created_at)} → ${escapeHtml(g.completed_at || "—")}</p>
+        ${g.error_message ? `<p class="error-text">${escapeHtml(g.error_message)}</p>` : ""}
+        <h3>Input</h3><pre class="admin-mono">${escapeHtml(JSON.stringify(g.input_data, null, 2))}</pre>
+        <h3>Output</h3><pre class="admin-mono">${escapeHtml(JSON.stringify(g.output_data, null, 2))}</pre>
+      `;
+})().catch((e) => { console.error(e); });
+</script>
+</body></html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin sign in — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+
+  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle aria-label="Theme">☾</button>
+  <div class="auth-page">
+    <div class="auth-card">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge Admin</span></a>
+      <h1 data-i18n="admin.login.h1">Admin sign in</h1>
+      <p class="muted" data-i18n="admin.login.sub">Staff access only</p>
+      <form id="form" class="form-grid">
+        <label data-i18n="login.email">Email<input name="email" type="email" required autocomplete="username" /></label>
+        <label data-i18n="login.password">Password<input name="password" type="password" required autocomplete="current-password" /></label>
+        <button class="btn btn-primary" type="submit" data-i18n="login.submit">Sign in</button>
+      </form>
+      <p id="err" class="error-text" hidden></p>
+    </div>
+  </div>
+  <script type="module">
+    import { login, currentUser } from "../../js/auth.js";
+    import { isStaffRole } from "../../js/admin.js";
+    import { applyDomI18n, t } from "../../js/app.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "../../js/theme.js";
+    applyDomI18n(document);
+    applyTheme(getTheme());
+    bindThemeToggles();
+    const u = currentUser();
+    if (u && isStaffRole(u.role)) location.href = "/admin";
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const err = document.getElementById("err");
+      err.hidden = true;
+      try {
+        const me = await login(fd.get("email"), fd.get("password"));
+        if (!isStaffRole(me.role)) {
+          err.textContent = t("admin.login.forbidden");
+          err.hidden = false;
+          return;
+        }
+        location.href = "/admin";
+      } catch (ex) {
+        err.textContent = ex.message || "Error";
+        err.hidden = false;
+      }
+    });
+  </script>
+</body>
+</html>

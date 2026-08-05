@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Tools — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.tools.h1">AI tools</h1><p data-i18n="admin.tools.sub">Enable or disable tools for all users</p></div></div>
+    <div class="panel" id="list"></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t, canWriteTools } from "../../js/admin.js";
+import { toast } from "../../js/app.js";
+
+(async () => {
+      const me = await requireStaff();
+      if (!me) throw new Error("staff");
+      mountAdminShell("tools");
+      applyDomI18n(document);
+      const write = canWriteTools(me.role);
+      async function load() {
+        const data = await AdminAPI.tools();
+        document.getElementById("list").innerHTML = data.tools.map((tool) => `
+          <div class="admin-tool-row">
+            <div><strong>${escapeHtml(tool.display_name)}</strong><div class="muted">${escapeHtml(tool.name)}</div></div>
+            <div>
+              <span class="admin-dot ${tool.enabled ? "on" : "off"}"></span>${tool.enabled ? "On" : "Off"}
+              ${write ? `<button class="btn btn-ghost" data-toggle="${escapeHtml(tool.name)}">Toggle</button>` : ""}
+            </div>
+          </div>`).join("");
+        document.querySelectorAll("[data-toggle]").forEach((b) => b.addEventListener("click", async () => {
+          try { await AdminAPI.toggleTool(b.dataset.toggle); toast("Updated"); load(); }
+          catch (e) { toast(e.message, true); }
+        }));
+      }
+      load();
+})().catch((e) => { console.error(e); });
+</script>
+</body></html>

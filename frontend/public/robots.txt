@@ -16,6 +16,7 @@ Disallow: /login
 Disallow: /register
 Disallow: /reset-password
 Disallow: /accept-invite
+Disallow: /admin
 Disallow: /api/
 
 Sitemap: https://gameforge.website/sitemap.xml

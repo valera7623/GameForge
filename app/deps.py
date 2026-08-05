@@ -78,7 +78,8 @@ async def get_current_user(
 
 
 async def require_admin(user: User = Depends(get_current_user)) -> User:
-    if user.role != UserRole.ADMIN:
+    """Legacy alias — platform admin or super_admin."""
+    if user.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     return user
 
@@ -96,7 +97,7 @@ async def ensure_generation_quota(user: User, db: AsyncSession) -> None:
     ensure_monthly_counters(user)
 
     limit = plan_limit(user)
-    if user.role == UserRole.ADMIN:
+    if user.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
         return
     if user.subscription and user.subscription.plan == PlanType.ENTERPRISE:
         return
@@ -116,7 +117,7 @@ async def reserve_generation_quota(user: User, db: AsyncSession) -> None:
     ensure_monthly_counters(user)
     await db.flush()
 
-    if user.role == UserRole.ADMIN or settings.is_onprem:
+    if user.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN) or settings.is_onprem:
         await db.execute(
             update(User)
             .where(User.id == user.id)

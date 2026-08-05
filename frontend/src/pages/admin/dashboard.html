@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div><h1 data-i18n="admin.dash.h1">Dashboard</h1><p data-i18n="admin.dash.sub">Platform overview</p></div></div>
+      <div class="loader visible" id="loader"><div class="spinner"></div></div>
+      <div id="content" hidden>
+        <div class="stats-row" id="stats"></div>
+        <div class="panel"><h2 data-i18n="admin.dash.chart">Generations (7 days)</h2><div class="admin-chart" id="chart"></div></div>
+        <div class="panel"><h2 data-i18n="admin.dash.recent">Recent users</h2><div class="admin-table-wrap"><table class="admin-table" id="recent"><thead><tr><th>Email</th><th>Role</th><th>Plan</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div></div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t } from "../../js/admin.js";
+import { statusBadge } from "../../js/app.js";
+
+(async () => {
+      const me = await requireStaff();
+      if (!me) throw new Error("staff");
+      mountAdminShell("");
+      applyDomI18n(document);
+      const data = await AdminAPI.dashboard();
+      document.getElementById("loader").classList.remove("visible");
+      document.getElementById("content").hidden = false;
+      document.getElementById("stats").innerHTML = `
+        <div class="stat"><div class="label">${escapeHtml(t("admin.dash.users"))}</div><div class="value">${data.users_total}</div></div>
+        <div class="stat"><div class="label">${escapeHtml(t("admin.dash.gens"))}</div><div class="value">${data.generations_total}</div></div>
+        <div class="stat"><div class="label">${escapeHtml(t("admin.dash.revenue"))}</div><div class="value">$${data.revenue_usd_estimate}</div></div>
+        <div class="stat"><div class="label">${escapeHtml(t("admin.dash.activity"))}</div><div class="value">${data.activity_pct}%</div></div>
+      `;
+      const max = Math.max(1, ...data.generations_last_7_days.map((d) => d.count));
+      document.getElementById("chart").innerHTML = data.generations_last_7_days.map((d) =>
+        `<div class="admin-chart-bar" style="height:${Math.round((d.count / max) * 100)}%" title="${escapeHtml(d.date)}: ${d.count}"></div>`
+      ).join("") || `<p class="muted">${escapeHtml(t("admin.empty"))}</p>`;
+      const tb = document.querySelector("#recent tbody");
+      tb.innerHTML = data.recent_users.map((u) => `<tr>
+        <td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.role)}</td><td>${escapeHtml(u.plan || "—")}</td>
+        <td>${u.is_active ? "🟢" : "🔴"}</td>
+        <td><a class="btn btn-ghost" href="/admin/user?id=${u.id}">${escapeHtml(t("admin.open"))}</a></td>
+      </tr>`).join("") || `<tr><td colspan="5">${escapeHtml(t("admin.empty"))}</td></tr>`;
+})().catch((e) => { console.error(e); });
+</script>
+</body>
+</html>

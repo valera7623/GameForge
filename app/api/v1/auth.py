@@ -105,6 +105,7 @@ async def login(
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Account disabled")
+    user.last_login_at = datetime.now(timezone.utc)
     access, refresh = await issue_tokens(db, user)
     return _token_response(access, refresh, response)
 

@@ -130,6 +130,17 @@ const TOOL_ROUTES = [
 export function sidebarHTML(active) {
   const activeKey = (active || "").replace(/\.html$/, "");
   const nextLang = getLang() === "ru" ? "EN" : "RU";
+  let adminLink = "";
+  try {
+    const raw = localStorage.getItem("gf_user");
+    const u = raw ? JSON.parse(raw) : null;
+    const staff = u && ["super_admin", "admin", "manager", "support"].includes(u.role);
+    if (staff) {
+      adminLink = `<a href="/admin">${t("nav.admin")}</a>`;
+    }
+  } catch {
+    /* ignore */
+  }
   return `
     <aside class="sidebar" aria-label="Main">
       <div class="sidebar-top">
@@ -146,6 +157,7 @@ export function sidebarHTML(active) {
         <nav class="sidebar-nav sidebar-nav-mobile" aria-label="${t("nav.menu")}">
           <a href="/dashboard" class="${activeKey === "dashboard" ? "active" : ""}">${t("nav.dashboard")}</a>
           <a href="/team" class="${activeKey === "team" ? "active" : ""}">${t("nav.team")}</a>
+          ${adminLink}
           <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer">${t("nav.docs")}</a>
         </nav>
         <div class="sidebar-tools">
@@ -160,6 +172,7 @@ export function sidebarHTML(active) {
             ([path, key]) =>
               `<a href="/${path}" class="${activeKey === path ? "active" : ""}">${t(key)}</a>`
           ).join("")}
+          ${adminLink}
         </nav>
         <div class="spacer"></div>
         <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer" class="sidebar-docs">${t("nav.docs")}</a>

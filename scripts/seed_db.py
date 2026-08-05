@@ -86,12 +86,13 @@ async def main() -> None:
         # Admin
         admin_email = "admin@gamedev.ai"
         result = await db.execute(select(User).where(User.email == admin_email))
-        if not result.scalar_one_or_none():
+        existing_admin = result.scalar_one_or_none()
+        if not existing_admin:
             admin = User(
                 email=admin_email,
                 hashed_password=hash_password("admin123456"),
                 full_name="Admin",
-                role=UserRole.ADMIN,
+                role=UserRole.SUPER_ADMIN,
                 is_verified=True,
                 generation_reset_at=datetime.now(timezone.utc),
             )
@@ -106,6 +107,11 @@ async def main() -> None:
                 )
             )
             print(f"Created admin: {admin_email} / admin123456")
+        elif existing_admin.role != UserRole.SUPER_ADMIN:
+            existing_admin.role = UserRole.SUPER_ADMIN
+            print(f"Promoted existing admin to super_admin: {admin_email}")
+        else:
+            print(f"Admin already exists: {admin_email}")
 
         await db.commit()
         print("Seed complete.")

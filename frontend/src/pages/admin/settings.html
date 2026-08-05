@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Settings — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.settings.h1">Settings</h1></div></div>
+    <div class="panel admin-kv" id="form"></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t, canWriteSettings } from "../../js/admin.js";
+import { toast } from "../../js/app.js";
+
+(async () => {
+      const me = await requireStaff();
+      if (!me) throw new Error("staff");
+      mountAdminShell("settings");
+      applyDomI18n(document);
+      const write = canWriteSettings(me.role);
+      const s = await AdminAPI.settings();
+      document.getElementById("form").innerHTML = `
+        <label>App name<input id="app_name" value="${escapeHtml(s.app_name)}" ${write ? "" : "disabled"} /></label>
+        <label>Domain<input id="domain" value="${escapeHtml(s.domain)}" ${write ? "" : "disabled"} /></label>
+        <label>Notes<textarea id="notes" rows="4" ${write ? "" : "disabled"}>${escapeHtml(s.notes)}</textarea></label>
+        ${write ? `<button class="btn btn-primary" id="save">${escapeHtml(t("admin.save"))}</button>` : `<p class="muted">${escapeHtml(t("admin.settings.readonly"))}</p>`}
+      `;
+      if (write) {
+        document.getElementById("save").onclick = async () => {
+          try {
+            await AdminAPI.saveSettings({
+              app_name: document.getElementById("app_name").value,
+              domain: document.getElementById("domain").value,
+              notes: document.getElementById("notes").value,
+            });
+            toast("Saved");
+          } catch (e) { toast(e.message, true); }
+        };
+      }
+})().catch((e) => { console.error(e); });
+</script>
+</body></html>

@@ -1,13 +1,34 @@
 # Users and Roles
 
-## Roles
+## Platform roles
 
 | Role | Capabilities |
 |------|----------------|
 | `user` | Standard tools, own projects |
-| `admin` | Platform administration (seed admin locally only) |
+| `enterprise` | Legacy enterprise platform role (plan usually on subscription) |
+| `support` | Admin panel: read users, generations, dashboard |
+| `manager` | Same read access as support |
+| `admin` | Manage users (block/edit/role except `super_admin`), tools, subscriptions |
+| `super_admin` | Full admin panel including platform settings |
 
-Studio **organization** roles are separate from global `UserRole`.
+Studio **organization** roles (`owner` / `admin` / `member`) are separate from global `UserRole`.
+
+## Admin panel
+
+Staff sign in at **`/admin/login`** (or open **`/admin`** after logging in with a staff account).
+
+API prefix: `/api/v1/admin/*` (cookie session, same as the app).
+
+| Area | Path |
+|------|------|
+| Dashboard | `/admin` |
+| Users | `/admin/users`, `/admin/user?id=` |
+| Generations | `/admin/generations` |
+| Subscriptions | `/admin/subscriptions` |
+| Tools on/off | `/admin/tools` |
+| Settings | `/admin/settings` (super_admin write) |
+
+Disabled tools return **503** on generation endpoints.
 
 ## Seed script
 
@@ -16,6 +37,8 @@ docker compose exec api python scripts/seed_db.py
 ```
 
 Creates demo/admin users and sample project **only** when `APP_ENV` is not `production`. In production the script exits with an error.
+
+Local seed admin: `admin@gamedev.ai` / `admin123456` with role **`super_admin`**.
 
 !!! danger "Never seed production"
     Do not set `SEED_ON_DEPLOY=1` on a live VPS. Remove any leftover `demo@` / `admin@` accounts.

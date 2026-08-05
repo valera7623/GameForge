@@ -15,10 +15,19 @@ from app.models.generation import Generation, ToolType
 from app.models.user import User
 from app.schemas import GenerationResponse
 from app.services.generation_tracker import complete_generation, create_generation, fail_generation
+from app.services.platform_settings import is_tool_enabled
 
 logger = logging.getLogger(__name__)
 
 AsyncToolFn = Callable[[], Awaitable[dict[str, Any]]]
+
+
+async def _ensure_tool_enabled(db: AsyncSession, tool: ToolType) -> None:
+    if not await is_tool_enabled(db, tool):
+        raise HTTPException(
+            status_code=503,
+            detail=f"Tool '{tool.value}' is temporarily disabled by an administrator.",
+        )
 
 
 def generation_to_response(gen: Generation) -> GenerationResponse:
@@ -51,6 +60,7 @@ async def run_tool(
     asset_urls_from: Optional[Callable[[dict[str, Any]], Optional[list]]] = None,
 ) -> GenerationResponse:
     await rate_limit(request)
+    await _ensure_tool_enabled(db, tool)
     await reserve_generation_quota(user, db)
 
     gen = await create_generation(
@@ -88,6 +98,7 @@ async def enqueue_tool(
 ) -> GenerationResponse:
     """Reserve quota, create generation, hand off to Celery."""
     await rate_limit(request)
+    await _ensure_tool_enabled(db, tool)
     await reserve_generation_quota(user, db)
     gen = await create_generation(
         db,

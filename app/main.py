@@ -25,6 +25,7 @@ from app.api.v1 import (
     sound_designer,
     texture_upscaler,
 )
+from app.api.v1.admin import router as admin_router
 from app.config import get_settings, validate_settings
 from app.database import init_db
 
@@ -135,6 +136,7 @@ app.include_router(playtester.router, prefix=prefix)
 app.include_router(localization.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
+app.include_router(admin_router, prefix=prefix)
 
 local_assets = Path("/tmp/gamedev-assets")
 local_assets.mkdir(parents=True, exist_ok=True)
