@@ -80,23 +80,29 @@ async def ai_costs(
         for t, c, n in by_tool_rows.all()
     ]
 
+    by_day_expr = cast(Generation.created_at, Date).label("day")
     by_day_rows = await db.execute(
-        select(cast(Generation.created_at, Date), func.coalesce(func.sum(Generation.cost_usd), 0))
+        select(by_day_expr, func.coalesce(func.sum(Generation.cost_usd), 0))
         .where(Generation.created_at >= start, Generation.created_at <= end)
-        .group_by(cast(Generation.created_at, Date))
-        .order_by(cast(Generation.created_at, Date))
+        .group_by(by_day_expr)
+        .order_by(by_day_expr)
     )
     by_day = [{"date": str(d), "cost_usd": float(c)} for d, c in by_day_rows.all()]
 
+    # Group by column only — coalesce(literal) in SELECT+GROUP BY breaks on Postgres
+    # because SQLAlchemy emits distinct bind params for each "unknown" literal.
     by_model_rows = await db.execute(
         select(
-            func.coalesce(Generation.model_name, "unknown"),
+            Generation.model_name,
             func.coalesce(func.sum(Generation.cost_usd), 0),
             func.count(),
         )
         .where(Generation.created_at >= start, Generation.created_at <= end)
-        .group_by(func.coalesce(Generation.model_name, "unknown"))
+        .group_by(Generation.model_name)
     )
-    by_model = [{"model": m, "cost_usd": float(c), "count": n} for m, c, n in by_model_rows.all()]
+    by_model = [
+        {"model": (m or "unknown"), "cost_usd": float(c), "count": n}
+        for m, c, n in by_model_rows.all()
+    ]
 
     return AiCostsOut(total_usd=total, by_tool=by_tool, by_day=by_day, by_model=by_model)

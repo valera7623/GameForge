@@ -21,37 +21,69 @@
   <div class="bg-grid"></div>
   <div class="app-shell"><main class="main-panel">
     <div class="page-header"><div><h1 data-i18n="admin.ai.h1">AI models & costs</h1></div></div>
-    <div class="panel"><h2 data-i18n="admin.ai.costs">Costs (30d)</h2><div id="costs" class="muted"></div></div>
-    <div class="panel"><h2 data-i18n="admin.ai.pricing">Pricing</h2><pre id="pricing" class="admin-mono"></pre>
-      <div class="admin-actions" id="actions"></div></div>
+    <div class="panel"><h2 data-i18n="admin.ai.costs">Costs (30d)</h2><div id="costs" class="muted">Loading…</div></div>
+    <div class="panel"><h2 data-i18n="admin.ai.pricing">Pricing</h2>
+      <textarea id="pricing" class="admin-mono" rows="16" style="width:100%" disabled></textarea>
+      <div class="admin-actions" id="actions"></div>
+    </div>
   </main></div>
   <script type="module">
 import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, t, canWriteSettings } from "../../js/admin.js";
 import { toast } from "../../js/app.js";
+
 (async () => {
   const me = await requireStaff();
   if (!me) throw new Error("staff");
   mountAdminShell("ai-models");
   applyDomI18n(document);
   const write = canWriteSettings(me.role);
-  const [models, costs] = await Promise.all([AdminAPI.aiModels(), AdminAPI.aiCosts({ days: 30 })]);
-  document.getElementById("costs").innerHTML = `<p><strong>$${costs.total_usd.toFixed(4)}</strong></p>` +
-    `<p>${costs.by_tool.map(x => `${escapeHtml(x.tool)}: $${Number(x.cost_usd).toFixed(4)} (${x.count})`).join(" · ") || "—"}</p>`;
-  const raw = JSON.stringify(models.models, null, 2);
+  const pricingEl = document.getElementById("pricing");
+  const costsEl = document.getElementById("costs");
+
+  let models;
+  let costs;
+  try {
+    models = await AdminAPI.aiModels();
+  } catch (e) {
+    costsEl.textContent = "";
+    toast(e.message || "Failed to load models", true);
+    throw e;
+  }
+  try {
+    costs = await AdminAPI.aiCosts({ days: 30 });
+  } catch (e) {
+    costsEl.innerHTML = `<p class="error-text">${escapeHtml(e.message || "Failed to load costs")}</p>`;
+    costs = { total_usd: 0, by_tool: [], by_day: [], by_model: [] };
+  }
+
+  costsEl.innerHTML =
+    `<p><strong>$${(Number(costs.total_usd) || 0).toFixed(4)}</strong></p>` +
+    `<p>${(costs.by_tool || []).map((x) => `${escapeHtml(x.tool)}: $${Number(x.cost_usd).toFixed(4)} (${x.count})`).join(" · ") || "—"}</p>` +
+    ((costs.by_model || []).length
+      ? `<p class="muted">${costs.by_model.map((x) => `${escapeHtml(x.model)}: $${Number(x.cost_usd).toFixed(4)}`).join(" · ")}</p>`
+      : "");
+
+  pricingEl.value = JSON.stringify(models.models || {}, null, 2);
+  pricingEl.disabled = !write;
   if (write) {
-    document.getElementById("pricing").outerHTML = `<textarea id="pricing" class="admin-mono" rows="16" style="width:100%">${escapeHtml(raw)}</textarea>`;
-    document.getElementById("actions").innerHTML = `<button class="btn btn-primary" id="save">${escapeHtml(t("admin.save"))}</button>`;
+    document.getElementById("actions").innerHTML =
+      `<button type="button" class="btn btn-primary" id="save">${escapeHtml(t("admin.save"))}</button>`;
     document.getElementById("save").onclick = async () => {
       try {
-        const parsed = JSON.parse(document.getElementById("pricing").value);
+        const parsed = JSON.parse(pricingEl.value);
         await AdminAPI.saveAiModels(parsed);
         toast("Saved");
-      } catch (e) { toast(e.message, true); }
+      } catch (e) {
+        toast(e.message || "Save failed", true);
+      }
     };
   } else {
-    document.getElementById("pricing").textContent = raw;
+    document.getElementById("actions").innerHTML =
+      `<p class="muted">${escapeHtml(t("admin.settings.readonly"))}</p>`;
   }
-})().catch(console.error);
+})().catch((e) => {
+  console.error(e);
+});
 </script>
 </body>
 </html>
