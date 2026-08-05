@@ -15,6 +15,7 @@ from app.api.v1 import (
     billing,
     character_creator,
     dashboard,
+    game_balancer,
     health,
     level_designer,
     localization,
@@ -137,6 +138,7 @@ app.include_router(character_creator.router, prefix=prefix)
 app.include_router(sound_designer.router, prefix=prefix)
 app.include_router(playtester.router, prefix=prefix)
 app.include_router(localization.router, prefix=prefix)
+app.include_router(game_balancer.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)

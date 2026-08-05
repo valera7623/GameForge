@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Game Balancer — Combat & Economy Balance — GameForge</title>
+  <meta name="description" content="Analyze classes, enemies, weapons, abilities, and economy for imbalance. Get DPS, TTK, and gold-efficiency recommendations before you ship." />
+  <link rel="canonical" href="https://gameforge.website/tools/game-balancer" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/tools/game-balancer" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/game-balancer" />
+  <link rel="alternate" hreflang="x-default" href="https://gameforge.website/tools/game-balancer" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="GameForge" />
+  <meta property="og:title" content="AI Game Balancer — GameForge" />
+  <meta property="og:description" content="Analyze classes, enemies, weapons, abilities, and economy for imbalance before you ship." />
+  <meta property="og:url" content="https://gameforge.website/tools/game-balancer" />
+  <meta property="og:image" content="https://gameforge.website/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "GameForge Game Balancer",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "url": "https://gameforge.website/tools/game-balancer",
+    "description": "Analyze classes, enemies, weapons, abilities, and economy for imbalance before you ship.",
+    "isPartOf": { "@type": "SoftwareApplication", "name": "GameForge", "url": "https://gameforge.website/" },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body class="page-landing page-tool">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <header class="topnav">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
+    <nav>
+      <a href="/#tools">Tools</a>
+      <a href="https://docs.gameforge.website/" target="_blank" rel="noopener noreferrer">Documentation</a>
+      <a class="btn-icon" href="/ru/tools/game-balancer" title="Русский" lang="ru">RU</a>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
+      <a href="/login" class="btn btn-ghost">Sign in</a>
+      <a href="/register" class="btn btn-primary">Start free</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero tool-hero">
+      <p class="tool-kicker"><span class="tool-icon" aria-hidden="true">⚖</span> GameForge</p>
+      <h1>AI Game Balancer for Classes, Enemies & Economy</h1>
+      <p class="lede">Paste your combat and economy JSON. Get a balance score, concrete nerfs/buffs, and DPS / TTK charts — before players find the meta.</p>
+      <div class="cta-row">
+        <a href="/register" class="btn btn-primary btn-lg">Analyze your game</a>
+        <a href="/#tools" class="btn btn-ghost btn-lg">All tools</a>
+      </div>
+    </section>
+    <section class="section tool-section">
+      <h2>How it works</h2>
+      <ol class="tool-steps">
+        <li>Export or type stats for classes, enemies, weapons, abilities, and economy.</li>
+        <li>Run analysis — GameForge computes DPS, survivability, TTK, and gold efficiency.</li>
+        <li>Apply recommended tweaks and re-run until the score looks shippable.</li>
+      </ol>
+    </section>
+    <section class="section tool-section">
+      <h2>What you get</h2>
+      <ul class="tool-bullets">
+        <li>Balance score 0–100 with severity-ranked issues</li>
+        <li>Actionable recommendations (damage, HP, cooldowns, prices)</li>
+        <li>Bar charts for class DPS, enemy TTK, weapon DPS, gold/min</li>
+        <li>JSON export for design docs and version control</li>
+      </ul>
+      <div class="cta-row" style="margin-top:1.5rem">
+        <a href="/register" class="btn btn-primary">Start free</a>
+      </div>
+    </section>
+  </main>
+  <script type="module">
+    import { applyTheme, bindThemeToggles, getTheme } from "../../js/theme.js";
+    applyTheme(getTheme());
+    bindThemeToggles(document);
+  </script>
+</body>
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="bal.title">Game Balancer — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .bal-score {
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+      margin: 0.75rem 0 1.25rem;
+    }
+    .bal-score strong { font-family: Orbitron, sans-serif; font-size: 1.6rem; }
+    .bal-bar {
+      flex: 1; min-width: 160px; height: 10px; border-radius: 999px;
+      background: color-mix(in srgb, var(--border) 80%, transparent);
+      overflow: hidden;
+    }
+    .bal-bar > i {
+      display: block; height: 100%; border-radius: 999px;
+      background: var(--accent); width: 0%; transition: width .4s ease;
+    }
+    .bal-issue {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.75rem 0.9rem; margin: 0.5rem 0;
+      background: var(--bg-elevated);
+    }
+    .bal-issue[data-sev="high"] { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+    .bal-issue[data-sev="medium"] { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
+    .bal-issue[data-sev="low"] { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .bal-sev { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .bal-charts { display: grid; gap: 1rem; margin-top: 1rem; }
+    @media (min-width: 900px) { .bal-charts { grid-template-columns: 1fr 1fr; } }
+    .bal-chart {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem;
+      background: var(--bg);
+    }
+    .bal-chart h3 { margin: 0 0 0.75rem; font-size: 0.95rem; }
+    .bal-bars { display: flex; flex-direction: column; gap: 0.45rem; }
+    .bal-row { display: grid; grid-template-columns: 90px 1fr 48px; gap: 0.5rem; align-items: center; font-size: 0.85rem; }
+    .bal-row .track { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--border) 70%, transparent); overflow: hidden; }
+    .bal-row .track > i { display:block; height:100%; background: var(--accent); border-radius: 999px; }
+    .bal-row .val { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    #gameJson { min-height: 280px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="bal.h1">AI Game Balancer</h1>
+        <p data-i18n="bal.sub">Find class, enemy, weapon, and economy imbalance before ship.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="bal.step1">Step 1: Enter game data</h2>
+        <form id="form" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="bal.game_name">Game name</span>
+              <input name="game_name" id="gameName" value="Dungeon Explorer" required />
+            </label>
+            <label><span data-i18n="bal.version">Version</span>
+              <input name="version" id="gameVersion" value="1.0.0" />
+            </label>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
+            </label>
+          </div>
+          <label><span data-i18n="bal.json">Game data (JSON)</span>
+            <textarea id="gameJson" spellcheck="false"></textarea>
+          </label>
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="bal.sample">Load sample</button>
+            <button class="btn btn-ghost" type="button" id="loadFile" data-i18n="bal.load">Load from JSON</button>
+            <input type="file" id="fileInput" accept="application/json,.json" hidden />
+            <button class="btn btn-ghost" type="button" id="saveLocal" data-i18n="bal.save">Save draft</button>
+            <button class="btn btn-primary" type="submit" data-i18n="bal.analyze">Analyze</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="bal.loading">Analyzing balance…</span></div>
+      </div>
+
+      <div class="panel" id="resultPanel" hidden>
+        <h2 data-i18n="bal.step2">Step 2: Results</h2>
+        <div class="bal-score">
+          <div><span data-i18n="bal.score_label">Balance score</span><br /><strong id="scoreVal">—</strong></div>
+          <div class="bal-bar" aria-hidden="true"><i id="scoreBar"></i></div>
+        </div>
+        <p id="summary" style="color:var(--muted)"></p>
+
+        <h3 data-i18n="bal.issues">Issues found</h3>
+        <div id="issues"></div>
+
+        <h3 data-i18n="bal.recs">Recommendations</h3>
+        <div id="recs"></div>
+
+        <h3 data-i18n="bal.viz">Visualizations</h3>
+        <div class="bal-charts" id="charts"></div>
+
+        <div class="actions" style="margin-top:1rem">
+          <button class="btn btn-ghost" id="dlJson" data-i18n="bal.export">Export JSON</button>
+          <button class="btn btn-ghost" id="reanalyze" data-i18n="bal.reanalyze">Re-analyze</button>
+        </div>
+        <details style="margin-top:1rem">
+          <summary data-i18n="bal.raw">Raw JSON</summary>
+          <div class="result-box" style="margin-top:0.75rem"><pre id="jsonOut"></pre></div>
+        </details>
+      </div>
+
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, escapeHtml, mountShell, setLoading, toast, t } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("game-balancer");
+    applyDomI18n(document);
+    mountToolHistory("game_balancer");
+
+    const SAMPLE = {
+      game_name: "Dungeon Explorer",
+      version: "1.0.0",
+      classes: [
+        { name: "Warrior", health: 100, damage: 20, defense: 10, speed: 1.0, abilities: ["Charge", "Shield Bash"] },
+        { name: "Mage", health: 60, damage: 30, defense: 5, speed: 0.8, abilities: ["Fireball", "Teleport"] },
+        { name: "Rogue", health: 75, damage: 18, defense: 6, speed: 1.3, abilities: ["Backstab", "Smoke Bomb"] },
+      ],
+      enemies: [
+        { name: "Goblin", health: 50, damage: 10, defense: 2, speed: 1.2, xp_reward: 50, gold_reward: 10 },
+        { name: "Orc", health: 120, damage: 25, defense: 8, speed: 0.7, xp_reward: 100, gold_reward: 25 },
+        { name: "Drake", health: 300, damage: 40, defense: 15, speed: 0.9, xp_reward: 400, gold_reward: 120 },
+      ],
+      weapons: [
+        { name: "Sword", damage: 15, speed: 1.0, range: 1.5, price: 100, rarity: "common" },
+        { name: "Axe", damage: 25, speed: 0.7, range: 1.2, price: 200, rarity: "uncommon" },
+        { name: "Dagger", damage: 10, speed: 1.6, range: 1.0, price: 80, rarity: "common" },
+      ],
+      abilities: [
+        { name: "Fireball", damage: 40, cooldown: 10, mana_cost: 30, range: 10 },
+        { name: "Slash", damage: 15, cooldown: 2, mana_cost: 5, range: 1.5 },
+        { name: "Heal", damage: 0, cooldown: 12, mana_cost: 25, range: 0 },
+      ],
+      economy: {
+        starting_gold: 100,
+        gold_per_kill: 10,
+        gold_per_quest: 50,
+        price_multiplier: 1.0,
+        xp_per_level: 100,
+      },
+    };
+
+    const DRAFT_KEY = "gf_balancer_draft";
+    let last = null;
+
+    function setJson(obj) {
+      document.getElementById("gameJson").value = JSON.stringify(obj, null, 2);
+      if (obj.game_name) document.getElementById("gameName").value = obj.game_name;
+      if (obj.version) document.getElementById("gameVersion").value = obj.version;
+    }
+
+    function readPayload() {
+      let data;
+      try {
+        data = JSON.parse(document.getElementById("gameJson").value);
+      } catch {
+        throw new Error(t("bal.bad_json"));
+      }
+      if (!data || typeof data !== "object") throw new Error(t("bal.bad_json"));
+      data.game_name = document.getElementById("gameName").value.trim() || data.game_name || "Untitled Game";
+      data.version = document.getElementById("gameVersion").value.trim() || data.version || "1.0.0";
+      const pid = document.getElementById("projectSelect").value;
+      if (pid) data.project_id = pid;
+      return data;
+    }
+
+    function renderBars(container, labels, values) {
+      const max = Math.max(...values, 0.01);
+      container.innerHTML = `<div class="bal-bars">${labels.map((lab, i) => {
+        const v = values[i] ?? 0;
+        const pct = Math.round((v / max) * 100);
+        return `<div class="bal-row"><span>${escapeHtml(String(lab))}</span><div class="track"><i style="width:${pct}%"></i></div><span class="val">${escapeHtml(String(v))}</span></div>`;
+      }).join("")}</div>`;
+    }
+
+    function renderResult(out) {
+      last = out;
+      document.getElementById("resultPanel").hidden = false;
+      const score = out.balance_score ?? 0;
+      document.getElementById("scoreVal").textContent = `${score}/100`;
+      document.getElementById("scoreBar").style.width = `${score}%`;
+      document.getElementById("summary").textContent = out.summary || "";
+      document.getElementById("jsonOut").textContent = JSON.stringify(out, null, 2);
+
+      const issuesEl = document.getElementById("issues");
+      const issues = out.issues || [];
+      issuesEl.innerHTML = issues.length
+        ? issues.map((iss) => `<div class="bal-issue" data-sev="${escapeHtml(iss.severity || "low")}">
+            <div class="bal-sev">${escapeHtml(iss.severity || "low")} · ${escapeHtml(iss.type || "issue")}</div>
+            <div>${escapeHtml(iss.description || "")}</div>
+          </div>`).join("")
+        : `<p style="color:var(--muted)">${escapeHtml(t("bal.no_issues"))}</p>`;
+
+      const recsEl = document.getElementById("recs");
+      const recs = out.recommendations || [];
+      recsEl.innerHTML = recs.length
+        ? `<ul>${recs.map((r) => `<li>${escapeHtml(r.description || `${r.action} ${r.target}`)}</li>`).join("")}</ul>`
+        : `<p style="color:var(--muted)">${escapeHtml(t("bal.no_recs"))}</p>`;
+
+      const charts = document.getElementById("charts");
+      charts.innerHTML = "";
+      (out.visualizations || []).forEach((viz) => {
+        if (viz.type !== "bar_chart" || !viz.data) return;
+        const card = document.createElement("div");
+        card.className = "bal-chart";
+        card.innerHTML = `<h3>${escapeHtml(viz.title || "Chart")}</h3>`;
+        const body = document.createElement("div");
+        card.appendChild(body);
+        renderBars(body, viz.data.labels || [], viz.data.values || []);
+        charts.appendChild(card);
+      });
+      if (!charts.children.length) {
+        charts.innerHTML = `<p style="color:var(--muted)">${escapeHtml(t("bal.no_viz"))}</p>`;
+      }
+    }
+
+    async function analyze() {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const body = readPayload();
+        const gen = await ToolsAPI.balance(body);
+        renderResult(gen.output_data || {});
+        toast(t("bal.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("game_balancer");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try { setJson(JSON.parse(saved)); } catch { setJson(SAMPLE); }
+    } else {
+      setJson(SAMPLE);
+    }
+
+    ProjectsAPI.list().then((list) => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }).catch(() => {});
+
+    document.getElementById("loadSample").addEventListener("click", () => setJson(SAMPLE));
+    document.getElementById("saveLocal").addEventListener("click", () => {
+      try {
+        const body = readPayload();
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(body));
+        toast(t("bal.saved"));
+      } catch (err) { toast(err.message, true); }
+    });
+    document.getElementById("loadFile").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        setJson(JSON.parse(text));
+        toast(t("bal.loaded"));
+      } catch { toast(t("bal.bad_json"), true); }
+      e.target.value = "";
+    });
+    document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); analyze(); });
+    document.getElementById("reanalyze").addEventListener("click", () => analyze());
+    document.getElementById("dlJson").addEventListener("click", () => {
+      if (last) downloadJSON("balance-report.json", last);
+    });
+  </script>
+</body>
+</html>

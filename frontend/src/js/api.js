@@ -114,6 +114,7 @@ export const ToolsAPI = {
   sound: (body) => api("/sound-designer", { method: "POST", body: JSON.stringify(body) }),
   playtest: (body) => api("/playtester", { method: "POST", body: JSON.stringify(body) }),
   localize: (body) => api("/localization", { method: "POST", body: JSON.stringify(body) }),
+  balance: (body) => api("/game-balancer", { method: "POST", body: JSON.stringify(body) }),
   upscale: async (file, scale, enhance, projectId) => {
     const fd = new FormData();
     fd.append("file", file);

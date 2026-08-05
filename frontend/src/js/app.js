@@ -114,6 +114,7 @@ const ROUTES = [
   ["sound-designer", "nav.sound"],
   ["playtester", "nav.playtester"],
   ["localization", "nav.localization"],
+  ["game-balancer", "nav.balancer"],
   ["team", "nav.team"],
 ];
 
@@ -125,6 +126,7 @@ const TOOL_ROUTES = [
   ["sound-designer", "nav.sound", "dash.tool.sound_d"],
   ["playtester", "nav.playtester", "dash.tool.play_d"],
   ["localization", "nav.localization", "dash.tool.loc_d"],
+  ["game-balancer", "nav.balancer", "dash.tool.bal_d"],
 ];
 
 export function sidebarHTML(active) {

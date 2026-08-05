@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 # ── Auth ──────────────────────────────────────────────────────────────
 
@@ -166,6 +166,36 @@ class PlaytesterRequest(BaseModel):
     game_description: str = Field(min_length=10, max_length=5000)
     scenarios: List[str] = Field(default_factory=list)
     focus: str = "bugs"  # bugs | balance | ux | all
+
+
+class GameBalancerRequest(BaseModel):
+    """JSON game parameters for balance analysis."""
+
+    project_id: Optional[UUID] = None
+    game_name: str = Field(default="Untitled Game", max_length=200)
+    version: str = Field(default="1.0.0", max_length=64)
+    classes: List[dict] = Field(default_factory=list)
+    enemies: List[dict] = Field(default_factory=list)
+    weapons: List[dict] = Field(default_factory=list)
+    abilities: List[dict] = Field(default_factory=list)
+    economy: dict = Field(default_factory=dict)
+
+    def to_game_data(self) -> dict:
+        return {
+            "game_name": self.game_name,
+            "version": self.version,
+            "classes": self.classes,
+            "enemies": self.enemies,
+            "weapons": self.weapons,
+            "abilities": self.abilities,
+            "economy": self.economy,
+        }
+
+    @model_validator(mode="after")
+    def _require_payload(self) -> "GameBalancerRequest":
+        if not (self.classes or self.enemies or self.weapons or self.abilities or self.economy):
+            raise ValueError("Provide at least one of: classes, enemies, weapons, abilities, economy")
+        return self
 
 
 class LocalizationRequest(BaseModel):

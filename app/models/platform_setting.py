@@ -28,6 +28,7 @@ DEFAULT_TOOLS = {
     "sound_designer": {"enabled": True, "display_name": "Sound Designer"},
     "playtester": {"enabled": True, "display_name": "Playtester"},
     "localization": {"enabled": True, "display_name": "Localization"},
+    "game_balancer": {"enabled": True, "display_name": "Game Balancer"},
 }
 
 DEFAULT_AI_MODELS = {
