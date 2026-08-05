@@ -6,7 +6,7 @@ The dashboard is the main hub after login.
 
 - **Profile / plan** — current subscription and remaining generations
 - **XP & achievements** — gamification progress (+10 XP per generation)
-- **Launch a tool** — shortcuts to the seven AI tools
+- **Launch a tool** — shortcuts to the fourteen AI tools
 - **Recent activity** — recent generations when available
 
 On narrow screens the sidebar collapses behind a hamburger menu; the “Launch a tool” panel may be hidden on mobile — use the sidebar links instead.

@@ -1,6 +1,6 @@
 # GameForge
 
-**AI Game Dev Toolkit** — seven AI-powered tools for indie developers, studios, and modders: levels, quests, textures, characters, sound, playtesting, and localization.
+**AI Game Dev Toolkit** — fourteen AI-powered tools for indie developers, studios, and modders: levels, quests, textures, characters, sound, playtesting, localization, balance, level analysis, store copy, playtest insights, trailer scripts, review analysis, and Discord community tooling.
 
 !!! info "Product version"
     Current API version: **1.2.0**. Production site: [https://gameforge.website](https://gameforge.website).
@@ -16,6 +16,13 @@
 | **Sound Designer** | SFX / music / voice clips (WAV/MP3) |
 | **Playtester** | Automated QA-style reports for game design docs |
 | **Localization** | JSON/CSV translations with glossary support |
+| **Game Balancer** | Combat / economy balance metrics and suggestions |
+| **Level Analyzer** | Pathfinding, difficulty, and level compare |
+| **Store Description** | Steam / App Store / Google Play listing copy |
+| **Playtest Analyzer** | Session retention and feedback insights |
+| **Trailer Script** | Timed promo / launch / teaser scripts |
+| **Review Analyzer** | Player review sentiment and issue clusters |
+| **Discord Bot** | Community bot config, moderation, analytics (API MVP) |
 | **Projects & export** | Group assets per project and download a ZIP |
 | **Team seats** | Studio plan organizations, invites, roles |
 | **Plans** | Free / Indie / Studio / Enterprise (on-prem) |

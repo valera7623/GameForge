@@ -40,7 +40,7 @@
 
 ## О проекте
 
-**GameForge** — открытый **AI Game Dev Toolkit**: семь ИИ-инструментов для инди, студий и моддеров — уровни, квесты, текстуры, персонажи, звук, плейтест и локализация — с проектами, командными местами и ZIP-экспортом в Unity, Unreal или Godot.
+**GameForge** — открытый **AI Game Dev Toolkit**: четырнадцать ИИ-инструментов для инди, студий и моддеров — уровни, квесты, текстуры, персонажи, звук, плейтест, локализация, баланс, анализ уровней, тексты витрин, инсайты плейтеста, сценарии трейлеров, анализ отзывов и Discord — с проектами, командными местами и ZIP-экспортом в Unity, Unreal или Godot.
 
 ### Проблема
 
@@ -54,7 +54,7 @@
 
 | Направление | Что даёт GameForge |
 |-------------|-------------------|
-| **Семь AI-tools** | Level, quest, texture, character, sound, playtester, localization |
+| **Четырнадцать AI-tools** | От level/quest до store copy, трейлеров, отзывов и Discord |
 | **Проекты и экспорт** | Ассеты по тайтлу + ZIP |
 | **Mock или реальный AI** | `USE_MOCK_AI=true` без оплаты; ProxyAPI / OpenAI когда нужно |
 | **Команда и тарифы** | Free / Indie / Studio / Enterprise (on-prem) |
@@ -90,6 +90,13 @@
 | **Sound Designer** | SFX / музыка / голос (WAV/MP3) |
 | **Playtester** | QA-отчёт по дизайн-доку |
 | **Localization** | Переводы JSON/CSV |
+| **Game Balancer** | Метрики баланса боя / экономики |
+| **Level Analyzer** | Pathfinding, сложность, сравнение уровней |
+| **Store Description** | Тексты Steam / App Store / Google Play |
+| **Playtest Analyzer** | Retention и инсайты по сессиям |
+| **Trailer Script** | Сценарии launch / teaser / gameplay |
+| **Review Analyzer** | Sentiment и кластеры проблем в отзывах |
+| **Discord Bot** | Community bot studio (API / simulate MVP) |
 | **Projects** | Проекты по движку + ZIP |
 | **Team seats** | Организации Studio, инвайты |
 | **Геймификация** | XP, ачивки, monthly leaderboard |
@@ -242,8 +249,10 @@ Issues, PR и фидбек приветствуются.
 
 1. Fork → `git checkout -b feature/my-feature`
 2. Код + тесты + docs
-3. `ruff check app tests` и `pytest -q`
+3. `ruff check app tests` и `pytest -q` (нужны Postgres + Redis; при `APP_ENV=test` rate limit отключён)
 4. Откройте Pull Request
+
+CI (`.github/workflows/ci.yml`) на каждый push в `main`: ruff, pytest, сборка frontend, проверка Compose config.
 
 ---
 
@@ -270,6 +279,6 @@ Issues, PR и фидбек приветствуются.
 ---
 
 <p align="center">
-  <strong>GameForge v1.2.0</strong> — семь ИИ-инструментов для геймдева<br>
+  <strong>GameForge v1.2.0</strong> — четырнадцать ИИ-инструментов для геймдева<br>
   Для инди, студий и моддеров, которые хотят шипить быстрее
 </p>

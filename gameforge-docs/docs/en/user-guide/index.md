@@ -8,7 +8,7 @@ This section covers day-to-day use of GameForge in the browser.
 |------|--------|
 | [Dashboard](dashboard.md) | Home screen, XP, launch tools |
 | [Projects](projects.md) | Create projects, attach generations, export ZIP |
-| [Tools](tools.md) | All seven AI tools |
+| [Tools](tools.md) | All fourteen AI tools |
 | [Team](team.md) | Studio organizations and invites |
 | [Billing](billing.md) | Plans, limits, disabled billing mode |
 

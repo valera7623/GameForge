@@ -40,7 +40,7 @@
 
 ## About
 
-**GameForge** is an open-source **AI Game Dev Toolkit**: seven AI-powered tools for indie developers, studios, and modders — levels, quests, textures, characters, sound, playtesting, and localization — with projects, team seats, and ZIP export into Unity, Unreal, or Godot.
+**GameForge** is an open-source **AI Game Dev Toolkit**: fourteen AI-powered tools for indie developers, studios, and modders — levels, quests, textures, characters, sound, playtesting, localization, balance, level analysis, store copy, playtest insights, trailer scripts, review analysis, and Discord community tooling — with projects, team seats, and ZIP export into Unity, Unreal, or Godot.
 
 ### The problem
 
@@ -54,7 +54,7 @@ Game teams burn time on repetitive content work:
 
 | Area | What GameForge provides |
 |------|-------------------------|
-| **Seven AI tools** | Level, quest, texture, character, sound, playtester, localization |
+| **Fourteen AI tools** | From level/quest pipelines to store copy, trailers, reviews, and Discord |
 | **Projects & export** | Group assets per title and download a ZIP |
 | **Mock or real AI** | `USE_MOCK_AI=true` for free local/prod prototyping; ProxyAPI / OpenAI when ready |
 | **Team & plans** | Free / Indie / Studio / Enterprise (on-prem) |
@@ -90,6 +90,13 @@ Local demo accounts (after seed — **never** use in production):
 | **Sound Designer** | SFX / music / voice (WAV/MP3) |
 | **Playtester** | QA-style design report JSON |
 | **Localization** | Multi-language JSON/CSV export |
+| **Game Balancer** | Combat / economy balance metrics |
+| **Level Analyzer** | Pathfinding, difficulty, level compare |
+| **Store Description** | Steam / App Store / Google Play copy |
+| **Playtest Analyzer** | Session retention & feedback insights |
+| **Trailer Script** | Launch / teaser / gameplay scripts |
+| **Review Analyzer** | Review sentiment and issue clusters |
+| **Discord Bot** | Community bot studio (API / simulate MVP) |
 | **Projects** | Per-engine projects + ZIP export |
 | **Team seats** | Studio organizations, invites, roles |
 | **Gamification** | XP, achievements, monthly leaderboard |
@@ -249,8 +256,10 @@ Issues, PRs, and feedback are welcome.
 
 1. Fork → `git checkout -b feature/my-feature`
 2. Code + tests + docs
-3. `ruff check app tests` and `pytest -q`
+3. `ruff check app tests` and `pytest -q` (needs Postgres + Redis; `APP_ENV=test` skips rate limits)
 4. Open a Pull Request
+
+CI (`.github/workflows/ci.yml`) runs ruff, pytest, frontend build, and Compose config check on every push to `main`.
 
 ---
 
@@ -277,6 +286,6 @@ Issues, PRs, and feedback are welcome.
 ---
 
 <p align="center">
-  <strong>GameForge v1.2.0</strong> — seven AI tools for game developers<br>
+  <strong>GameForge v1.2.0</strong> — fourteen AI tools for game developers<br>
   Built for indies, studios, and modders who ship faster
 </p>

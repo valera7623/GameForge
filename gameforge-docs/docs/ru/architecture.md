@@ -43,7 +43,7 @@ flowchart TB
 | **Frontend** | Статический MPA + прокси `/api` на API |
 | **API** | Auth, проекты, биллинг, инструменты, signed URL |
 | **Worker** | Долгие задачи (upscale, character, sound) |
-| **PostgreSQL** | Пользователи, проекты, подписки, генерации, орг |
+| **PostgreSQL** | Пользователи, проекты, подписки, генерации, орг, CMS-контент, ops-логи |
 | **Redis** | Rate limit, Celery broker / results |
 | **MinIO** | Ассеты; браузер через public endpoint rewrite |
 

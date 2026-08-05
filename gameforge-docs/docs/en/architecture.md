@@ -43,7 +43,7 @@ flowchart TB
 | **Frontend** | Static MPA (Vite build) + Nginx reverse-proxy to the API |
 | **API** | Auth, projects, billing hooks, tool endpoints, signed asset URLs |
 | **Worker** | Long-running AI jobs (upscale, character, sound) via Celery |
-| **PostgreSQL** | Users, projects, subscriptions, generations, orgs |
+| **PostgreSQL** | Users, projects, subscriptions, generations, orgs, CMS content, ops logs |
 | **Redis** | Rate limits, Celery broker / results |
 | **MinIO** | Asset storage; browser access via public endpoint rewrite |
 
