@@ -78,6 +78,7 @@ function ensureGateCss() {
     style.id = "gf-metrika-gate-css";
     document.head.appendChild(style);
   }
+  // Only target known Metrika badge/informer selectors — never blanket [class*="ym-"].
   style.textContent = canSeeMetrikaBadge()
     ? ""
     : `
@@ -85,44 +86,36 @@ function ensureGateCss() {
     html.gf-hide-metrika-ui a[href*="metrika.yandex"],
     html.gf-hide-metrika-ui a[href*="metrica.yandex"],
     html.gf-hide-metrika-ui a[href*="informer.yandex"],
-    html.gf-hide-metrika-ui a[href*="yandex.ru/metrika"],
-    html.gf-hide-metrika-ui a[href*="yandex.com/metrika"],
+    html.gf-hide-metrika-ui img.ym-advanced-informer,
     html.gf-hide-metrika-ui img[src*="informer.yandex"],
     html.gf-hide-metrika-ui img[src*="metrika.yandex"],
-    html.gf-hide-metrika-ui img[src*="mc.yandex"],
-    html.gf-hide-metrika-ui iframe[src*="metrika.yandex"],
-    html.gf-hide-metrika-ui iframe[src*="mc.yandex.ru"],
-    html.gf-hide-metrika-ui iframe[src*="mc.yandex.com"],
-    html.gf-hide-metrika-ui iframe[src*="yandex.ru"],
-    html.gf-hide-metrika-ui iframe[src*="yandex.com"],
     html.gf-hide-metrika-ui .ym-advanced-informer,
     html.gf-hide-metrika-ui [class*="ym-informer"],
-    html.gf-hide-metrika-ui [class*="ym-"],
-    html.gf-hide-metrika-ui [class*="metrika"],
     html.gf-hide-metrika-ui [id*="ymWidget"],
     html.gf-hide-metrika-ui [id*="yandex_metrika"],
-    html.gf-hide-metrika-ui [id*="YaMetrika"],
-    html.gf-hide-metrika-ui [id*="YaCounter"],
     html.gf-hide-metrika-ui .gf-metrika-badge {
       display: none !important;
       visibility: hidden !important;
       pointer-events: none !important;
       opacity: 0 !important;
-      width: 0 !important;
-      height: 0 !important;
-      overflow: hidden !important;
     }
   `;
 }
 
+function isProtectedRoot(el) {
+  if (!el || el.nodeType !== 1) return true;
+  const tag = el.tagName;
+  return tag === "HTML" || tag === "HEAD" || tag === "BODY" || tag === "SCRIPT" || tag === "STYLE" || tag === "LINK" || tag === "META";
+}
+
 function isOurUi(el) {
   if (!el || el.nodeType !== 1) return true;
+  if (isProtectedRoot(el)) return true;
   if (el.id === "toast-live" || el.closest?.("#toast-live")) return true;
   if (el.classList?.contains("toast") || el.closest?.(".toast")) return true;
   if (el.classList?.contains("theme-toggle") || el.closest?.(".theme-toggle")) return true;
   if (el.classList?.contains("modal-overlay") || el.closest?.(".modal-overlay")) return true;
-  if (el.closest?.(".sidebar") || el.closest?.(".app-shell") || el.closest?.(".main-panel")) return true;
-  if (el.id === "gf-metrika-gate-css" || el.id === "gf-metrika-badge-css") return true;
+  if (el.closest?.(".sidebar, .app-shell, .main-panel, .auth-page, .bg-grid")) return true;
   return false;
 }
 
@@ -132,57 +125,43 @@ function looksLikeTrackingPixel(el) {
   return /left:\s*-9999px|position:\s*absolute/i.test(style) || (el.width <= 1 && el.height <= 1);
 }
 
-function isMetrikaMarked(el) {
-  if (!el || el.nodeType !== 1) return false;
+function isMetrikaBadgeNode(el) {
+  if (!el || el.nodeType !== 1 || isProtectedRoot(el) || isOurUi(el)) return false;
   if (el.id === "gf-metrika-badge" || el.classList?.contains("gf-metrika-badge")) return true;
-  if (el.classList?.contains("gf-hide-corner-widget")) return true;
 
-  const href = `${el.getAttribute?.("href") || ""} ${el.href || ""}`;
-  const src = `${el.getAttribute?.("src") || ""} ${el.src || ""}`;
-  const cls = `${el.className || ""}`;
-  const id = `${el.id || ""}`;
-  const title = `${el.getAttribute?.("title") || ""} ${el.getAttribute?.("aria-label") || ""}`;
-  const html = (el.outerHTML || "").slice(0, 2500);
+  const href = `${el.getAttribute?.("href") || ""}`;
+  const src = `${el.getAttribute?.("src") || ""}`;
+  const cls = typeof el.className === "string" ? el.className : "";
+  const id = el.id || "";
 
   if (looksLikeTrackingPixel(el)) return false;
 
-  if (/metrika\.yandex|metrica\.yandex|informer\.yandex|yandex\.(ru|com)\/metrika/i.test(href)) return true;
-  if (/informer\.yandex|metrika\.yandex|mc\.yandex/i.test(src)) return true;
-  if (/ym-advanced-informer|ym-informer|metrika|YaMetrika|ymWidget/i.test(`${cls} ${id}`)) return true;
-  if (/Яндекс\.?\s*Метрик|Yandex\.?\s*Metrica/i.test(title)) return true;
-  if (/metrika|metrica|informer\.yandex|mc\.yandex|Яндекс\.?\s*Метрик/i.test(html)) return true;
-
-  try {
-    const bg = window.getComputedStyle(el).backgroundImage || "";
-    if (/informer\.yandex|metrika\.yandex|mc\.yandex/i.test(bg)) return true;
-  } catch {
-    /* ignore */
-  }
+  if (/metrika\.yandex|metrica\.yandex|informer\.yandex/i.test(href)) return true;
+  if (/informer\.yandex|metrika\.yandex/i.test(src)) return true;
+  if (/ym-advanced-informer|ym-informer/i.test(`${cls} ${id}`)) return true;
+  if (/ymWidget|yandex_metrika|YaMetrika/i.test(id)) return true;
 
   return false;
 }
 
-/** Small fixed/sticky widgets anchored to the bottom-right (Metrika badge etc.). */
+/** Small fixed widgets in the bottom-right corner, outside the app shell. */
 function isCornerFloatingWidget(el) {
-  if (!el || el.nodeType !== 1 || isOurUi(el)) return false;
+  if (!el || el.nodeType !== 1 || isOurUi(el) || isProtectedRoot(el)) return false;
+  // Only consider direct (or near-direct) body injects — never app content
+  if (el.parentElement !== document.body && el.parentElement?.parentElement !== document.body) {
+    return isMetrikaBadgeNode(el);
+  }
   try {
     const cs = window.getComputedStyle(el);
-    if (cs.position !== "fixed" && cs.position !== "sticky") return false;
-    if (cs.display === "none" || cs.visibility === "hidden") return false;
+    if (cs.position !== "fixed") return false;
 
     const r = el.getBoundingClientRect();
-    const w = r.width;
-    const h = r.height;
-    if (w < 18 || h < 18 || w > 180 || h > 180) return false;
+    if (r.width < 18 || r.height < 18 || r.width > 160 || r.height > 160) return false;
 
     const distBottom = window.innerHeight - r.bottom;
     const distRight = window.innerWidth - r.right;
-    if (distBottom < -10 || distBottom > 96) return false;
-    if (distRight < -10 || distRight > 96) return false;
-
-    // Prefer body-level injects (extensions / Metrika), not in-app chrome
-    const underApp = Boolean(el.closest?.(".app-shell, .sidebar, .main-panel, .auth-page"));
-    if (underApp && !isMetrikaMarked(el)) return false;
+    if (distBottom < -4 || distBottom > 80) return false;
+    if (distRight < -4 || distRight > 80) return false;
 
     return true;
   } catch {
@@ -191,18 +170,16 @@ function isCornerFloatingWidget(el) {
 }
 
 function hideEl(el) {
-  if (!el || isOurUi(el)) return;
-  el.classList?.add("gf-hide-corner-widget");
+  if (!el || isProtectedRoot(el) || isOurUi(el)) return;
   try {
+    el.classList?.add("gf-hide-corner-widget");
     el.style.setProperty("display", "none", "important");
     el.style.setProperty("visibility", "hidden", "important");
-    el.style.setProperty("opacity", "0", "important");
     el.style.setProperty("pointer-events", "none", "important");
   } catch {
     /* ignore */
   }
-  // Body-level Metrika/extension nodes: remove so they cannot reflow
-  if (el.parentElement === document.body || isMetrikaMarked(el)) {
+  if (el.parentElement === document.body) {
     try {
       el.remove();
     } catch {
@@ -211,32 +188,17 @@ function hideEl(el) {
   }
 }
 
-function walkShadow(root, visit) {
-  if (!root) return;
-  const nodes = root.querySelectorAll ? root.querySelectorAll("*") : [];
-  for (const el of nodes) {
-    visit(el);
-    if (el.shadowRoot) walkShadow(el.shadowRoot, visit);
-  }
-}
-
 function stripUnauthorizedMetrikaUi() {
   if (canSeeMetrikaBadge() || !document.body) return;
 
-  const visit = (el) => {
-    if (isMetrikaMarked(el) || isCornerFloatingWidget(el)) hideEl(el);
-  };
+  for (const el of [...document.body.children]) {
+    if (isMetrikaBadgeNode(el) || isCornerFloatingWidget(el)) hideEl(el);
+  }
 
-  visit(document.body);
-  walkShadow(document.body, visit);
-
-  // Iframes from Yandex in the corner
-  for (const frame of document.querySelectorAll("iframe")) {
-    if (isOurUi(frame)) continue;
-    const src = frame.getAttribute("src") || frame.src || "";
-    if (/yandex|metrika|metrica|mc\.yandex/i.test(src) || isCornerFloatingWidget(frame)) {
-      hideEl(frame);
-    }
+  for (const el of document.body.querySelectorAll(
+    "a[href*='metrika.yandex'], a[href*='informer.yandex'], img.ym-advanced-informer, img[src*='informer.yandex'], .ym-advanced-informer, [class*='ym-informer']",
+  )) {
+    if (!isOurUi(el)) hideEl(el);
   }
 }
 
@@ -245,29 +207,26 @@ function watchMetrikaUi() {
   if (badgeObserver) badgeObserver.disconnect();
   badgeObserver = new MutationObserver((mutations) => {
     if (canSeeMetrikaBadge()) return;
-    let dirty = false;
     for (const m of mutations) {
-      m.addedNodes.forEach((node) => {
-        if (node.nodeType !== 1) return;
-        dirty = true;
-        if (isMetrikaMarked(node) || isCornerFloatingWidget(node)) hideEl(node);
-        else stripUnauthorizedMetrikaUi();
-      });
+      for (const node of m.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        if (isProtectedRoot(node) || isOurUi(node)) continue;
+        if (isMetrikaBadgeNode(node) || isCornerFloatingWidget(node)) hideEl(node);
+      }
     }
-    if (dirty) stripUnauthorizedMetrikaUi();
   });
-  badgeObserver.observe(document.documentElement, { childList: true, subtree: true });
+  badgeObserver.observe(document.body, { childList: true, subtree: true });
 
   if (scanTimer) clearInterval(scanTimer);
   let ticks = 0;
   scanTimer = setInterval(() => {
     ticks += 1;
     syncMetrikaBadge();
-    if (ticks >= 40) {
+    if (ticks >= 20) {
       clearInterval(scanTimer);
       scanTimer = null;
     }
-  }, 500);
+  }, 1000);
 }
 
 /** Sync Metrika badge visibility with GameForge role. */
@@ -291,7 +250,6 @@ export function initAnalytics() {
   if (MEASUREMENT_ID && MEASUREMENT_ID.startsWith("G-")) {
     loadGtag(MEASUREMENT_ID);
   }
-  // Always wire badge gate (even before Metrika script finishes), so role sync works.
   const boot = () => {
     syncMetrikaBadge();
     watchMetrikaUi();
@@ -317,5 +275,4 @@ export function getYandexMetrikaId() {
   return METRIKA_ID;
 }
 
-// Auto-init when this module is imported
 initAnalytics();
