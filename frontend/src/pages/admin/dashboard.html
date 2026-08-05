@@ -50,10 +50,20 @@ import { statusBadge } from "../../js/app.js";
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.activity"))}</div><div class="value">${data.activity_pct}%</div></div>
         <div class="stat"><div class="label">${escapeHtml(t("admin.dash.ai_spend"))}</div><div class="value">$${(data.ai_spend_usd_7d || 0).toFixed(4)}</div></div>
       `;
-      const max = Math.max(1, ...data.generations_last_7_days.map((d) => d.count));
-      document.getElementById("chart").innerHTML = data.generations_last_7_days.map((d) =>
-        `<div class="admin-chart-bar" style="height:${Math.round((d.count / max) * 100)}%" title="${escapeHtml(d.date)}: ${d.count}"></div>`
-      ).join("") || `<p class="muted">${escapeHtml(t("admin.empty"))}</p>`;
+      const days = data.generations_last_7_days || [];
+      const max = Math.max(1, ...days.map((d) => Number(d.count) || 0));
+      document.getElementById("chart").innerHTML = days.length
+        ? days.map((d) => {
+            const count = Number(d.count) || 0;
+            const pct = Math.max(count > 0 ? 8 : 2, Math.round((count / max) * 100));
+            const label = String(d.date || "").slice(5); // MM-DD
+            return `<div class="admin-chart-col" title="${escapeHtml(d.date)}: ${count}">
+              <div class="admin-chart-bar" style="height:${pct}%"></div>
+              <span class="admin-chart-count">${count}</span>
+              <span class="admin-chart-label">${escapeHtml(label)}</span>
+            </div>`;
+          }).join("")
+        : `<p class="muted">${escapeHtml(t("admin.empty"))}</p>`;
       const tb = document.querySelector("#recent tbody");
       tb.innerHTML = data.recent_users.map((u) => `<tr>
         <td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.role)}</td><td>${escapeHtml(u.plan || "—")}</td>

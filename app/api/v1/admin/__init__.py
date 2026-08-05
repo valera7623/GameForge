@@ -152,7 +152,9 @@ async def dashboard(
         cents = PLANS.get(key, {}).get("price_cents", 0) or 0
         revenue += (cents / 100.0) * count
 
-    since = datetime.now(timezone.utc) - timedelta(days=7)
+    since = datetime.now(timezone.utc) - timedelta(days=6)
+    # Start of UTC day 6 days ago → 7 calendar days including today
+    since = since.replace(hour=0, minute=0, second=0, microsecond=0)
     active_users = (
         await db.execute(
             select(func.count(func.distinct(Generation.user_id))).where(Generation.created_at >= since)
@@ -166,7 +168,16 @@ async def dashboard(
         .group_by("day")
         .order_by("day")
     )
-    series = [{"date": row[0].date().isoformat() if row[0] else "", "count": row[1]} for row in day_rows.all()]
+    by_day = {
+        (row[0].date().isoformat() if row[0] else ""): int(row[1])
+        for row in day_rows.all()
+        if row[0] is not None
+    }
+    today = datetime.now(timezone.utc).date()
+    series = []
+    for i in range(6, -1, -1):
+        d = (today - timedelta(days=i)).isoformat()
+        series.append({"date": d, "count": by_day.get(d, 0)})
 
     recent = await db.execute(
         select(User).options(selectinload(User.subscription)).order_by(User.created_at.desc()).limit(8)
