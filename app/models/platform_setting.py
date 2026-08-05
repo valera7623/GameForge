@@ -29,6 +29,7 @@ DEFAULT_TOOLS = {
     "playtester": {"enabled": True, "display_name": "Playtester"},
     "localization": {"enabled": True, "display_name": "Localization"},
     "game_balancer": {"enabled": True, "display_name": "Game Balancer"},
+    "level_analyzer": {"enabled": True, "display_name": "Level Analyzer"},
 }
 
 DEFAULT_AI_MODELS = {

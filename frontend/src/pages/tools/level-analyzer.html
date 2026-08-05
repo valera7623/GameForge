@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Level Analyzer — Pathfinding & Difficulty — GameForge</title>
+  <meta name="description" content="Analyze level maps for completable paths, difficulty, enemy density, traps, rewards, and activity heatmaps before playtests." />
+  <link rel="canonical" href="https://gameforge.website/tools/level-analyzer" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/tools/level-analyzer" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/tools/level-analyzer" />
+  <meta property="og:title" content="AI Level Analyzer — GameForge" />
+  <meta property="og:description" content="Pathfinding, difficulty, density, and heatmap reports for game levels." />
+  <meta property="og:url" content="https://gameforge.website/tools/level-analyzer" />
+  <meta property="og:image" content="https://gameforge.website/og-image.png" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body class="page-landing page-tool">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <header class="topnav">
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge</span></a>
+    <nav>
+      <a href="/#tools">Tools</a>
+      <a href="https://docs.gameforge.website/" target="_blank" rel="noopener noreferrer">Documentation</a>
+      <a class="btn-icon" href="/ru/tools/level-analyzer" title="Русский" lang="ru">RU</a>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
+      <a href="/login" class="btn btn-ghost">Sign in</a>
+      <a href="/register" class="btn btn-primary">Start free</a>
+    </nav>
+  </header>
+  <main>
+    <section class="hero tool-hero">
+      <p class="tool-kicker"><span class="tool-icon" aria-hidden="true">🗺️</span> GameForge</p>
+      <h1>AI Level Analyzer for Pathfinding & Difficulty</h1>
+      <p class="lede">Paste a tilemap JSON. Get playability score, difficulty, estimated clear time, dead ends, and an activity heatmap — before players get stuck.</p>
+      <div class="cta-row">
+        <a href="/register" class="btn btn-primary btn-lg">Analyze a level</a>
+        <a href="/#tools" class="btn btn-ghost btn-lg">All tools</a>
+      </div>
+    </section>
+    <section class="section tool-section">
+      <h2>What you get</h2>
+      <ul class="tool-bullets">
+        <li>BFS path check from start to end</li>
+        <li>Difficulty and time estimates from enemies, traps, and path length</li>
+        <li>Density checks for enemies, treasures, and traps</li>
+        <li>Heatmap of expected activity along the route</li>
+      </ul>
+      <div class="cta-row" style="margin-top:1.5rem">
+        <a href="/register" class="btn btn-primary">Start free</a>
+      </div>
+    </section>
+  </main>
+  <script type="module">
+    import { applyTheme, bindThemeToggles, getTheme } from "../../js/theme.js";
+    applyTheme(getTheme());
+    bindThemeToggles(document);
+  </script>
+</body>
+</html>

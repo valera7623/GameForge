@@ -115,6 +115,8 @@ export const ToolsAPI = {
   playtest: (body) => api("/playtester", { method: "POST", body: JSON.stringify(body) }),
   localize: (body) => api("/localization", { method: "POST", body: JSON.stringify(body) }),
   balance: (body) => api("/game-balancer", { method: "POST", body: JSON.stringify(body) }),
+  levelAnalyze: (body) => api("/level-analyzer", { method: "POST", body: JSON.stringify(body) }),
+  levelCompare: (body) => api("/level-analyzer/compare", { method: "POST", body: JSON.stringify(body) }),
   upscale: async (file, scale, enhance, projectId) => {
     const fd = new FormData();
     fd.append("file", file);

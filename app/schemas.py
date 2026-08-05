@@ -200,6 +200,48 @@ class GameBalancerRequest(BaseModel):
         return self
 
 
+class LevelAnalyzerRequest(BaseModel):
+    """Level map JSON for playability / difficulty analysis."""
+
+    project_id: Optional[UUID] = None
+    level_name: str = Field(default="Untitled Level", max_length=200)
+    width: Optional[int] = Field(default=None, ge=1, le=200)
+    height: Optional[int] = Field(default=None, ge=1, le=200)
+    tiles: List[List[Any]] = Field(default_factory=list)
+    legend: dict = Field(default_factory=dict)
+    entities: List[dict] = Field(default_factory=list)
+    time_limit: Optional[int] = Field(default=None, ge=0, le=86400)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+    def to_level_data(self) -> dict:
+        data = {
+            "level_name": self.level_name,
+            "tiles": self.tiles,
+            "legend": self.legend,
+            "entities": self.entities,
+            "lang": self.lang,
+        }
+        if self.width is not None:
+            data["width"] = self.width
+        if self.height is not None:
+            data["height"] = self.height
+        if self.time_limit is not None:
+            data["time_limit"] = self.time_limit
+        return data
+
+    @model_validator(mode="after")
+    def _require_map(self) -> "LevelAnalyzerRequest":
+        if not self.tiles and not self.entities:
+            raise ValueError("Provide tiles and/or entities for level analysis")
+        return self
+
+
+class LevelAnalyzerCompareRequest(BaseModel):
+    level_a: dict
+    level_b: dict
+    lang: str = Field(default="en", pattern="^(en|ru)$")
+
+
 class LocalizationRequest(BaseModel):
     project_id: Optional[UUID] = None
     texts: dict[str, str]  # key -> source text

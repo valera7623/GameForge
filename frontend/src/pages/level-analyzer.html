@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title data-i18n="lana.title">Level Analyzer — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    #levelJson { min-height: 260px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+    .lana-map {
+      overflow: auto; max-height: 320px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); padding: 0.5rem; margin-top: 0.5rem;
+    }
+    .lana-map pre {
+      margin: 0; font-size: 11px; line-height: 1.15; letter-spacing: 0.04em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--muted);
+    }
+    .lana-scores {
+      display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      margin: 0.75rem 0 1.25rem;
+    }
+    .lana-score {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 0.9rem; background: var(--bg-elevated);
+    }
+    .lana-score strong { font-family: Orbitron, sans-serif; font-size: 1.25rem; display: block; }
+    .lana-score .bar {
+      height: 8px; border-radius: 999px; margin-top: 0.45rem;
+      background: color-mix(in srgb, var(--border) 80%, transparent); overflow: hidden;
+    }
+    .lana-score .bar > i { display:block; height:100%; background: var(--accent); width:0%; }
+    .lana-issue {
+      border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 0.9rem; margin: 0.5rem 0;
+      background: var(--bg-elevated);
+    }
+    .lana-issue[data-sev="high"] { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+    .lana-issue[data-sev="medium"] { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); }
+    .lana-issue[data-sev="low"] { border-color: color-mix(in srgb, var(--ok) 45%, var(--border)); }
+    .lana-sev { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .lana-heat {
+      display: inline-grid; gap: 1px; background: var(--border); padding: 1px; border-radius: 6px;
+      max-width: 100%; overflow: auto;
+    }
+    .lana-heat span {
+      width: 10px; height: 10px; display: block;
+    }
+  </style>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="app-shell">
+    <main class="main-panel">
+      <div class="page-header"><div>
+        <h1 data-i18n="lana.h1">AI Level Analyzer</h1>
+        <p data-i18n="lana.sub">Check pathfinding, difficulty, density, and rewards before playtests.</p>
+      </div></div>
+
+      <div class="panel">
+        <h2 data-i18n="lana.step1">Step 1: Upload or paste level JSON</h2>
+        <form id="form" class="form-grid">
+          <div class="form-row">
+            <label><span data-i18n="lana.level_name">Level name</span>
+              <input id="levelName" name="level_name" value="The Sunken Temple" required />
+            </label>
+            <label><span data-i18n="common.project">Project</span>
+              <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
+            </label>
+          </div>
+          <label><span data-i18n="lana.json">Level data (JSON)</span>
+            <textarea id="levelJson" spellcheck="false"></textarea>
+          </label>
+          <div>
+            <span data-i18n="lana.preview">Map preview</span>
+            <div class="lana-map"><pre id="mapPreview"></pre></div>
+          </div>
+          <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+            <button class="btn btn-ghost" type="button" id="loadSample" data-i18n="lana.sample">Load sample</button>
+            <button class="btn btn-ghost" type="button" id="loadFile" data-i18n="lana.load">Load from JSON</button>
+            <input type="file" id="fileInput" accept="application/json,.json" hidden />
+            <button class="btn btn-ghost" type="button" id="saveLocal" data-i18n="lana.save">Save draft</button>
+            <button class="btn btn-primary" type="submit" data-i18n="lana.analyze">Analyze</button>
+          </div>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="lana.loading">Analyzing level…</span></div>
+      </div>
+
+      <div class="panel" id="resultPanel" hidden>
+        <h2 data-i18n="lana.step2">Step 2: Results</h2>
+        <div class="lana-scores">
+          <div class="lana-score">
+            <span data-i18n="lana.playability">Playability</span>
+            <strong id="playVal">—</strong>
+            <div class="bar"><i id="playBar"></i></div>
+          </div>
+          <div class="lana-score">
+            <span data-i18n="lana.difficulty">Difficulty</span>
+            <strong id="diffVal">—</strong>
+            <div class="bar"><i id="diffBar"></i></div>
+          </div>
+          <div class="lana-score">
+            <span data-i18n="lana.time">Est. time</span>
+            <strong id="timeVal">—</strong>
+          </div>
+        </div>
+        <p id="summary" style="color:var(--muted)"></p>
+
+        <h3 data-i18n="lana.heatmap">Heatmap</h3>
+        <div id="heatmap" class="lana-heat" style="margin:0.5rem 0 1rem"></div>
+
+        <h3 data-i18n="lana.issues">Issues found</h3>
+        <div id="issues"></div>
+
+        <h3 data-i18n="lana.recs">Recommendations</h3>
+        <div id="recs"></div>
+
+        <div class="actions" style="margin-top:1rem">
+          <button class="btn btn-ghost" id="dlJson" data-i18n="lana.export">Export JSON</button>
+          <button class="btn btn-ghost" id="reanalyze" data-i18n="lana.reanalyze">Re-analyze</button>
+        </div>
+        <details style="margin-top:1rem">
+          <summary data-i18n="lana.raw">Raw JSON</summary>
+          <div class="result-box" style="margin-top:0.75rem"><pre id="jsonOut"></pre></div>
+        </details>
+      </div>
+
+      <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
+    </main>
+  </div>
+  <script type="module">
+    import { requireAuth } from "../js/auth.js";
+    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { mountToolHistory } from "../js/tool-history.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, setLoading, toast, t } from "../js/app.js";
+
+    if (!requireAuth()) throw new Error("auth");
+    mountShell("level-analyzer");
+    applyDomI18n(document);
+    mountToolHistory("level_analyzer");
+
+    const SAMPLE = {
+      level_name: "The Sunken Temple",
+      width: 20,
+      height: 20,
+      tiles: [
+        ["W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," ","E"," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," ","W","W","W"," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W"," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," "," ","W"],
+        ["W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W","W"],
+      ],
+      legend: {
+        W: "Wall",
+        " ": "Floor",
+        E: "Enemy",
+        T: "Treasure",
+        P: "Trap",
+      },
+      entities: [
+        { type: "enemy", x: 4, y: 2, name: "Skeleton Warrior", health: 50, damage: 10 },
+        { type: "enemy", x: 12, y: 4, name: "Water Elemental", health: 80, damage: 15 },
+        { type: "treasure", x: 8, y: 6, value: 100 },
+        { type: "treasure", x: 14, y: 8, value: 150 },
+        { type: "trap", x: 6, y: 3, damage: 20 },
+        { type: "trap", x: 10, y: 5, damage: 30 },
+        { type: "start", x: 1, y: 1 },
+        { type: "end", x: 18, y: 18 },
+      ],
+      time_limit: 300,
+    };
+
+    const DRAFT_KEY = "gf_level_analyzer_draft";
+    let last = null;
+
+    function setJson(obj) {
+      const ta = document.getElementById("levelJson");
+      const text = JSON.stringify(obj, null, 2);
+      ta.value = "";
+      ta.value = text;
+      if (obj.level_name) document.getElementById("levelName").value = obj.level_name;
+      renderPreview(obj);
+    }
+
+    function renderPreview(obj) {
+      const tiles = obj?.tiles;
+      const pre = document.getElementById("mapPreview");
+      if (!Array.isArray(tiles) || !tiles.length) {
+        pre.textContent = "—";
+        return;
+      }
+      const maxRows = 24;
+      const rows = tiles.slice(0, maxRows).map((row) =>
+        (Array.isArray(row) ? row : String(row).split("")).map((c) => (c === " " ? "·" : c)).join(" ")
+      );
+      if (tiles.length > maxRows) rows.push(`… (+${tiles.length - maxRows} rows)`);
+      pre.textContent = rows.join("\n");
+    }
+
+    function readPayload() {
+      let data;
+      try {
+        data = JSON.parse(document.getElementById("levelJson").value);
+      } catch {
+        throw new Error(t("lana.bad_json"));
+      }
+      if (!data || typeof data !== "object") throw new Error(t("lana.bad_json"));
+      data.level_name = document.getElementById("levelName").value.trim() || data.level_name || "Untitled Level";
+      data.lang = getLang() === "ru" ? "ru" : "en";
+      const pid = document.getElementById("projectSelect").value;
+      if (pid) data.project_id = pid;
+      return data;
+    }
+
+    function heatColor(v) {
+      const t = Math.max(0, Math.min(1, Number(v) || 0));
+      const r = Math.round(20 + t * 200);
+      const g = Math.round(40 + (1 - t) * 80);
+      const b = Math.round(60 + (1 - t) * 40);
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function renderHeatmap(hm) {
+      const el = document.getElementById("heatmap");
+      el.innerHTML = "";
+      const data = hm?.data;
+      if (!Array.isArray(data) || !data.length) {
+        el.textContent = t("lana.no_heat");
+        return;
+      }
+      const h = Math.min(data.length, 40);
+      const w = Math.min((data[0] || []).length, 40);
+      el.style.gridTemplateColumns = `repeat(${w}, 10px)`;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const cell = document.createElement("span");
+          cell.style.background = heatColor(data[y][x]);
+          cell.title = `${x},${y}: ${data[y][x]}`;
+          el.appendChild(cell);
+        }
+      }
+    }
+
+    function renderResult(out) {
+      last = out;
+      document.getElementById("resultPanel").hidden = false;
+      const play = out.playability_score ?? 0;
+      const diff = out.difficulty_score ?? 0;
+      const secs = out.time_estimate_seconds ?? 0;
+      document.getElementById("playVal").textContent = `${play}/100`;
+      document.getElementById("diffVal").textContent = `${diff}/100`;
+      document.getElementById("playBar").style.width = `${play}%`;
+      document.getElementById("diffBar").style.width = `${diff}%`;
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      document.getElementById("timeVal").textContent = `${m}:${String(s).padStart(2, "0")}`;
+      document.getElementById("summary").textContent = out.summary || "";
+      document.getElementById("jsonOut").textContent = JSON.stringify(out, null, 2);
+      renderHeatmap(out.heatmap);
+
+      const issues = out.issues || [];
+      document.getElementById("issues").innerHTML = issues.length
+        ? issues.map((iss) => {
+            const sev = iss.severity || "low";
+            const sevLabel = t(`lana.sev.${sev}`) !== `lana.sev.${sev}` ? t(`lana.sev.${sev}`) : sev;
+            return `<div class="lana-issue" data-sev="${escapeHtml(sev)}">
+              <div class="lana-sev">${escapeHtml(sevLabel)} · ${escapeHtml(iss.type || "issue")}</div>
+              <div>${escapeHtml(iss.description || "")}</div>
+            </div>`;
+          }).join("")
+        : `<p style="color:var(--muted)">${escapeHtml(t("lana.no_issues"))}</p>`;
+
+      const recs = out.recommendations || [];
+      document.getElementById("recs").innerHTML = recs.length
+        ? `<ul>${recs.map((r) => `<li>${escapeHtml(r.description || "")}</li>`).join("")}</ul>`
+        : `<p style="color:var(--muted)">${escapeHtml(t("lana.no_recs"))}</p>`;
+    }
+
+    async function analyze() {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const body = readPayload();
+        const gen = await ToolsAPI.levelAnalyze(body);
+        renderResult(gen.output_data || {});
+        toast(t("lana.toast", { xp: gen.xp_awarded ?? 0 }));
+        mountToolHistory("level_analyzer");
+      } catch (err) {
+        toast(err.message || String(err), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    }
+
+    function loadSample() {
+      setJson(structuredClone(SAMPLE));
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+      toast(t("lana.sample_loaded"));
+    }
+
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try { setJson(JSON.parse(saved)); } catch { setJson(SAMPLE); }
+    } else {
+      setJson(SAMPLE);
+    }
+
+    ProjectsAPI.list().then((list) => {
+      const sel = document.getElementById("projectSelect");
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+    }).catch(() => {});
+
+    document.getElementById("levelJson").addEventListener("input", () => {
+      try { renderPreview(JSON.parse(document.getElementById("levelJson").value)); } catch { /* ignore */ }
+    });
+    document.getElementById("loadSample").addEventListener("click", (e) => { e.preventDefault(); loadSample(); });
+    document.getElementById("saveLocal").addEventListener("click", () => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(readPayload()));
+        toast(t("lana.saved"));
+      } catch (err) { toast(err.message, true); }
+    });
+    document.getElementById("loadFile").addEventListener("click", () => document.getElementById("fileInput").click());
+    document.getElementById("fileInput").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        setJson(JSON.parse(await file.text()));
+        toast(t("lana.loaded"));
+      } catch { toast(t("lana.bad_json"), true); }
+      e.target.value = "";
+    });
+    document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); analyze(); });
+    document.getElementById("reanalyze").addEventListener("click", () => analyze());
+    document.getElementById("dlJson").addEventListener("click", () => {
+      if (last) downloadJSON("level-analysis.json", last);
+    });
+  </script>
+</body>
+</html>
