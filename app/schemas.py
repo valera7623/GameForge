@@ -174,6 +174,7 @@ class GameBalancerRequest(BaseModel):
     project_id: Optional[UUID] = None
     game_name: str = Field(default="Untitled Game", max_length=200)
     version: str = Field(default="1.0.0", max_length=64)
+    lang: str = Field(default="en", pattern="^(en|ru)$")
     classes: List[dict] = Field(default_factory=list)
     enemies: List[dict] = Field(default_factory=list)
     weapons: List[dict] = Field(default_factory=list)
@@ -184,6 +185,7 @@ class GameBalancerRequest(BaseModel):
         return {
             "game_name": self.game_name,
             "version": self.version,
+            "lang": self.lang,
             "classes": self.classes,
             "enemies": self.enemies,
             "weapons": self.weapons,

@@ -125,7 +125,7 @@
     import { requireAuth } from "../js/auth.js";
     import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
     import { mountToolHistory } from "../js/tool-history.js";
-    import { applyDomI18n, escapeHtml, mountShell, setLoading, toast, t } from "../js/app.js";
+    import { applyDomI18n, escapeHtml, getLang, mountShell, setLoading, toast, t } from "../js/app.js";
 
     if (!requireAuth()) throw new Error("auth");
     mountShell("game-balancer");
@@ -183,6 +183,7 @@
       if (!data || typeof data !== "object") throw new Error(t("bal.bad_json"));
       data.game_name = document.getElementById("gameName").value.trim() || data.game_name || "Untitled Game";
       data.version = document.getElementById("gameVersion").value.trim() || data.version || "1.0.0";
+      data.lang = getLang() === "ru" ? "ru" : "en";
       const pid = document.getElementById("projectSelect").value;
       if (pid) data.project_id = pid;
       return data;
@@ -209,10 +210,14 @@
       const issuesEl = document.getElementById("issues");
       const issues = out.issues || [];
       issuesEl.innerHTML = issues.length
-        ? issues.map((iss) => `<div class="bal-issue" data-sev="${escapeHtml(iss.severity || "low")}">
-            <div class="bal-sev">${escapeHtml(iss.severity || "low")} · ${escapeHtml(iss.type || "issue")}</div>
+        ? issues.map((iss) => {
+            const sev = iss.severity || "low";
+            const sevLabel = t(`bal.sev.${sev}`) !== `bal.sev.${sev}` ? t(`bal.sev.${sev}`) : sev;
+            return `<div class="bal-issue" data-sev="${escapeHtml(sev)}">
+            <div class="bal-sev">${escapeHtml(sevLabel)} · ${escapeHtml(iss.type || "issue")}</div>
             <div>${escapeHtml(iss.description || "")}</div>
-          </div>`).join("")
+          </div>`;
+          }).join("")
         : `<p style="color:var(--muted)">${escapeHtml(t("bal.no_issues"))}</p>`;
 
       const recsEl = document.getElementById("recs");

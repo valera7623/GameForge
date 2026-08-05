@@ -48,6 +48,18 @@ def test_analyze_game_data_structure():
     assert result["metrics"]["enemies"]
 
 
+def test_analyze_russian_locale():
+    result = analyze_game_data(SAMPLE, lang="ru")
+    assert result["lang"] == "ru"
+    assert "оценк" in result["summary"].lower() or "баланс" in result["summary"].lower()
+    assert any(
+        "сильнее" in i["description"] or "слаб" in i["description"].lower() or "DPS" in i["description"]
+        for i in result["issues"]
+    ) or result["issues"] == []
+    if result["visualizations"]:
+        assert any("Сравнен" in v["title"] or "Время" in v["title"] or "Золот" in v["title"] for v in result["visualizations"])
+
+
 def test_analyze_detects_weapon_spread():
     result = analyze_game_data(SAMPLE)
     types = {i["type"] for i in result["issues"]}

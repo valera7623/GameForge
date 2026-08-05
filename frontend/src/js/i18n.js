@@ -369,6 +369,9 @@ const DICT = {
     "bal.no_issues": "No issues detected.",
     "bal.no_recs": "No recommendations.",
     "bal.no_viz": "No charts for this dataset.",
+    "bal.sev.high": "high",
+    "bal.sev.medium": "medium",
+    "bal.sev.low": "low",
   },
   ru: {
     "nav.dashboard": "Панель",
@@ -736,6 +739,9 @@ const DICT = {
     "bal.no_issues": "Проблем не найдено.",
     "bal.no_recs": "Рекомендаций нет.",
     "bal.no_viz": "Нет графиков для этих данных.",
+    "bal.sev.high": "высокий",
+    "bal.sev.medium": "средний",
+    "bal.sev.low": "низкий",
   },
 };
 

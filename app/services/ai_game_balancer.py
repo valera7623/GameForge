@@ -13,6 +13,114 @@ settings = get_settings()
 
 SEVERITY_WEIGHT = {"high": 12, "medium": 7, "low": 3}
 
+# Report copy (EN / RU). Placeholders use str.format.
+_MSG: dict[str, dict[str, str]] = {
+    "en": {
+        "class_fallback": "Class",
+        "enemy_fallback": "Enemy",
+        "weapon_fallback": "Weapon",
+        "ability_fallback": "Ability",
+        "class_imbalance": (
+            "{strong} class is {spread}% stronger than {weak} "
+            "(power score {strong_power} vs {weak_power})"
+        ),
+        "reduce_damage": "Reduce {name} damage from {old} → {new}",
+        "increase_health": "Increase {name} health from {old} → {new}",
+        "class_variance": "Class power coefficient of variation is {cv}% (target < 20%)",
+        "viz_class_dps": "Class DPS Comparison",
+        "viz_class_radar": "Class Balance Radar",
+        "radar_labels": "Damage|Survivability|Speed|Defense|DPS",
+        "enemy_too_weak": "{name} dies too fast (TTK {ttk}s vs player DPS {player_dps})",
+        "enemy_too_strong": (
+            "{name} is overtuned (player TTK {ttk}s, player lifetime vs it {lifetime}s)"
+        ),
+        "viz_enemy_ttk": "Enemy Time-to-Kill (seconds)",
+        "weapon_imbalance": "{best} has {spread}% more DPS than {worst}",
+        "weapon_efficiency": "{name} is {pct}% more gold-efficient than average",
+        "increase_price": "Raise {name} price from {old} → {new}",
+        "viz_weapon_dps": "Weapon DPS Comparison",
+        "ability_imbalance": "{best} sustained DPS is {spread}% above {worst}",
+        "increase_cooldown": "Increase {name} cooldown from {old} → {new}",
+        "economy_inflation": (
+            "Average weapon affordable after only {kills} kills "
+            "(~{minutes} min) — economy may inflate too fast"
+        ),
+        "reduce_gold_per_kill": "Reduce gold_per_kill from {old} → {new}",
+        "economy_too_tight": (
+            "Needs ~{kills} kills to afford average weapon — progression may feel slow"
+        ),
+        "increase_starting_gold": "Increase starting_gold from {old} → {new}",
+        "xp_too_fast": "Level-up in ~{kills} kills (xp_per_level={xp_level}, avg XP={avg_xp})",
+        "viz_gold_min": "Gold per Minute by Enemy",
+        "summary": "Overall balance score: {score}/100 for «{game}». ",
+        "summary_issues": "Main issues: {issues}. ",
+        "summary_ok": "No major issues detected. ",
+        "summary_fix": "Top fix: {fix}.",
+        "summary_keep": "Keep iterating with playtests.",
+        "methodology": "Deterministic combat/economy metrics (DPS, TTK, survivability, gold/min)",
+        "methodology_llm": "Deterministic metrics + GPT narrative polish",
+        "untitled": "Untitled Game",
+        "economy_target": "economy",
+    },
+    "ru": {
+        "class_fallback": "Класс",
+        "enemy_fallback": "Враг",
+        "weapon_fallback": "Оружие",
+        "ability_fallback": "Способность",
+        "class_imbalance": (
+            "Класс {strong} на {spread}% сильнее, чем {weak} "
+            "(сила {strong_power} против {weak_power})"
+        ),
+        "reduce_damage": "Снизить урон {name}: {old} → {new}",
+        "increase_health": "Увеличить здоровье {name}: {old} → {new}",
+        "class_variance": "Коэффициент вариации силы классов {cv}% (цель < 20%)",
+        "viz_class_dps": "Сравнение DPS классов",
+        "viz_class_radar": "Радар баланса классов",
+        "radar_labels": "Урон|Живучесть|Скорость|Защита|DPS",
+        "enemy_too_weak": "{name} слишком слабый (TTK {ttk}с при DPS игрока {player_dps})",
+        "enemy_too_strong": (
+            "{name} перекачан (TTK игрока {ttk}с, живучесть игрока против него {lifetime}с)"
+        ),
+        "viz_enemy_ttk": "Время убийства врага (сек)",
+        "weapon_imbalance": "У {best} на {spread}% больше DPS, чем у {worst}",
+        "weapon_efficiency": "{name} на {pct}% эффективнее среднего по золоту",
+        "increase_price": "Поднять цену {name}: {old} → {new}",
+        "viz_weapon_dps": "Сравнение DPS оружия",
+        "ability_imbalance": "Устойчивый DPS {best} на {spread}% выше, чем у {worst}",
+        "increase_cooldown": "Увеличить кулдаун {name}: {old} → {new}",
+        "economy_inflation": (
+            "Среднее оружие доступно уже после {kills} убийств "
+            "(~{minutes} мин) — экономика может раздуваться слишком быстро"
+        ),
+        "reduce_gold_per_kill": "Снизить gold_per_kill: {old} → {new}",
+        "economy_too_tight": (
+            "Нужно ~{kills} убийств на среднее оружие — прогрессия может ощущаться медленной"
+        ),
+        "increase_starting_gold": "Увеличить starting_gold: {old} → {new}",
+        "xp_too_fast": "Ап уровня за ~{kills} убийств (xp_per_level={xp_level}, ср. XP={avg_xp})",
+        "viz_gold_min": "Золото в минуту по врагам",
+        "summary": "Общая оценка баланса: {score}/100 для «{game}». ",
+        "summary_issues": "Главные проблемы: {issues}. ",
+        "summary_ok": "Критических проблем не найдено. ",
+        "summary_fix": "Приоритетный фикс: {fix}.",
+        "summary_keep": "Продолжайте итерации с плейтестами.",
+        "methodology": "Детерминированные метрики боя/экономики (DPS, TTK, живучесть, золото/мин)",
+        "methodology_llm": "Детерминированные метрики + GPT-нарратив",
+        "untitled": "Без названия",
+        "economy_target": "экономика",
+    },
+}
+
+
+def _norm_lang(lang: str | None) -> str:
+    return "ru" if str(lang or "").lower().startswith("ru") else "en"
+
+
+def _t(lang: str, key: str, **kwargs: Any) -> str:
+    table = _MSG.get(_norm_lang(lang), _MSG["en"])
+    template = table.get(key) or _MSG["en"].get(key) or key
+    return template.format(**kwargs) if kwargs else template
+
 
 def _f(obj: dict[str, Any], *keys: str, default: float = 0.0) -> float:
     for k in keys:
@@ -34,7 +142,6 @@ def _dps(damage: float, speed: float) -> float:
 
 
 def _survivability(health: float, defense: float, threat_dps: float) -> float:
-    """Effective lifetime vs a reference threat DPS."""
     incoming = max(threat_dps - defense * 0.5, threat_dps * 0.25, 0.1)
     return round(health / incoming, 2)
 
@@ -58,8 +165,9 @@ def _stdev(vals: list[float]) -> float:
     return statistics.pstdev(vals) if len(vals) > 1 else 0.0
 
 
-def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
+def analyze_game_data(game_data: dict[str, Any], lang: str | None = None) -> dict[str, Any]:
     """Deterministic balance analysis. Always available (mock + production base)."""
+    lang = _norm_lang(lang or game_data.get("lang"))
     classes = list(game_data.get("classes") or [])
     enemies = list(game_data.get("enemies") or [])
     weapons = list(game_data.get("weapons") or [])
@@ -70,11 +178,9 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
     recommendations: list[dict[str, Any]] = []
     visualizations: list[dict[str, Any]] = []
 
-    # Reference threat from average enemy DPS (or default)
     enemy_dps_list = [_dps(_f(e, "damage"), _f(e, "speed", default=1.0)) for e in enemies]
     threat_dps = _mean(enemy_dps_list) if enemy_dps_list else 12.0
 
-    # ── Classes ──────────────────────────────────────────────────────
     class_metrics: list[dict[str, Any]] = []
     for c in classes:
         dmg = _f(c, "damage")
@@ -86,7 +192,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         power = round(dps * 0.55 + surv * 0.45, 2)
         class_metrics.append(
             {
-                "name": _name(c, "Class"),
+                "name": _name(c, _t(lang, "class_fallback")),
                 "dps": dps,
                 "survivability": surv,
                 "power": power,
@@ -109,9 +215,14 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "class_imbalance",
                     "severity": sev,
-                    "description": (
-                        f"{max_m['name']} class is {spread}% stronger than {min_m['name']} "
-                        f"(power score {max_m['power']} vs {min_m['power']})"
+                    "description": _t(
+                        lang,
+                        "class_imbalance",
+                        strong=max_m["name"],
+                        weak=min_m["name"],
+                        spread=spread,
+                        strong_power=max_m["power"],
+                        weak_power=min_m["power"],
                     ),
                     "details": {
                         "strongest": max_m["name"],
@@ -127,7 +238,9 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                     "target": max_m["name"],
                     "action": "reduce_damage",
                     "value": round((1 - new_dmg / max(max_m["damage"], 0.01)) * 100, 1),
-                    "description": f"Reduce {max_m['name']} damage from {max_m['damage']} → {new_dmg}",
+                    "description": _t(
+                        lang, "reduce_damage", name=max_m["name"], old=max_m["damage"], new=new_dmg
+                    ),
                 }
             )
             new_hp = round(min_m["health"] * 1.15, 1)
@@ -136,7 +249,9 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                     "target": min_m["name"],
                     "action": "increase_health",
                     "value": 15,
-                    "description": f"Increase {min_m['name']} health from {min_m['health']} → {new_hp}",
+                    "description": _t(
+                        lang, "increase_health", name=min_m["name"], old=min_m["health"], new=new_hp
+                    ),
                 }
             )
         cv = (_stdev(powers) / avg_p * 100) if avg_p else 0
@@ -145,7 +260,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "class_variance",
                     "severity": "low",
-                    "description": f"Class power coefficient of variation is {cv:.1f}% (target < 20%)",
+                    "description": _t(lang, "class_variance", cv=round(cv, 1)),
                     "details": {"cv_pct": round(cv, 1), "avg_power": round(avg_p, 2)},
                 }
             )
@@ -153,7 +268,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         visualizations.append(
             {
                 "type": "bar_chart",
-                "title": "Class DPS Comparison",
+                "title": _t(lang, "viz_class_dps"),
                 "data": {
                     "labels": [m["name"] for m in class_metrics],
                     "values": [m["dps"] for m in class_metrics],
@@ -163,9 +278,9 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         visualizations.append(
             {
                 "type": "radar_chart",
-                "title": "Class Balance Radar",
+                "title": _t(lang, "viz_class_radar"),
                 "data": {
-                    "labels": ["Damage", "Survivability", "Speed", "Defense", "DPS"],
+                    "labels": _t(lang, "radar_labels").split("|"),
                     **{
                         m["name"].lower().replace(" ", "_"): [
                             _scale(m["damage"], powers_ref=[x["damage"] for x in class_metrics]),
@@ -180,7 +295,6 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
-    # ── Enemies ──────────────────────────────────────────────────────
     player_dps = _mean([m["dps"] for m in class_metrics]) if class_metrics else 18.0
     player_hp = _mean([m["health"] for m in class_metrics]) if class_metrics else 100.0
 
@@ -195,9 +309,10 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         edps = _dps(dmg, spd)
         ttk = _ttk(hp, defense, player_dps)
         gold_per_min = round(gold / max(ttk / 60.0, 0.01), 2) if gold else 0.0
+        ename = _name(e, _t(lang, "enemy_fallback"))
         enemy_metrics.append(
             {
-                "name": _name(e, "Enemy"),
+                "name": ename,
                 "dps": edps,
                 "ttk": ttk,
                 "gold_per_min": gold_per_min,
@@ -208,13 +323,12 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
-        # Too weak: TTK under 3s
         if ttk < 3:
             issues.append(
                 {
                     "type": "enemy_too_weak",
                     "severity": "medium",
-                    "description": f"{_name(e)} dies too fast (TTK {ttk}s vs player DPS {player_dps})",
+                    "description": _t(lang, "enemy_too_weak", name=ename, ttk=ttk, player_dps=player_dps),
                     "details": {
                         "enemy_dps": edps,
                         "player_dps": player_dps,
@@ -226,22 +340,20 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             new_hp = round(hp * 1.2, 1)
             recommendations.append(
                 {
-                    "target": _name(e),
+                    "target": ename,
                     "action": "increase_health",
                     "value": 20,
-                    "description": f"Increase {_name(e)} health from {hp} → {new_hp}",
+                    "description": _t(lang, "increase_health", name=ename, old=hp, new=new_hp),
                 }
             )
-        # Too strong: TTK over 45s or enemy DPS shreds player in < 4s
         player_ttk_by_enemy = _ttk(player_hp, 0, edps)
         if ttk > 45 or player_ttk_by_enemy < 4:
             issues.append(
                 {
                     "type": "enemy_too_strong",
                     "severity": "high" if player_ttk_by_enemy < 3 else "medium",
-                    "description": (
-                        f"{_name(e)} is overtuned (player TTK {ttk}s, "
-                        f"player lifetime vs it {player_ttk_by_enemy}s)"
+                    "description": _t(
+                        lang, "enemy_too_strong", name=ename, ttk=ttk, lifetime=player_ttk_by_enemy
                     ),
                     "details": {
                         "time_to_kill": ttk,
@@ -253,10 +365,10 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             new_dmg = max(1, round(dmg * 0.85, 1))
             recommendations.append(
                 {
-                    "target": _name(e),
+                    "target": ename,
                     "action": "reduce_damage",
                     "value": 15,
-                    "description": f"Reduce {_name(e)} damage from {dmg} → {new_dmg}",
+                    "description": _t(lang, "reduce_damage", name=ename, old=dmg, new=new_dmg),
                 }
             )
 
@@ -264,7 +376,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         visualizations.append(
             {
                 "type": "bar_chart",
-                "title": "Enemy Time-to-Kill (seconds)",
+                "title": _t(lang, "viz_enemy_ttk"),
                 "data": {
                     "labels": [m["name"] for m in enemy_metrics],
                     "values": [m["ttk"] for m in enemy_metrics],
@@ -272,7 +384,6 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
-    # ── Weapons ──────────────────────────────────────────────────────
     weapon_metrics: list[dict[str, Any]] = []
     for w in weapons:
         dmg = _f(w, "damage", default=10.0)
@@ -282,7 +393,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         efficiency = round(dps / max(price, 1.0) * 100, 2) if price else dps
         weapon_metrics.append(
             {
-                "name": _name(w, "Weapon"),
+                "name": _name(w, _t(lang, "weapon_fallback")),
                 "dps": dps,
                 "efficiency": efficiency,
                 "damage": dmg,
@@ -302,7 +413,9 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "weapon_imbalance",
                     "severity": sev,
-                    "description": f"{best['name']} has {spread}% more DPS than {worst['name']}",
+                    "description": _t(
+                        lang, "weapon_imbalance", best=best["name"], worst=worst["name"], spread=spread
+                    ),
                     "details": {
                         f"{best['name'].lower()}_dps": best["dps"],
                         f"{worst['name'].lower()}_dps": worst["dps"],
@@ -316,11 +429,12 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                     "target": best["name"],
                     "action": "reduce_damage",
                     "value": 20,
-                    "description": f"Reduce {best['name']} damage from {best['damage']} → {new_dmg}",
+                    "description": _t(
+                        lang, "reduce_damage", name=best["name"], old=best["damage"], new=new_dmg
+                    ),
                 }
             )
 
-        # Efficiency outliers (DPS per gold)
         if any(m["price"] > 0 for m in weapon_metrics):
             effs = [m["efficiency"] for m in weapon_metrics if m["price"] > 0]
             avg_e = _mean(effs)
@@ -328,14 +442,12 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 if m["price"] <= 0:
                     continue
                 if m["efficiency"] > avg_e * 1.5:
+                    pct = round(m["efficiency"] / avg_e * 100 - 100, 1)
                     issues.append(
                         {
                             "type": "weapon_efficiency",
                             "severity": "medium",
-                            "description": (
-                                f"{m['name']} is {round(m['efficiency'] / avg_e * 100 - 100, 1)}% "
-                                f"more gold-efficient than average"
-                            ),
+                            "description": _t(lang, "weapon_efficiency", name=m["name"], pct=pct),
                             "details": {"efficiency": m["efficiency"], "avg_efficiency": round(avg_e, 2)},
                         }
                     )
@@ -344,14 +456,20 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                             "target": m["name"],
                             "action": "increase_price",
                             "value": 25,
-                            "description": f"Raise {m['name']} price from {m['price']} → {round(m['price'] * 1.25)}",
+                            "description": _t(
+                                lang,
+                                "increase_price",
+                                name=m["name"],
+                                old=m["price"],
+                                new=round(m["price"] * 1.25),
+                            ),
                         }
                     )
 
         visualizations.append(
             {
                 "type": "bar_chart",
-                "title": "Weapon DPS Comparison",
+                "title": _t(lang, "viz_weapon_dps"),
                 "data": {
                     "labels": [m["name"] for m in weapon_metrics],
                     "values": [m["dps"] for m in weapon_metrics],
@@ -359,7 +477,6 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
-    # ── Abilities ────────────────────────────────────────────────────
     ability_metrics: list[dict[str, Any]] = []
     for a in abilities:
         dmg = _f(a, "damage", default=0.0)
@@ -368,7 +485,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         burst = round(dmg / cd, 2)
         ability_metrics.append(
             {
-                "name": _name(a, "Ability"),
+                "name": _name(a, _t(lang, "ability_fallback")),
                 "dps": burst,
                 "damage": dmg,
                 "cooldown": cd,
@@ -385,7 +502,9 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "ability_imbalance",
                     "severity": "medium" if spread < 80 else "high",
-                    "description": f"{best['name']} sustained DPS is {spread}% above {worst['name']}",
+                    "description": _t(
+                        lang, "ability_imbalance", best=best["name"], worst=worst["name"], spread=spread
+                    ),
                     "details": {
                         "best_dps": best["dps"],
                         "worst_dps": worst["dps"],
@@ -399,17 +518,22 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                     "target": best["name"],
                     "action": "increase_cooldown",
                     "value": 20,
-                    "description": f"Increase {best['name']} cooldown from {best['cooldown']} → {new_cd}",
+                    "description": _t(
+                        lang, "increase_cooldown", name=best["name"], old=best["cooldown"], new=new_cd
+                    ),
                 }
             )
 
-    # ── Economy ──────────────────────────────────────────────────────
     if economy or any(m.get("gold_reward") for m in enemy_metrics):
         starting = _f(economy, "starting_gold", default=100.0)
-        gold_kill = _f(economy, "gold_per_kill", default=_mean([m["gold_reward"] for m in enemy_metrics]) if enemy_metrics else 10.0)
-        gold_quest = _f(economy, "gold_per_quest", default=50.0)
+        gold_kill = _f(
+            economy,
+            "gold_per_kill",
+            default=_mean([m["gold_reward"] for m in enemy_metrics]) if enemy_metrics else 10.0,
+        )
         xp_level = _f(economy, "xp_per_level", default=100.0)
         price_mult = _f(economy, "price_multiplier", default=1.0)
+        econ_target = _t(lang, "economy_target")
 
         avg_weapon_price = _mean([m["price"] for m in weapon_metrics if m["price"] > 0]) or 100.0
         kills_to_weapon = math.ceil((avg_weapon_price * price_mult) / max(gold_kill, 0.01))
@@ -421,9 +545,8 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "economy_inflation",
                     "severity": "medium",
-                    "description": (
-                        f"Average weapon affordable after only {kills_to_weapon} kills "
-                        f"(~{minutes_to_weapon} min) — economy may inflate too fast"
+                    "description": _t(
+                        lang, "economy_inflation", kills=kills_to_weapon, minutes=minutes_to_weapon
                     ),
                     "details": {
                         "kills_to_weapon": kills_to_weapon,
@@ -435,10 +558,12 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             )
             recommendations.append(
                 {
-                    "target": "economy",
+                    "target": econ_target,
                     "action": "reduce_gold_per_kill",
                     "value": 20,
-                    "description": f"Reduce gold_per_kill from {gold_kill} → {round(gold_kill * 0.8, 1)}",
+                    "description": _t(
+                        lang, "reduce_gold_per_kill", old=gold_kill, new=round(gold_kill * 0.8, 1)
+                    ),
                 }
             )
         elif kills_to_weapon >= 40:
@@ -446,16 +571,18 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                 {
                     "type": "economy_too_tight",
                     "severity": "low",
-                    "description": f"Needs ~{kills_to_weapon} kills to afford average weapon — progression may feel slow",
+                    "description": _t(lang, "economy_too_tight", kills=kills_to_weapon),
                     "details": {"kills_to_weapon": kills_to_weapon, "starting_gold": starting},
                 }
             )
             recommendations.append(
                 {
-                    "target": "economy",
+                    "target": econ_target,
                     "action": "increase_starting_gold",
                     "value": 50,
-                    "description": f"Increase starting_gold from {starting} → {starting + 50}",
+                    "description": _t(
+                        lang, "increase_starting_gold", old=starting, new=starting + 50
+                    ),
                 }
             )
 
@@ -467,7 +594,13 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
                     {
                         "type": "xp_too_fast",
                         "severity": "medium",
-                        "description": f"Level-up in ~{kills_per_level} kills (xp_per_level={xp_level}, avg XP={avg_xp})",
+                        "description": _t(
+                            lang,
+                            "xp_too_fast",
+                            kills=kills_per_level,
+                            xp_level=xp_level,
+                            avg_xp=avg_xp,
+                        ),
                         "details": {"kills_per_level": kills_per_level, "xp_per_level": xp_level},
                     }
                 )
@@ -475,7 +608,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         visualizations.append(
             {
                 "type": "bar_chart",
-                "title": "Gold per Minute by Enemy",
+                "title": _t(lang, "viz_gold_min"),
                 "data": {
                     "labels": [m["name"] for m in enemy_metrics],
                     "values": [m["gold_per_min"] for m in enemy_metrics],
@@ -483,7 +616,6 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
-    # Deduplicate recommendations by target+action
     seen_rec: set[str] = set()
     uniq_recs: list[dict[str, Any]] = []
     for r in recommendations:
@@ -493,20 +625,22 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
         seen_rec.add(key)
         uniq_recs.append(r)
 
-    # Score
     penalty = sum(SEVERITY_WEIGHT.get(i.get("severity", "low"), 3) for i in issues)
     balance_score = int(max(0, min(100, 100 - penalty)))
 
-    game_name = str(game_data.get("game_name") or "Untitled Game")
+    game_name = str(game_data.get("game_name") or _t(lang, "untitled"))
     top = [i["description"] for i in issues[:3]]
-    summary = (
-        f"Overall balance score: {balance_score}/100 for «{game_name}». "
-        + (f"Main issues: {'; '.join(top)}. " if top else "No major issues detected. ")
-        + (f"Top fix: {uniq_recs[0]['description']}." if uniq_recs else "Keep iterating with playtests.")
+    summary = _t(lang, "summary", score=balance_score, game=game_name)
+    summary += _t(lang, "summary_issues", issues="; ".join(top)) if top else _t(lang, "summary_ok")
+    summary += (
+        _t(lang, "summary_fix", fix=uniq_recs[0]["description"])
+        if uniq_recs
+        else _t(lang, "summary_keep")
     )
 
     return {
         "balance_score": balance_score,
+        "lang": lang,
         "issues": issues,
         "recommendations": uniq_recs,
         "visualizations": visualizations,
@@ -519,7 +653,7 @@ def analyze_game_data(game_data: dict[str, Any]) -> dict[str, Any]:
             "threat_dps": threat_dps,
             "player_dps": player_dps,
         },
-        "methodology": "Deterministic combat/economy metrics (DPS, TTK, survivability, gold/min)",
+        "methodology": _t(lang, "methodology"),
     }
 
 
@@ -533,23 +667,28 @@ def _scale(value: float, powers_ref: list[float], lo: int = 1, hi: int = 10) -> 
     return int(round(lo + t * (hi - lo)))
 
 
-async def run_balance_analysis(game_data: dict[str, Any]) -> dict[str, Any]:
+async def run_balance_analysis(game_data: dict[str, Any], lang: str | None = None) -> dict[str, Any]:
     """Run balance analysis; optionally enrich narrative via OpenAI when not mocking."""
-    base = analyze_game_data(game_data)
+    lang = _norm_lang(lang or game_data.get("lang"))
+    base = analyze_game_data(game_data, lang=lang)
     if settings.USE_MOCK_AI:
         return base
     if not settings.OPENAI_API_KEY:
         return base
     try:
-        return await _openai_enrich(game_data, base)
+        return await _openai_enrich(game_data, base, lang=lang)
     except Exception:
         return base
 
 
-async def _openai_enrich(game_data: dict[str, Any], base: dict[str, Any]) -> dict[str, Any]:
+async def _openai_enrich(
+    game_data: dict[str, Any], base: dict[str, Any], lang: str = "en"
+) -> dict[str, Any]:
     from app.services.openai_client import chat_completion
 
+    lang_name = "Russian" if lang == "ru" else "English"
     prompt = f"""You are a senior game designer specializing in combat/economy balance.
+Write ALL narrative text in {lang_name}.
 Given this game data and a metric-based analysis, refine the summary and add up to 3 extra
 actionable recommendations (same JSON shape). Do NOT invent stats that contradict the metrics.
 Keep balance_score, issues, visualizations, metrics from the analysis unless clearly wrong.
@@ -560,7 +699,8 @@ Game data:
 Analysis:
 {json.dumps({k: base[k] for k in ('balance_score', 'issues', 'recommendations', 'summary')}, ensure_ascii=False)[:6000]}
 
-Respond with JSON: {{"summary": "...", "extra_recommendations": [{{"target","action","value","description"}}]}}"""
+Respond with JSON: {{"summary": "...", "extra_recommendations": [{{"target","action","value","description"}}]}}
+All strings must be in {lang_name}."""
 
     resp = await chat_completion(
         model=settings.OPENAI_MODEL,
@@ -583,5 +723,5 @@ Respond with JSON: {{"summary": "...", "extra_recommendations": [{{"target","act
                 continue
             out["recommendations"].append(r)
             existing.add(key)
-    out["methodology"] = "Deterministic metrics + GPT narrative polish"
+    out["methodology"] = _t(lang, "methodology_llm")
     return out

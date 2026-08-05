@@ -31,5 +31,5 @@ async def analyze_balance(
         input_data=game_data,
         title=title[:200],
         project_id=body.project_id,
-        run=lambda: ai_game_balancer.run_balance_analysis(game_data),
+        run=lambda: ai_game_balancer.run_balance_analysis(game_data, lang=body.lang),
     )
