@@ -26,10 +26,16 @@
       <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">GameForge Admin</span></a>
       <h1 data-i18n="admin.login.h1">Admin sign in</h1>
       <p class="muted" data-i18n="admin.login.sub">Staff access only</p>
-      <form id="form" class="form-grid">
-        <label data-i18n="login.email">Email<input name="email" type="email" required autocomplete="username" /></label>
-        <label data-i18n="login.password">Password<input name="password" type="password" required autocomplete="current-password" /></label>
-        <button class="btn btn-primary" type="submit" data-i18n="login.submit">Sign in</button>
+      <form id="form" class="auth-form">
+        <div class="field">
+          <label class="field-label" for="adminEmail" data-i18n="login.email">Email</label>
+          <input id="adminEmail" type="email" name="email" required autocomplete="email" inputmode="email" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="adminPassword" data-i18n="login.password">Password</label>
+          <input id="adminPassword" type="password" name="password" required minlength="10" autocomplete="current-password" />
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="login.submit">Sign in</button>
       </form>
       <p id="err" class="error-text" hidden></p>
     </div>
@@ -46,11 +52,12 @@
     if (u && isStaffRole(u.role)) location.href = "/admin";
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const fd = new FormData(e.target);
+      const email = String(document.getElementById("adminEmail").value || "").trim();
+      const password = String(document.getElementById("adminPassword").value || "");
       const err = document.getElementById("err");
       err.hidden = true;
       try {
-        const me = await login(fd.get("email"), fd.get("password"));
+        const me = await login(email, password);
         if (!isStaffRole(me.role)) {
           err.textContent = t("admin.login.forbidden");
           err.hidden = false;
