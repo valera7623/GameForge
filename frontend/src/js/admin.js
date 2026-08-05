@@ -7,6 +7,7 @@ import { requireAuth, currentUser, logout } from "./auth.js";
 import { applyDomI18n, escapeHtml, t } from "./app.js";
 import { applyTheme, bindThemeToggles, getTheme } from "./theme.js";
 import { getLang, setLang } from "./i18n.js";
+import { bootSkeletons } from "../components/skeleton/skeleton.js";
 
 const STAFF = new Set(["super_admin", "admin", "manager", "support"]);
 
@@ -167,6 +168,7 @@ export function mountAdminShell(activeKey) {
   applyDomI18n(shell);
   applyTheme(getTheme());
   bindThemeToggles(shell);
+  bootSkeletons();
   document.getElementById("langBtn")?.addEventListener("click", () => {
     setLang(getLang() === "ru" ? "en" : "ru");
     location.reload();
