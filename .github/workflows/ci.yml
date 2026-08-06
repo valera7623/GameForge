@@ -5,9 +5,12 @@ on:
     branches: [main, master]
   pull_request:
 
+# One job = one hosted runner. Parallel jobs were failing with
+# "not acquired by Runner of type hosted" during GH capacity issues.
 jobs:
-  lint-and-test:
+  ci:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:15-alpine
@@ -47,29 +50,30 @@ jobs:
       CELERY_RESULT_BACKEND: redis://localhost:6379/13
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -r requirements.txt
-      - run: ruff check app tests
-      - run: pytest -q
 
-  docker-compose-config:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cp .env.example .env
-      - run: docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+      - name: Python lint & tests
+        run: |
+          pip install -r requirements.txt
+          ruff check app tests
+          pytest -q
 
-  frontend-build:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
+      - name: Docker Compose config
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: npm ci
-      - run: npm run build
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
