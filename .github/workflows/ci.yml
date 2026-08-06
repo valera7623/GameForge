@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
 
 # One job = one hosted runner. Parallel jobs were failing with
 # "not acquired by Runner of type hosted" during GH capacity issues.
