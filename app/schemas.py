@@ -147,9 +147,12 @@ class LevelDesignerSaveRequest(BaseModel):
 class QuestGeneratorRequest(BaseModel):
     project_id: Optional[UUID] = None
     setting: str = Field(min_length=3, max_length=500)
-    quest_type: str = Field(default="side", pattern="^(main|side)$")
+    quest_type: str = Field(default="side", pattern="^(main|side|daily)$")
     length: str = Field(default="medium", pattern="^(short|medium|long)$")
-    tone: str = "adventure"
+    tone: str = Field(
+        default="adventure",
+        pattern="^(adventure|dark|heroic|mystery|humorous|tragic|horror|epic)$",
+    )
 
 
 class TextureUpscalerRequest(BaseModel):

@@ -37,7 +37,18 @@
             <label><span data-i18n="quest.length">Length</span>
               <select name="length"><option value="short">Short</option><option value="medium" selected>Medium</option><option value="long">Long</option></select>
             </label>
-            <label><span data-i18n="quest.tone">Tone</span> <input name="tone" value="adventure" /></label>
+            <label><span data-i18n="quest.tone">Tone</span>
+              <select name="tone">
+                <option value="adventure" selected data-i18n="quest.tone_adventure">Adventure</option>
+                <option value="dark" data-i18n="quest.tone_dark">Dark</option>
+                <option value="heroic" data-i18n="quest.tone_heroic">Heroic</option>
+                <option value="mystery" data-i18n="quest.tone_mystery">Mystery</option>
+                <option value="humorous" data-i18n="quest.tone_humorous">Humorous</option>
+                <option value="tragic" data-i18n="quest.tone_tragic">Tragic</option>
+                <option value="horror" data-i18n="quest.tone_horror">Horror</option>
+                <option value="epic" data-i18n="quest.tone_epic">Epic</option>
+              </select>
+            </label>
             <label><span data-i18n="common.project">Project</span>
               <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
