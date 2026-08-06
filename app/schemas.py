@@ -129,7 +129,19 @@ class LevelDesignerRequest(BaseModel):
     description: str = Field(min_length=5, max_length=2000)
     width: int = Field(default=32, ge=8, le=128)
     height: int = Field(default=32, ge=8, le=128)
-    style: str = "dungeon"
+    style: str = Field(
+        default="dungeon",
+        pattern="^(dungeon|cave|temple|city|winter|sci_fi|desert)$",
+    )
+    difficulty: str = Field(default="medium", pattern="^(easy|medium|hard)$")
+
+
+class LevelDesignerSaveRequest(BaseModel):
+    """Persist an edited tilemap back onto an existing generation (no quota)."""
+
+    output_data: dict[str, Any]
+    project_id: Optional[UUID] = None
+    title: Optional[str] = Field(default=None, max_length=200)
 
 
 class QuestGeneratorRequest(BaseModel):

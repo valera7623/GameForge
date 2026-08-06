@@ -109,6 +109,8 @@ export const ProjectsAPI = {
 
 export const ToolsAPI = {
   level: (body) => api("/level-designer", { method: "POST", body: JSON.stringify(body) }),
+  saveLevel: (id, body) =>
+    api(`/level-designer/${id}`, { method: "PUT", body: JSON.stringify(body) }),
   quest: (body) => api("/quest-generator", { method: "POST", body: JSON.stringify(body) }),
   character: (body) => api("/character-creator", { method: "POST", body: JSON.stringify(body) }),
   sound: (body) => api("/sound-designer", { method: "POST", body: JSON.stringify(body) }),

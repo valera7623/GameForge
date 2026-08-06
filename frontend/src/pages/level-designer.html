@@ -23,7 +23,7 @@
       <div class="page-header">
         <div>
           <h1 data-i18n="level.h1">AI Level Designer</h1>
-          <p data-i18n="level.sub">Describe a space — get a playable tilemap.</p>
+          <p data-i18n="level.sub">Describe a space — get a playable tilemap, then edit and save.</p>
         </div>
       </div>
       <div class="panel">
@@ -40,6 +40,16 @@
                 <option value="cave">Cave</option>
                 <option value="temple">Temple</option>
                 <option value="city">City</option>
+                <option value="winter">Winter</option>
+                <option value="sci_fi">Sci-Fi</option>
+                <option value="desert">Desert</option>
+              </select>
+            </label>
+            <label><span data-i18n="level.difficulty">Difficulty</span>
+              <select name="difficulty">
+                <option value="easy" data-i18n="level.diff_easy">Easy — fewer enemies & traps</option>
+                <option value="medium" selected data-i18n="level.diff_medium">Medium — balanced</option>
+                <option value="hard" data-i18n="level.diff_hard">Hard — more enemies & traps</option>
               </select>
             </label>
             <label><span data-i18n="common.project">Project</span>
@@ -51,11 +61,25 @@
         <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="level.loading">Forging level…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
-        <h2 data-i18n="level.preview">Map preview</h2>
+        <h2 data-i18n="level.preview">Map preview & editor</h2>
+        <div class="level-editor-bar" id="editorBar" role="toolbar">
+          <span class="muted" data-i18n="level.editor">Edit tools</span>
+          <button type="button" class="btn btn-ghost btn-sm is-active" data-tool="wall" data-i18n="level.tool_wall">Wall</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="floor" data-i18n="level.tool_floor">Floor</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="empty" data-i18n="level.tool_empty">Erase tile</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="trap" data-i18n="level.tool_trap">Trap</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="water" data-i18n="level.tool_water">Water</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="door" data-i18n="level.tool_door">Door</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="chest" data-i18n="level.tool_chest">Treasure</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="enemy" data-i18n="level.tool_enemy">Add enemy</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="erase_enemy" data-i18n="level.tool_erase_enemy">Remove enemy</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-tool="erase_treasure" data-i18n="level.tool_erase_treasure">Remove treasure</button>
+        </div>
         <div class="canvas-wrap"><canvas id="levelCanvas"></canvas></div>
         <div class="actions">
           <button class="btn btn-ghost" id="dlJson" data-i18n="level.dl_json">Export JSON</button>
           <button class="btn btn-ghost" id="dlPng" data-i18n="level.dl_png">Export PNG</button>
+          <button class="btn btn-primary" id="saveBtn" data-i18n="level.save">Save to project</button>
         </div>
         <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
       </div>
@@ -64,57 +88,135 @@
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
-    import { ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
+    import { DashboardAPI, ProjectsAPI, ToolsAPI, downloadJSON } from "../js/api.js";
     import { mountToolHistory } from "../js/tool-history.js";
     import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
-    import { downloadCanvasPNG, renderLevel } from "../js/canvas-level.js";
+    import { downloadCanvasPNG, mountLevelEditor } from "../js/canvas-level.js";
 
     if (!requireAuth()) throw new Error("auth");
     mountShell("level-designer");
     applyDomI18n(document);
-    mountToolHistory("level_designer");
 
     let lastLevel = null;
-    ProjectsAPI.list().then(list => {
-      const sel = document.getElementById("projectSelect");
-      list.forEach(p => {
-        const o = document.createElement("option");
-        o.value = p.id; o.textContent = p.name;
-        sel.appendChild(o);
+    let lastGenId = null;
+    let editor = null;
+
+    function syncJson() {
+      if (!lastLevel) return;
+      document.getElementById("jsonOut").textContent = JSON.stringify(lastLevel, null, 2);
+    }
+
+    function showLevel(level, genId) {
+      lastLevel = level;
+      lastGenId = genId || null;
+      document.getElementById("resultPanel").hidden = false;
+      if (editor) editor.destroy();
+      editor = mountLevelEditor(document.getElementById("levelCanvas"), lastLevel, {
+        onChange(next) {
+          lastLevel = next;
+          syncJson();
+        },
       });
-    });
+      const active = document.querySelector("#editorBar [data-tool].is-active");
+      if (active) editor.setTool(active.getAttribute("data-tool"));
+      syncJson();
+    }
 
-    document.getElementById("form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      setLoading(document.getElementById("loader"), true);
-      try {
-        const body = {
-          description: fd.get("description"),
-          width: Number(fd.get("width")),
-          height: Number(fd.get("height")),
-          style: fd.get("style"),
-        };
-        if (fd.get("project_id")) body.project_id = fd.get("project_id");
-        const gen = await ToolsAPI.level(body);
-        lastLevel = gen.output_data;
-        document.getElementById("resultPanel").hidden = false;
-        renderLevel(document.getElementById("levelCanvas"), lastLevel);
-        document.getElementById("jsonOut").textContent = JSON.stringify(lastLevel, null, 2);
-        toast(t("level.toast", { xp: gen.xp_awarded }));
-      } catch (err) {
-        toast(err.message, true);
-      } finally {
-        setLoading(document.getElementById("loader"), false);
-      }
-    });
+    async function refreshHistory() {
+      await mountToolHistory("level_designer", "toolHistory", {
+        loadable: true,
+        onLoad: async (id) => {
+          try {
+            const gen = await DashboardAPI.getGeneration(id);
+            if (!gen?.output_data?.tiles) throw new Error("No map data");
+            showLevel(gen.output_data, gen.id);
+            const sel = document.getElementById("projectSelect");
+            if (gen.project_id && sel) sel.value = gen.project_id;
+            toast(t("level.loaded"));
+          } catch (err) {
+            toast(err.message, true);
+          }
+        },
+      });
+    }
 
-    document.getElementById("dlJson").addEventListener("click", () => {
-      if (lastLevel) downloadJSON("level.json", lastLevel);
-    });
-    document.getElementById("dlPng").addEventListener("click", () => {
-      downloadCanvasPNG(document.getElementById("levelCanvas"), "level.png");
-    });
+    void (async () => {
+      await refreshHistory();
+
+      ProjectsAPI.list().then((list) => {
+        const sel = document.getElementById("projectSelect");
+        list.forEach((p) => {
+          const o = document.createElement("option");
+          o.value = p.id;
+          o.textContent = p.name;
+          sel.appendChild(o);
+        });
+      });
+
+      document.getElementById("editorBar").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-tool]");
+        if (!btn || !editor) return;
+        document.querySelectorAll("#editorBar [data-tool]").forEach((b) => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        editor.setTool(btn.getAttribute("data-tool"));
+      });
+
+      document.getElementById("form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        setLoading(document.getElementById("loader"), true);
+        try {
+          const body = {
+            description: fd.get("description"),
+            width: Number(fd.get("width")),
+            height: Number(fd.get("height")),
+            style: fd.get("style"),
+            difficulty: fd.get("difficulty") || "medium",
+          };
+          if (fd.get("project_id")) body.project_id = fd.get("project_id");
+          const gen = await ToolsAPI.level(body);
+          showLevel(gen.output_data, gen.id);
+          toast(t("level.toast", { xp: gen.xp_awarded }));
+          await refreshHistory();
+        } catch (err) {
+          toast(err.message, true);
+        } finally {
+          setLoading(document.getElementById("loader"), false);
+        }
+      });
+
+      document.getElementById("dlJson").addEventListener("click", () => {
+        const data = editor ? editor.getLevel() : lastLevel;
+        if (data) downloadJSON("level.json", data);
+      });
+      document.getElementById("dlPng").addEventListener("click", () => {
+        if (editor) {
+          lastLevel = editor.getLevel();
+          editor.redraw();
+        }
+        downloadCanvasPNG(document.getElementById("levelCanvas"), "level.png");
+      });
+      document.getElementById("saveBtn").addEventListener("click", async () => {
+        if (!lastGenId) {
+          toast(t("level.need_gen"), true);
+          return;
+        }
+        try {
+          const data = editor ? editor.getLevel() : lastLevel;
+          const projectId = document.getElementById("projectSelect").value || null;
+          const body = { output_data: data, title: data.name || undefined };
+          if (projectId) body.project_id = projectId;
+          const gen = await ToolsAPI.saveLevel(lastGenId, body);
+          lastLevel = gen.output_data;
+          lastGenId = gen.id;
+          syncJson();
+          toast(t("level.saved"));
+          await refreshHistory();
+        } catch (err) {
+          toast(err.message, true);
+        }
+      });
+    })();
   </script>
 </body>
 </html>
