@@ -204,6 +204,7 @@ async def me(user: User = Depends(get_current_user), db: AsyncSession = Depends(
         plan=sub.plan.value,
         generations_limit=sub.generations_limit,
         achievements_count=len(achievements),
+        localization_words_remaining=int(sub.localization_words_remaining or 0),
     )
 
 

@@ -171,7 +171,11 @@ export const DashboardAPI = {
 
 export const BillingAPI = {
   plans: () => api("/billing/plans"),
-  checkout: (plan) => api("/billing/checkout", { method: "POST", body: JSON.stringify({ plan }) }),
+  checkout: (plan, opts = {}) =>
+    api("/billing/checkout", {
+      method: "POST",
+      body: JSON.stringify({ plan, ...opts }),
+    }),
   subscription: () => api("/billing/subscription"),
   portal: () => api("/billing/portal", { method: "POST", body: "{}" }),
   cancel: () => api("/billing/cancel", { method: "POST", body: "{}" }),

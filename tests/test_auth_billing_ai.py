@@ -202,3 +202,149 @@ async def test_apply_plan_blocked_without_payment_when_mock_disallowed():
             await billing_service.apply_plan(None, None, "indie", confirmed_payment=False)
     finally:
         billing_service.settings = original
+
+
+@pytest.mark.asyncio
+async def test_word_pack_checkout_credits_and_lists(client: AsyncClient):
+    await _register(client, "locwords@example.com")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "locwords@example.com", "password": "password1234"},
+    )
+
+    plans = await client.get("/api/v1/billing/plans")
+    assert plans.status_code == 200
+    ids = {p["id"] for p in plans.json()}
+    assert {"loc_starter", "loc_indie", "loc_studio"}.issubset(ids)
+    starter = next(p for p in plans.json() if p["id"] == "loc_starter")
+    assert starter["kind"] == "word_pack"
+    assert starter["words"] == 5000
+
+    res = await client.post("/api/v1/billing/checkout", json={"plan": "loc_starter"})
+    assert res.status_code == 200, res.text
+    assert "checkout_url" in res.json()
+
+    sub = await client.get("/api/v1/billing/subscription")
+    assert sub.status_code == 200
+    assert sub.json()["localization_words_remaining"] == 5000
+
+    me = await client.get("/api/v1/auth/me")
+    assert me.status_code == 200
+    assert me.json()["localization_words_remaining"] == 5000
+
+
+@pytest.mark.asyncio
+async def test_localize_prefers_word_credits(client: AsyncClient):
+    await _register(client, "locbill@example.com")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "locbill@example.com", "password": "password1234"},
+    )
+    await client.post("/api/v1/billing/checkout", json={"plan": "loc_starter"})
+
+    me_before = (await client.get("/api/v1/auth/me")).json()
+    words_before = me_before["localization_words_remaining"]
+    gens_before = me_before["generations_this_month"]
+    assert words_before == 5000
+
+    texts = {"ui.start": "Start game now", "ui.quit": "Quit"}  # 4 words
+    res = await client.post(
+        "/api/v1/localization",
+        json={"texts": texts, "source_lang": "en", "target_langs": ["ru"], "export_format": "json"},
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["quota_kind"] == "words"
+    assert body["words_used"] == 4
+    assert body["words_remaining"] == words_before - 4
+
+    me_after = (await client.get("/api/v1/auth/me")).json()
+    assert me_after["localization_words_remaining"] == words_before - 4
+    assert me_after["generations_this_month"] == gens_before
+
+
+@pytest.mark.asyncio
+async def test_localize_falls_back_to_generations_without_words(client: AsyncClient):
+    await _register(client, "locgen@example.com")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "locgen@example.com", "password": "password1234"},
+    )
+
+    me_before = (await client.get("/api/v1/auth/me")).json()
+    assert me_before["localization_words_remaining"] == 0
+    gens_before = me_before["generations_this_month"]
+
+    res = await client.post(
+        "/api/v1/localization",
+        json={
+            "texts": {"a": "hello"},
+            "source_lang": "en",
+            "target_langs": ["ru"],
+            "export_format": "json",
+        },
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["quota_kind"] == "generations"
+    assert body["words_used"] == 0
+    assert body["words_remaining"] == 0
+
+    me_after = (await client.get("/api/v1/auth/me")).json()
+    assert me_after["generations_this_month"] == gens_before + 1
+    assert me_after["localization_words_remaining"] == 0
+
+
+@pytest.mark.asyncio
+async def test_localize_insufficient_words_uses_generations(client: AsyncClient):
+    """Some credits but not enough for the job → generation quota; words untouched."""
+    from sqlalchemy import select
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+    from app.config import get_settings
+    from app.models.subscription import Subscription
+    from app.models.user import User
+
+    await _register(client, "locshort@example.com")
+    await client.post(
+        "/api/v1/auth/login",
+        json={"email": "locshort@example.com", "password": "password1234"},
+    )
+    await client.post("/api/v1/billing/checkout", json={"plan": "loc_starter"})
+
+    settings = get_settings()
+    eng = create_async_engine(settings.DATABASE_URL)
+    factory = async_sessionmaker(eng, class_=AsyncSession, expire_on_commit=False)
+    async with factory() as session:
+        user = (
+            await session.execute(select(User).where(User.email == "locshort@example.com"))
+        ).scalar_one()
+        sub = (
+            await session.execute(select(Subscription).where(Subscription.user_id == user.id))
+        ).scalar_one()
+        sub.localization_words_remaining = 2
+        await session.commit()
+    await eng.dispose()
+
+    me_before = (await client.get("/api/v1/auth/me")).json()
+    assert me_before["localization_words_remaining"] == 2
+    gens_before = me_before["generations_this_month"]
+
+    res = await client.post(
+        "/api/v1/localization",
+        json={
+            "texts": {"a": "one two three four five"},
+            "source_lang": "en",
+            "target_langs": ["ru"],
+            "export_format": "json",
+        },
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["quota_kind"] == "generations"
+    assert body["words_used"] == 0
+    assert body["words_remaining"] == 2
+
+    me_after = (await client.get("/api/v1/auth/me")).json()
+    assert me_after["localization_words_remaining"] == 2
+    assert me_after["generations_this_month"] == gens_before + 1

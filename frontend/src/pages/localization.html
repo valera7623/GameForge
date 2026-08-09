@@ -34,6 +34,19 @@
         <h1 data-i18n="loc.h1">AI Localization</h1>
         <p data-i18n="loc.sub">Translate game strings to 20+ languages. CSV, glossary, QA, Unity/Godot export.</p>
       </div></div>
+      <div class="panel" id="wordsPanel" style="margin-bottom:1rem">
+        <div class="form-row" style="align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+          <p id="wordsBalance" style="margin:0;color:var(--muted)" data-i18n="loc.words_loading">Loading word balance…</p>
+          <div class="form-row" style="gap:0.5rem;margin:0;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost" data-loc-pack="loc_starter" data-i18n="loc.buy_starter">Buy 5K · $49</button>
+            <button type="button" class="btn btn-primary" data-loc-pack="loc_indie" data-i18n="loc.buy_indie">Buy 25K · $149</button>
+            <button type="button" class="btn btn-ghost" data-loc-pack="loc_studio" data-i18n="loc.buy_studio">Buy 100K · $399</button>
+          </div>
+        </div>
+        <p class="form-hint" style="margin:0.5rem 0 0;color:var(--muted);font-size:0.85rem" data-i18n="loc.words_hint">
+          Word packs bill LocForge usage first. Without credits, a regular generation quota slot is used.
+        </p>
+      </div>
       <div class="panel">
         <form id="form" class="form-grid">
           <label><span data-i18n="loc.texts">Source texts</span>
@@ -132,7 +145,7 @@
   </div>
   <script type="module">
     import { requireAuth } from "../js/auth.js";
-    import { ProjectsAPI, ToolsAPI, downloadJSON, downloadText } from "../js/api.js";
+    import { BillingAPI, ProjectsAPI, ToolsAPI, downloadJSON, downloadText } from "../js/api.js";
     import { mountToolHistory } from "../js/tool-history.js";
     import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
     import { csvErrorToI18n, parseSourceCsv } from "../js/loc-csv.js";
@@ -148,6 +161,58 @@
     if (!requireAuth()) throw new Error("auth");
     mountShell("localization");
     applyDomI18n(document);
+
+    const wordsBalanceEl = document.getElementById("wordsBalance");
+
+    function setWordsBalance(n) {
+      const count = Number.isFinite(Number(n)) ? Number(n) : 0;
+      wordsBalanceEl.textContent = t("loc.words_balance", { count });
+    }
+
+    async function refreshWordsBalance() {
+      try {
+        const sub = await BillingAPI.subscription();
+        setWordsBalance(sub.localization_words_remaining ?? 0);
+      } catch {
+        wordsBalanceEl.textContent = t("loc.words_balance_failed");
+      }
+    }
+
+    document.querySelectorAll("[data-loc-pack]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const plan = btn.getAttribute("data-loc-pack");
+        if (!plan) return;
+        btn.disabled = true;
+        try {
+          const origin = location.origin;
+          const res = await BillingAPI.checkout(plan, {
+            success_url: `${origin}/localization?billing=success&plan=${encodeURIComponent(plan)}`,
+            cancel_url: `${origin}/localization?billing=cancel`,
+          });
+          if (res.checkout_url) {
+            if (String(res.checkout_url).includes("mock=1")) {
+              toast(t("loc.words_purchased"));
+              await refreshWordsBalance();
+              return;
+            }
+            location.href = res.checkout_url;
+            return;
+          }
+          toast(t("loc.words_buy_failed"), true);
+        } catch (err) {
+          toast(err.message || t("loc.words_buy_failed"), true);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    if (new URLSearchParams(location.search).get("billing") === "success") {
+      toast(t("loc.words_purchased"));
+      history.replaceState({}, "", "/localization");
+    }
+
+    refreshWordsBalance();
     mountToolHistory("localization");
 
     let last = null;
@@ -340,11 +405,19 @@
         const gen = await ToolsAPI.localize(body);
         last = gen.output_data;
         renderResult(last, texts);
+        if (typeof gen.words_remaining === "number") {
+          setWordsBalance(gen.words_remaining);
+        } else {
+          refreshWordsBalance();
+        }
         const hits = last.glossary_hits || 0;
         const qa = last.qa_issue_count || 0;
         let msg = t("loc.toast", { count: last.key_count || Object.keys(texts).length, xp: gen.xp_awarded });
         if (hits) msg += ` · ${t("loc.glossary_hits", { count: hits })}`;
         if (qa) msg += ` · ${t("loc.qa_toast", { count: qa })}`;
+        if (gen.quota_kind === "words" && gen.words_used) {
+          msg += ` · ${t("loc.words_used", { count: gen.words_used })}`;
+        }
         toast(msg);
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }

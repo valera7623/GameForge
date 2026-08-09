@@ -11,9 +11,17 @@ from app.services.ai_localization import (
     LocalizationCsvError,
     _apply_glossary,
     _mock_translate,
+    count_source_words,
     normalize_glossary,
     parse_source_csv,
 )
+
+
+def test_count_source_words():
+    assert count_source_words({"a": "one two", "b": "three"}) == 3
+    assert count_source_words({}) == 0
+    assert count_source_words({"x": ""}) == 0
+
 
 
 def test_normalize_glossary_strips_empty():

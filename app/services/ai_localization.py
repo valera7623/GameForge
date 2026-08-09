@@ -16,6 +16,14 @@ SUPPORTED_LANGS = [
     "ja", "ko", "zh", "ar", "hi", "nl", "sv", "cs", "ro", "vi", "th", "id",
 ]
 
+
+def count_source_words(texts: Dict[str, str]) -> int:
+    """Count whitespace-separated tokens across source string values."""
+    total = 0
+    for value in texts.values():
+        total += len(str(value).split())
+    return total
+
 # Tiny offline glossary for mock mode
 _MOCK_GLOSSARY = {
     "ru": {

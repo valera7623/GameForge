@@ -168,3 +168,56 @@ async def refund_generation_quota(user: User, db: AsyncSession) -> None:
         {"uid": str(user.id)},
     )
     await db.refresh(user)
+
+
+async def reserve_localization_or_generation(user: User, db: AsyncSession, word_count: int) -> str:
+    """Prefer word credits when enough remain; otherwise use generation quota.
+
+    Returns ``words`` or ``generations``.
+    """
+    from app.services.billing_service import get_or_create_subscription
+
+    words = max(1, int(word_count))
+    sub = await get_or_create_subscription(db, user)
+    await db.flush()
+
+    if int(sub.localization_words_remaining or 0) >= words:
+        result = await db.execute(
+            text(
+                """
+                UPDATE subscriptions
+                SET localization_words_remaining = localization_words_remaining - :words
+                WHERE user_id = :uid AND localization_words_remaining >= :words
+                RETURNING localization_words_remaining
+                """
+            ),
+            {"uid": str(user.id), "words": words},
+        )
+        row = result.first()
+        if row:
+            await db.refresh(sub)
+            return "words"
+
+    await reserve_generation_quota(user, db)
+    return "generations"
+
+
+async def refund_localization_words(user: User, db: AsyncSession, word_count: int) -> None:
+    words = max(1, int(word_count))
+    await db.execute(
+        text(
+            """
+            UPDATE subscriptions
+            SET localization_words_remaining = localization_words_remaining + :words
+            WHERE user_id = :uid
+            """
+        ),
+        {"uid": str(user.id), "words": words},
+    )
+
+
+async def localization_words_remaining(user: User, db: AsyncSession) -> int:
+    from app.services.billing_service import get_or_create_subscription
+
+    sub = await get_or_create_subscription(db, user)
+    return int(sub.localization_words_remaining or 0)

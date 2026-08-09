@@ -80,5 +80,6 @@ async def my_subscription(user: User = Depends(get_current_user), db: AsyncSessi
         "plan": sub.plan.value,
         "status": sub.status.value,
         "generations_limit": sub.generations_limit,
+        "localization_words_remaining": int(sub.localization_words_remaining or 0),
         "current_period_end": sub.current_period_end,
     }

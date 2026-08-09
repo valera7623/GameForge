@@ -71,6 +71,7 @@ class UserMeResponse(UserResponse):
     plan: str = "free"
     generations_limit: int = 5
     achievements_count: int = 0
+    localization_words_remaining: int = 0
 
 
 # ── Projects ──────────────────────────────────────────────────────────
@@ -117,6 +118,9 @@ class GenerationResponse(BaseModel):
     project_id: Optional[UUID]
     created_at: datetime
     completed_at: Optional[datetime]
+    words_used: Optional[int] = None
+    words_remaining: Optional[int] = None
+    quota_kind: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -554,7 +558,7 @@ class ProjectGlossaryUpdate(BaseModel):
 
 
 class CheckoutRequest(BaseModel):
-    plan: str = Field(pattern="^(indie|studio)$")
+    plan: str = Field(pattern="^(indie|studio|loc_starter|loc_indie|loc_studio)$")
     provider: Optional[str] = None  # stripe | yukassa
     success_url: Optional[str] = None
     cancel_url: Optional[str] = None
@@ -569,7 +573,9 @@ class PlanInfo(BaseModel):
     id: str
     name: str
     price_cents: int
-    generations: int
+    generations: int = 0
+    words: Optional[int] = None
+    kind: str = "subscription"
     features: List[str]
 
 

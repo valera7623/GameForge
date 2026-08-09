@@ -38,6 +38,7 @@ async def localize(
         input_data=body.model_dump(mode="json"),
         title=f"Localize {len(body.texts)} keys → {', '.join(body.target_langs[:5])}",
         project_id=body.project_id,
+        localization_word_count=ai_localization.count_source_words(body.texts),
         run=lambda: ai_localization.localize(
             body.texts,
             body.source_lang,

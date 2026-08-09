@@ -11,7 +11,13 @@ from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limiter import _client_ip, rate_limit
-from app.deps import refund_generation_quota, reserve_generation_quota
+from app.deps import (
+    localization_words_remaining,
+    refund_generation_quota,
+    refund_localization_words,
+    reserve_generation_quota,
+    reserve_localization_or_generation,
+)
 from app.models.generation import Generation, ToolType
 from app.models.user import User
 from app.schemas import GenerationResponse
@@ -33,7 +39,13 @@ async def _ensure_tool_enabled(db: AsyncSession, tool: ToolType) -> None:
         )
 
 
-def generation_to_response(gen: Generation) -> GenerationResponse:
+def generation_to_response(
+    gen: Generation,
+    *,
+    words_used: Optional[int] = None,
+    words_remaining: Optional[int] = None,
+    quota_kind: Optional[str] = None,
+) -> GenerationResponse:
     return GenerationResponse(
         id=gen.id,
         tool=gen.tool.value,
@@ -47,6 +59,9 @@ def generation_to_response(gen: Generation) -> GenerationResponse:
         project_id=gen.project_id,
         created_at=gen.created_at,
         completed_at=gen.completed_at,
+        words_used=words_used,
+        words_remaining=words_remaining,
+        quota_kind=quota_kind,
     )
 
 
@@ -61,10 +76,18 @@ async def run_tool(
     project_id: Optional[UUID],
     run: AsyncToolFn,
     asset_urls_from: Optional[Callable[[dict[str, Any]], Optional[list]]] = None,
+    localization_word_count: Optional[int] = None,
 ) -> GenerationResponse:
     await rate_limit(request)
     await _ensure_tool_enabled(db, tool)
-    await reserve_generation_quota(user, db)
+
+    quota_kind = "generations"
+    words_billed = 0
+    if localization_word_count is not None:
+        words_billed = max(1, int(localization_word_count))
+        quota_kind = await reserve_localization_or_generation(user, db, words_billed)
+    else:
+        await reserve_generation_quota(user, db)
 
     gen = await create_generation(
         db,
@@ -106,13 +129,28 @@ async def run_tool(
             generation_id=gen.id,
             request_id=getattr(request.state, "request_id", None),
         )
-        await refund_generation_quota(user, db)
+        if quota_kind == "words":
+            await refund_localization_words(user, db, words_billed)
+        else:
+            await refund_generation_quota(user, db)
         await db.commit()
         raise HTTPException(status_code=502, detail=str(exc)) from exc
     finally:
         reset_llm_usage()
 
-    return generation_to_response(gen)
+    words_used = words_billed if localization_word_count is not None and quota_kind == "words" else None
+    remaining = None
+    if localization_word_count is not None:
+        remaining = await localization_words_remaining(user, db)
+        if quota_kind != "words":
+            words_used = 0
+
+    return generation_to_response(
+        gen,
+        words_used=words_used,
+        words_remaining=remaining,
+        quota_kind=quota_kind if localization_word_count is not None else None,
+    )
 
 
 async def enqueue_tool(

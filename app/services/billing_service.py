@@ -21,6 +21,8 @@ PLANS = {
         "name": "Free",
         "price_cents": 0,
         "generations": settings.FREE_GENERATIONS,
+        "words": None,
+        "kind": "subscription",
         "features": ["5 generations / month", "All 7 AI tools", "Community support"],
     },
     "indie": {
@@ -28,6 +30,8 @@ PLANS = {
         "name": "Indie",
         "price_cents": settings.INDIE_PRICE_CENTS,
         "generations": settings.INDIE_GENERATIONS,
+        "words": None,
+        "kind": "subscription",
         "features": ["100 generations / month", "Priority queue", "ZIP project export", "Email support"],
     },
     "studio": {
@@ -35,6 +39,8 @@ PLANS = {
         "name": "Studio",
         "price_cents": settings.STUDIO_PRICE_CENTS,
         "generations": settings.STUDIO_GENERATIONS,
+        "words": None,
+        "kind": "subscription",
         "features": [
             "1000 generations / month",
             "Team seats (5)",
@@ -48,13 +54,53 @@ PLANS = {
         "name": "Enterprise",
         "price_cents": 0,
         "generations": 999999,
+        "words": None,
+        "kind": "subscription",
         "features": ["Unlimited / custom", "On-prem deployment", "SSO", "SLA", "Dedicated success manager"],
     },
 }
 
+WORD_PACKS = {
+    "loc_starter": {
+        "id": "loc_starter",
+        "name": "LocForge Starter",
+        "price_cents": settings.LOC_STARTER_PRICE_CENTS,
+        "generations": 0,
+        "words": settings.LOC_STARTER_WORDS,
+        "kind": "word_pack",
+        "features": [f"{settings.LOC_STARTER_WORDS:,} localization words", "CSV + glossary + length QA"],
+    },
+    "loc_indie": {
+        "id": "loc_indie",
+        "name": "LocForge Indie",
+        "price_cents": settings.LOC_INDIE_PRICE_CENTS,
+        "generations": 0,
+        "words": settings.LOC_INDIE_WORDS,
+        "kind": "word_pack",
+        "features": [f"{settings.LOC_INDIE_WORDS:,} localization words", "CSV + glossary + length QA"],
+    },
+    "loc_studio": {
+        "id": "loc_studio",
+        "name": "LocForge Studio",
+        "price_cents": settings.LOC_STUDIO_PRICE_CENTS,
+        "generations": 0,
+        "words": settings.LOC_STUDIO_WORDS,
+        "kind": "word_pack",
+        "features": [f"{settings.LOC_STUDIO_WORDS:,} localization words", "CSV + glossary + length QA", "Unity / Godot export"],
+    },
+}
+
+SUBSCRIPTION_CHECKOUT_PLANS = frozenset({"indie", "studio"})
+WORD_PACK_IDS = frozenset(WORD_PACKS.keys())
+CHECKOUT_PLANS = SUBSCRIPTION_CHECKOUT_PLANS | WORD_PACK_IDS
+
 
 def list_plans() -> list[dict[str, Any]]:
-    return list(PLANS.values())
+    return [*PLANS.values(), *WORD_PACKS.values()]
+
+
+def is_word_pack(plan: str) -> bool:
+    return plan in WORD_PACK_IDS
 
 
 async def get_or_create_subscription(db: AsyncSession, user: User) -> Subscription:
@@ -110,10 +156,12 @@ async def create_checkout(
     success_url = success_url or f"{settings.FRONTEND_URL}/dashboard?billing=success"
     cancel_url = cancel_url or f"{settings.FRONTEND_URL}/dashboard?billing=cancel"
 
-    if plan not in ("indie", "studio"):
+    if plan not in CHECKOUT_PLANS:
         raise ValueError("Invalid plan")
 
     if provider == "stripe" and settings.STRIPE_SECRET_KEY:
+        if is_word_pack(plan):
+            return await _stripe_word_pack_checkout(user, plan, success_url, cancel_url)
         return await _stripe_checkout(user, plan, success_url, cancel_url)
 
     if provider == "yukassa" and settings.YUKASSA_SHOP_ID and settings.YUKASSA_SECRET_KEY:
@@ -124,12 +172,36 @@ async def create_checkout(
             "Payment provider is not configured. Set Stripe or YuKassa credentials."
         )
 
-    await apply_plan(db, user, plan, confirmed_payment=True)
+    if is_word_pack(plan):
+        await apply_word_pack(db, user, plan, confirmed_payment=True)
+    else:
+        await apply_plan(db, user, plan, confirmed_payment=True)
     return {
         "checkout_url": f"{success_url}&mock=1&plan={plan}",
         "session_id": f"mock_{plan}_{user.id}",
         "mock": True,
     }
+
+
+async def apply_word_pack(
+    db: AsyncSession,
+    user: User,
+    plan: str,
+    *,
+    confirmed_payment: bool = False,
+) -> Subscription:
+    if plan not in WORD_PACKS:
+        raise ValueError("Invalid word pack")
+    if not confirmed_payment and not settings.mock_billing_allowed:
+        raise ValueError("Word pack purchases require a confirmed payment in this environment")
+
+    sub = await get_or_create_subscription(db, user)
+    if settings.is_onprem and settings.FORCE_PLAN:
+        return sub
+    words = int(WORD_PACKS[plan]["words"] or 0)
+    sub.localization_words_remaining = int(sub.localization_words_remaining or 0) + words
+    await db.flush()
+    return sub
 
 
 async def apply_plan(
@@ -139,6 +211,9 @@ async def apply_plan(
     *,
     confirmed_payment: bool = False,
 ) -> Subscription:
+    if is_word_pack(plan):
+        return await apply_word_pack(db, user, plan, confirmed_payment=confirmed_payment)
+
     if not confirmed_payment and not settings.mock_billing_allowed:
         raise ValueError("Plan changes require a confirmed payment in this environment")
 
@@ -238,6 +313,36 @@ async def _stripe_checkout(user: User, plan: str, success_url: str, cancel_url: 
     return {"checkout_url": session.url, "session_id": session.id}
 
 
+async def _stripe_word_pack_checkout(
+    user: User, plan: str, success_url: str, cancel_url: str
+) -> dict[str, Any]:
+    import stripe
+
+    pack = WORD_PACKS[plan]
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    session = stripe.checkout.Session.create(
+        mode="payment",
+        line_items=[
+            {
+                "price_data": {
+                    "currency": "usd",
+                    "unit_amount": pack["price_cents"],
+                    "product_data": {
+                        "name": pack["name"],
+                        "description": f"{pack['words']} localization words",
+                    },
+                },
+                "quantity": 1,
+            }
+        ],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        customer_email=user.email,
+        metadata={"user_id": str(user.id), "plan": plan},
+    )
+    return {"checkout_url": session.url, "session_id": session.id}
+
+
 async def _yukassa_checkout(
     db: AsyncSession, user: User, plan: str, success_url: str
 ) -> dict[str, Any]:
@@ -245,7 +350,13 @@ async def _yukassa_checkout(
 
     import httpx
 
-    amount = PLANS[plan]["price_cents"] / 100
+    catalog = WORD_PACKS if is_word_pack(plan) else PLANS
+    amount = catalog[plan]["price_cents"] / 100
+    description = (
+        f"LocForge — {catalog[plan]['name']}"
+        if is_word_pack(plan)
+        else f"AI Game Dev Toolkit — {plan}"
+    )
     idempotence = str(uuid.uuid4())
     async with httpx.AsyncClient() as client:
         resp = await client.post(
@@ -256,7 +367,7 @@ async def _yukassa_checkout(
                 "amount": {"value": f"{amount:.2f}", "currency": "RUB"},
                 "confirmation": {"type": "redirect", "return_url": success_url},
                 "capture": True,
-                "description": f"AI Game Dev Toolkit — {plan}",
+                "description": description,
                 "metadata": {"user_id": str(user.id), "plan": plan},
             },
         )

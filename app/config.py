@@ -120,6 +120,14 @@ class Settings(BaseSettings):
     INDIE_PRICE_CENTS: int = 1900
     STUDIO_PRICE_CENTS: int = 9900
 
+    # LocForge word packs (one-time credits)
+    LOC_STARTER_PRICE_CENTS: int = 4900
+    LOC_INDIE_PRICE_CENTS: int = 14900
+    LOC_STUDIO_PRICE_CENTS: int = 39900
+    LOC_STARTER_WORDS: int = 5000
+    LOC_INDIE_WORDS: int = 25000
+    LOC_STUDIO_WORDS: int = 100000
+
     # Rate limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     AUTH_RATE_LIMIT_PER_MINUTE: int = 20
