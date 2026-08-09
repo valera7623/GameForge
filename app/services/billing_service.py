@@ -96,11 +96,49 @@ CHECKOUT_PLANS = SUBSCRIPTION_CHECKOUT_PLANS | WORD_PACK_IDS
 
 
 def list_plans() -> list[dict[str, Any]]:
-    return [*PLANS.values(), *WORD_PACKS.values()]
+    currency = (settings.BILLING_CURRENCY or "RUB").upper()
+    out: list[dict[str, Any]] = []
+    for plan in (*PLANS.values(), *WORD_PACKS.values()):
+        row = dict(plan)
+        row["currency"] = currency
+        out.append(row)
+    return out
 
 
 def is_word_pack(plan: str) -> bool:
     return plan in WORD_PACK_IDS
+
+
+def _format_amount_major(price_cents: int) -> str:
+    """Minor units (kopecks) → major amount string for YuKassa."""
+    return f"{price_cents / 100:.2f}"
+
+
+def _yukassa_receipt(user: User, plan: str, amount_value: str) -> Optional[dict[str, Any]]:
+    """54-FZ receipt payload when VAT code is configured (>0)."""
+    vat = int(getattr(settings, "YUKASSA_VAT_CODE", 0) or 0)
+    if vat <= 0:
+        return None
+    catalog = WORD_PACKS if is_word_pack(plan) else PLANS
+    description = str(catalog[plan].get("name") or plan)[:128]
+    customer: dict[str, str] = {}
+    if user.email:
+        customer["email"] = user.email
+    if not customer:
+        return None
+    return {
+        "customer": customer,
+        "items": [
+            {
+                "description": description,
+                "quantity": "1.00",
+                "amount": {"value": amount_value, "currency": "RUB"},
+                "vat_code": vat,
+                "payment_mode": "full_payment",
+                "payment_subject": "service",
+            }
+        ],
+    }
 
 
 async def get_or_create_subscription(db: AsyncSession, user: User) -> Subscription:
@@ -152,24 +190,32 @@ async def create_checkout(
     if settings.billing_disabled:
         raise ValueError("Billing is disabled in this deployment")
 
-    provider = provider or settings.BILLING_PROVIDER
+    provider = (provider or settings.BILLING_PROVIDER or "yukassa").lower().strip()
     success_url = success_url or f"{settings.FRONTEND_URL}/dashboard?billing=success"
     cancel_url = cancel_url or f"{settings.FRONTEND_URL}/dashboard?billing=cancel"
 
     if plan not in CHECKOUT_PLANS:
         raise ValueError("Invalid plan")
 
+    if provider == "yukassa" and settings.YUKASSA_SHOP_ID and settings.YUKASSA_SECRET_KEY:
+        return await _yukassa_checkout(db, user, plan, success_url)
+
     if provider == "stripe" and settings.STRIPE_SECRET_KEY:
         if is_word_pack(plan):
             return await _stripe_word_pack_checkout(user, plan, success_url, cancel_url)
         return await _stripe_checkout(user, plan, success_url, cancel_url)
 
-    if provider == "yukassa" and settings.YUKASSA_SHOP_ID and settings.YUKASSA_SECRET_KEY:
+    # Fallback: if default yukassa but only Stripe configured (or vice versa)
+    if settings.YUKASSA_SHOP_ID and settings.YUKASSA_SECRET_KEY:
         return await _yukassa_checkout(db, user, plan, success_url)
+    if settings.STRIPE_SECRET_KEY:
+        if is_word_pack(plan):
+            return await _stripe_word_pack_checkout(user, plan, success_url, cancel_url)
+        return await _stripe_checkout(user, plan, success_url, cancel_url)
 
     if not settings.mock_billing_allowed:
         raise ValueError(
-            "Payment provider is not configured. Set Stripe or YuKassa credentials."
+            "Payment provider is not configured. Set YuKassa credentials (YUKASSA_SHOP_ID / YUKASSA_SECRET_KEY)."
         )
 
     if is_word_pack(plan):
@@ -351,33 +397,39 @@ async def _yukassa_checkout(
     import httpx
 
     catalog = WORD_PACKS if is_word_pack(plan) else PLANS
-    amount = catalog[plan]["price_cents"] / 100
+    amount_value = _format_amount_major(int(catalog[plan]["price_cents"]))
     description = (
         f"LocForge — {catalog[plan]['name']}"
         if is_word_pack(plan)
-        else f"AI Game Dev Toolkit — {plan}"
+        else f"GameForge — {catalog[plan]['name']}"
     )
+    payload: dict[str, Any] = {
+        "amount": {"value": amount_value, "currency": "RUB"},
+        "confirmation": {"type": "redirect", "return_url": success_url},
+        "capture": True,
+        "description": description[:128],
+        "metadata": {"user_id": str(user.id), "plan": plan},
+    }
+    receipt = _yukassa_receipt(user, plan, amount_value)
+    if receipt:
+        payload["receipt"] = receipt
+
     idempotence = str(uuid.uuid4())
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(
             "https://api.yookassa.ru/v3/payments",
             auth=(settings.YUKASSA_SHOP_ID, settings.YUKASSA_SECRET_KEY),
             headers={"Idempotence-Key": idempotence},
-            json={
-                "amount": {"value": f"{amount:.2f}", "currency": "RUB"},
-                "confirmation": {"type": "redirect", "return_url": success_url},
-                "capture": True,
-                "description": description,
-                "metadata": {"user_id": str(user.id), "plan": plan},
-            },
+            json=payload,
         )
         resp.raise_for_status()
         data = resp.json()
     sub = await get_or_create_subscription(db, user)
     sub.yukassa_payment_id = data.get("id")
     await db.flush()
+    confirmation = data.get("confirmation") or {}
     return {
-        "checkout_url": data["confirmation"]["confirmation_url"],
+        "checkout_url": confirmation.get("confirmation_url"),
         "session_id": data.get("id"),
     }
 

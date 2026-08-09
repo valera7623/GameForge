@@ -111,19 +111,23 @@ class Settings(BaseSettings):
     STRIPE_PORTAL_RETURN_URL: str = ""
     YUKASSA_SHOP_ID: str = ""
     YUKASSA_SECRET_KEY: str = ""
-    BILLING_PROVIDER: str = "stripe"
+    # Russia-first: YuKassa + RUB (price_* are kopecks / minor units)
+    BILLING_PROVIDER: str = "yukassa"
+    BILLING_CURRENCY: str = "RUB"
+    # 54-FZ receipt for YuKassa (1 = без НДС). Set 0 to omit receipt payload.
+    YUKASSA_VAT_CODE: int = 1
 
-    # Plans
+    # Plans — RUB prices in kopecks (1990.00 ₽ → 199000)
     FREE_GENERATIONS: int = 5
     INDIE_GENERATIONS: int = 100
     STUDIO_GENERATIONS: int = 1000
-    INDIE_PRICE_CENTS: int = 1900
-    STUDIO_PRICE_CENTS: int = 9900
+    INDIE_PRICE_CENTS: int = 199_000
+    STUDIO_PRICE_CENTS: int = 999_000
 
-    # LocForge word packs (one-time credits)
-    LOC_STARTER_PRICE_CENTS: int = 4900
-    LOC_INDIE_PRICE_CENTS: int = 14900
-    LOC_STUDIO_PRICE_CENTS: int = 39900
+    # LocForge word packs (one-time credits, RUB kopecks)
+    LOC_STARTER_PRICE_CENTS: int = 499_000
+    LOC_INDIE_PRICE_CENTS: int = 1_499_000
+    LOC_STUDIO_PRICE_CENTS: int = 3_999_000
     LOC_STARTER_WORDS: int = 5000
     LOC_INDIE_WORDS: int = 25000
     LOC_STUDIO_WORDS: int = 100000
@@ -210,9 +214,22 @@ def validate_settings(settings: Settings) -> None:
         errors.append("EMAIL_PROVIDER must be smtp or resend in production")
 
     if not settings.billing_disabled:
+        provider = settings.BILLING_PROVIDER.lower().strip()
         has_stripe = bool(settings.STRIPE_SECRET_KEY.strip() and settings.STRIPE_WEBHOOK_SECRET.strip())
         has_yukassa = bool(settings.YUKASSA_SHOP_ID.strip() and settings.YUKASSA_SECRET_KEY.strip())
-        if not has_stripe and not has_yukassa:
+        if provider == "yukassa":
+            if not has_yukassa:
+                errors.append(
+                    "BILLING_PROVIDER=yukassa but YUKASSA_SHOP_ID / YUKASSA_SECRET_KEY are missing — "
+                    "set DISABLE_BILLING=true or configure YuKassa"
+                )
+        elif provider == "stripe":
+            if not has_stripe:
+                errors.append(
+                    "BILLING_PROVIDER=stripe but Stripe keys are missing — "
+                    "set DISABLE_BILLING=true or configure Stripe"
+                )
+        elif not has_stripe and not has_yukassa:
             errors.append(
                 "Billing is enabled but Stripe/YuKassa keys are missing — "
                 "set DISABLE_BILLING=true or configure a payment provider"

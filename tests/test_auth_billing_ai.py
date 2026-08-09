@@ -219,6 +219,11 @@ async def test_word_pack_checkout_credits_and_lists(client: AsyncClient):
     starter = next(p for p in plans.json() if p["id"] == "loc_starter")
     assert starter["kind"] == "word_pack"
     assert starter["words"] == 5000
+    assert starter["currency"] == "RUB"
+    assert starter["price_cents"] == 499_000
+    indie_sub = next(p for p in plans.json() if p["id"] == "indie")
+    assert indie_sub["currency"] == "RUB"
+    assert indie_sub["price_cents"] == 199_000
 
     res = await client.post("/api/v1/billing/checkout", json={"plan": "loc_starter"})
     assert res.status_code == 200, res.text

@@ -559,7 +559,7 @@ class ProjectGlossaryUpdate(BaseModel):
 
 class CheckoutRequest(BaseModel):
     plan: str = Field(pattern="^(indie|studio|loc_starter|loc_indie|loc_studio)$")
-    provider: Optional[str] = None  # stripe | yukassa
+    provider: Optional[str] = None  # yukassa (default) | stripe
     success_url: Optional[str] = None
     cancel_url: Optional[str] = None
 
@@ -576,6 +576,7 @@ class PlanInfo(BaseModel):
     generations: int = 0
     words: Optional[int] = None
     kind: str = "subscription"
+    currency: str = "RUB"
     features: List[str]
 
 
