@@ -176,7 +176,13 @@ class SoundDesignerRequest(BaseModel):
     project_id: Optional[UUID] = None
     description: str = Field(min_length=5, max_length=1000)
     kind: str = Field(default="sfx", pattern="^(sfx|music)$")
-    mood: str = "dark"
+    mood: str = Field(
+        default="dark",
+        pattern=(
+            "^(dark|heroic|calm|tense|magic|epic|horror|mysterious|"
+            "playful|melancholic|battle|cyber|nature|industrial)$"
+        ),
+    )
     duration_sec: int = Field(default=5, ge=1, le=60)
 
 
