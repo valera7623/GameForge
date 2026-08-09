@@ -88,16 +88,61 @@
   </header>
 
   <main>
-    <section class="hero">
-      <div class="brand-hero-block">
-        <span class="brand-mark brand-mark--hero" aria-hidden="true"></span>
-        <p class="brand-hero">GameForge</p>
+    <section class="hero hero--split" aria-label="GameForge">
+      <div class="hero-copy">
+        <div class="brand-hero-block brand-hero-block--start">
+          <span class="brand-mark brand-mark--hero" aria-hidden="true"></span>
+          <p class="brand-hero">GameForge</p>
+        </div>
+        <h1>Seven AI tools. One forge for your game.</h1>
+        <p class="lede">Generate levels, quests, characters, textures, sound, playtests, and localization — then export straight into Unity, Unreal, or Godot.</p>
+        <div class="cta-row">
+          <a href="/register" class="btn btn-primary btn-lg">Forge your first asset</a>
+          <a href="#tools" class="btn btn-ghost btn-lg">Explore tools</a>
+        </div>
       </div>
-      <h1>Seven AI tools. One forge for your game.</h1>
-      <p class="lede">Generate levels, quests, characters, textures, sound, playtests, and localization — then export straight into Unity, Unreal, or Godot.</p>
-      <div class="cta-row">
-        <a href="/register" class="btn btn-primary btn-lg">Forge your first asset</a>
-        <a href="#tools" class="btn btn-ghost btn-lg">Explore tools</a>
+
+      <div class="hero-stage" aria-hidden="true">
+        <div class="forge-cycle">
+          <div class="forge-cycle-plane">
+            <article class="forge-slide forge-slide--level">
+              <header><span>Level Designer</span><code>dungeon_01.json</code></header>
+              <pre>{
+  "tiles": ["W","F","F","E","F"],
+  "spawns": [{"x":1,"y":3,"type":"player"}],
+  "enemies": [{"x":5,"y":3,"id":"slime"}],
+  "export": "Unity · Godot"
+}</pre>
+            </article>
+            <article class="forge-slide forge-slide--char">
+              <header><span>Character Creator</span><code>mira_scout</code></header>
+              <div class="forge-slide-char">
+                <div class="forge-slide-char-art"></div>
+                <ul>
+                  <li>role: scout</li>
+                  <li>mood: ash &amp; teal</li>
+                  <li>export: concept PNG</li>
+                </ul>
+              </div>
+            </article>
+            <article class="forge-slide forge-slide--tex">
+              <header><span>Texture Upscaler</span><code>stone_wall · 4×</code></header>
+              <div class="forge-slide-tex">
+                <div class="forge-slide-tex-lo"><em>64²</em></div>
+                <div class="forge-slide-tex-arrow">→</div>
+                <div class="forge-slide-tex-hi"><em>256²</em></div>
+              </div>
+            </article>
+            <article class="forge-slide forge-slide--sound">
+              <header><span>Sound Designer</span><code>mood_battle.wav</code></header>
+              <div class="forge-slide-wave" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
+              <p class="forge-slide-meta">loop · 12s · battle tension</p>
+            </article>
+          </div>
+          <div class="forge-cycle-fade"></div>
+        </div>
       </div>
     </section>
 

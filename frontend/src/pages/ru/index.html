@@ -89,16 +89,61 @@
   </header>
 
   <main>
-    <section class="hero">
-      <div class="brand-hero-block">
-        <span class="brand-mark brand-mark--hero" aria-hidden="true"></span>
-        <p class="brand-hero">GameForge</p>
+    <section class="hero hero--split" aria-label="GameForge">
+      <div class="hero-copy">
+        <div class="brand-hero-block brand-hero-block--start">
+          <span class="brand-mark brand-mark--hero" aria-hidden="true"></span>
+          <p class="brand-hero">GameForge</p>
+        </div>
+        <h1>Семь ИИ-инструментов. Одна кузница для вашей игры.</h1>
+        <p class="lede">Генерируйте уровни, квесты, персонажей, текстуры, звук, плейтесты и локализацию — и экспортируйте сразу в Unity, Unreal или Godot.</p>
+        <div class="cta-row">
+          <a href="/register" class="btn btn-primary btn-lg">Создать первый ассет</a>
+          <a href="#tools" class="btn btn-ghost btn-lg">Смотреть инструменты</a>
+        </div>
       </div>
-      <h1>Семь ИИ-инструментов. Одна кузница для вашей игры.</h1>
-      <p class="lede">Генерируйте уровни, квесты, персонажей, текстуры, звук, плейтесты и локализацию — и экспортируйте сразу в Unity, Unreal или Godot.</p>
-      <div class="cta-row">
-        <a href="/register" class="btn btn-primary btn-lg">Создать первый ассет</a>
-        <a href="#tools" class="btn btn-ghost btn-lg">Смотреть инструменты</a>
+
+      <div class="hero-stage" aria-hidden="true">
+        <div class="forge-cycle">
+          <div class="forge-cycle-plane">
+            <article class="forge-slide forge-slide--level">
+              <header><span>Дизайн уровней</span><code>dungeon_01.json</code></header>
+              <pre>{
+  "tiles": ["W","F","F","E","F"],
+  "spawns": [{"x":1,"y":3,"type":"player"}],
+  "enemies": [{"x":5,"y":3,"id":"slime"}],
+  "export": "Unity · Godot"
+}</pre>
+            </article>
+            <article class="forge-slide forge-slide--char">
+              <header><span>Персонажи</span><code>mira_scout</code></header>
+              <div class="forge-slide-char">
+                <div class="forge-slide-char-art"></div>
+                <ul>
+                  <li>роль: разведчик</li>
+                  <li>настроение: пепел и бирюза</li>
+                  <li>экспорт: concept PNG</li>
+                </ul>
+              </div>
+            </article>
+            <article class="forge-slide forge-slide--tex">
+              <header><span>Апскейл текстур</span><code>stone_wall · 4×</code></header>
+              <div class="forge-slide-tex">
+                <div class="forge-slide-tex-lo"><em>64²</em></div>
+                <div class="forge-slide-tex-arrow">→</div>
+                <div class="forge-slide-tex-hi"><em>256²</em></div>
+              </div>
+            </article>
+            <article class="forge-slide forge-slide--sound">
+              <header><span>Звук</span><code>mood_battle.wav</code></header>
+              <div class="forge-slide-wave" aria-hidden="true">
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
+              <p class="forge-slide-meta">loop · 12с · боевое напряжение</p>
+            </article>
+          </div>
+          <div class="forge-cycle-fade"></div>
+        </div>
       </div>
     </section>
 
