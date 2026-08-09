@@ -9,13 +9,74 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <style>
-    .glossary-wrap { overflow-x: auto; margin-top: 0.5rem; }
+    .glossary-wrap { overflow-x: auto; margin-top: 0.5rem; -webkit-overflow-scrolling: touch; }
     .glossary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     .glossary-table th, .glossary-table td { padding: 0.35rem 0.4rem; text-align: left; vertical-align: middle; }
     .glossary-table th { color: var(--muted); font-weight: 500; white-space: nowrap; }
-    .glossary-table input[type="text"] { width: 100%; min-width: 5.5rem; }
+    .glossary-table input[type="text"] { width: 100%; min-width: 0; }
     .glossary-table td:last-child { width: 2.5rem; }
     .glossary-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; }
+    .loc-csv-field { display: grid; gap: 0.45rem; min-width: 0; max-width: 100%; }
+    .loc-csv-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      min-width: 0;
+    }
+    .loc-file-btn {
+      position: relative;
+      display: inline-flex;
+      cursor: pointer;
+      margin: 0;
+      flex-shrink: 0;
+    }
+    .loc-file-btn input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      font-size: 0;
+      border: 0;
+      padding: 0;
+    }
+    .loc-file-name {
+      flex: 1 1 8rem;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #csvStatus {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      min-width: 0;
+    }
+    #wordsPanel .loc-words-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+    #wordsPanel .loc-words-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+    @media (max-width: 520px) {
+      #wordsPanel .loc-words-actions { width: 100%; }
+      #wordsPanel .loc-words-actions .btn { flex: 1 1 auto; justify-content: center; }
+    }
   </style>
   <script>
     (function () {
@@ -35,9 +96,9 @@
         <p data-i18n="loc.sub">Translate game strings to 20+ languages. CSV, glossary, QA, Unity/Godot export.</p>
       </div></div>
       <div class="panel" id="wordsPanel" style="margin-bottom:1rem">
-        <div class="form-row" style="align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div class="loc-words-row">
           <p id="wordsBalance" style="margin:0;color:var(--muted)" data-i18n="loc.words_loading">Loading word balance…</p>
-          <div class="form-row" style="gap:0.5rem;margin:0;flex-wrap:wrap">
+          <div class="loc-words-actions">
             <button type="button" class="btn btn-ghost" data-loc-pack="loc_starter" data-i18n="loc.buy_starter">Buy 5K · $49</button>
             <button type="button" class="btn btn-primary" data-loc-pack="loc_indie" data-i18n="loc.buy_indie">Buy 25K · $149</button>
             <button type="button" class="btn btn-ghost" data-loc-pack="loc_studio" data-i18n="loc.buy_studio">Buy 100K · $399</button>
@@ -55,12 +116,16 @@
   "quest.intro": "Welcome, traveler."
 }</textarea>
           </label>
-          <div class="form-row" style="align-items:end">
-            <label style="flex:1">
-              <span data-i18n="loc.csv_upload">Or upload CSV</span>
-              <input type="file" id="csvFile" accept=".csv,text/csv" />
-            </label>
-            <p id="csvStatus" class="form-hint" style="margin:0;color:var(--muted);flex:1" hidden></p>
+          <div class="loc-csv-field">
+            <span data-i18n="loc.csv_upload">Or upload CSV</span>
+            <div class="loc-csv-controls">
+              <label class="btn btn-ghost loc-file-btn">
+                <span data-i18n="loc.csv_choose">Choose file</span>
+                <input type="file" id="csvFile" accept=".csv,text/csv" />
+              </label>
+              <span id="csvFileName" class="loc-file-name" data-i18n="loc.csv_no_file">No file chosen</span>
+            </div>
+            <p id="csvStatus" hidden></p>
           </div>
           <p class="form-hint" style="margin:0;color:var(--muted);font-size:0.85rem" data-i18n="loc.csv_hint">
             CSV columns: key,source (or key,en / key,text). UTF-8, comma or semicolon.
@@ -337,7 +402,12 @@
 
     document.getElementById("csvFile").addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
-      if (!file) return;
+      const csvFileName = document.getElementById("csvFileName");
+      if (!file) {
+        csvFileName.textContent = t("loc.csv_no_file");
+        return;
+      }
+      csvFileName.textContent = file.name;
       try {
         let texts;
         let warnings = [];
@@ -372,6 +442,7 @@
         csvStatus.textContent = msg;
         toast(msg, true);
         e.target.value = "";
+        csvFileName.textContent = t("loc.csv_no_file");
       }
     });
 
