@@ -122,7 +122,7 @@ async def submit_feedback(
 
 
 async def _notify_staff(row: FeedbackMessage, user: Optional[User]) -> None:
-    to = (settings.FEEDBACK_NOTIFY_EMAIL or "").strip() or "valera7623@gmail.com"
+    to = (settings.FEEDBACK_NOTIFY_EMAIL or "").strip() or "gameforge.website@yandex.ru"
     who = html.escape(user.email if user else (row.email or "guest"))
     subj_line = row.subject or "(no subject)"
     subject = f"[GameForge feedback] {row.category.value}: {subj_line[:80]}"
