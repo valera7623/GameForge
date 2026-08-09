@@ -63,8 +63,8 @@ class Settings(BaseSettings):
     STABILITY_API_KEY: str = ""
     # core | ultra | sd3 | sd3.5-large | sd3.5-large-turbo | sd3.5-medium | sd3.5-flash
     STABILITY_IMAGE_MODEL: str = "core"
-    # Sound Designer: stable-audio-2.5 (default) | stable-audio-2 | stable-audio-3
-    STABILITY_AUDIO_MODEL: str = "stable-audio-2.5"
+    # Sound Designer: stable-audio-2 (quality) | stable-audio-2.5 (fast) | stable-audio-3
+    STABILITY_AUDIO_MODEL: str = "stable-audio-2"
     STABILITY_AUDIO_FORMAT: str = "mp3"
     ELEVENLABS_API_KEY: str = ""
     USE_MOCK_AI: bool = True

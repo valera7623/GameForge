@@ -77,7 +77,10 @@
         let gen = await ToolsAPI.sound(body);
         if (gen.status === "processing" || gen.status === "pending") {
           toast(t("common.queued"));
-          gen = await pollGeneration(gen.id);
+          gen = await pollGeneration(gen.id, {
+            intervalMs: 2000,
+            timeoutMs: 600000,
+          });
         }
         if (gen.status === "failed") throw new Error(gen.error_message || "Generation failed");
         const out = gen.output_data;
@@ -85,7 +88,11 @@
         document.getElementById("player").src = out.url;
         document.getElementById("dlLink").href = out.url;
         document.getElementById("dlLink").download = `audio.${out.format || "wav"}`;
-        toast(t("sound.toast", { xp: gen.xp_awarded }));
+        if (out.provider) {
+          toast(t("sound.toast_provider", { xp: gen.xp_awarded, provider: out.provider }));
+        } else {
+          toast(t("sound.toast", { xp: gen.xp_awarded }));
+        }
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     });

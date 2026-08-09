@@ -360,6 +360,7 @@ const DICT = {
     "sound.loading": "Synthesizing…",
     "sound.dl": "Download",
     "sound.toast": "Audio ready · +{xp} XP",
+    "sound.toast_provider": "Audio ready ({provider}) · +{xp} XP",
 
     "play.title": "Playtester — GameForge",
     "play.h1": "AI Playtester",
@@ -1081,6 +1082,7 @@ const DICT = {
     "sound.loading": "Синтез…",
     "sound.dl": "Скачать",
     "sound.toast": "Аудио готово · +{xp} XP",
+    "sound.toast_provider": "Аудио готово ({provider}) · +{xp} XP",
 
     "play.title": "Плейтест — GameForge",
     "play.h1": "ИИ: плейтест",

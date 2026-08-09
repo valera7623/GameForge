@@ -149,10 +149,12 @@ OPENAI_MODEL=gpt-4o
 
 Key from [ProxyAPI](https://proxyapi.ru) — same OpenAI SDK, different `base_url`.
 
-Optional: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability` (cloud Stable Image), `STABILITY_AUDIO_MODEL=stable-audio-2.5` (Sound Designer), `REALESRGAN_URL=http://realesrgan:8080` (CPU Real-ESRGAN via ncnn/llvmpipe), `REPLICATE_API_TOKEN` (MusicGen fallback), `ELEVENLABS_API_KEY` (SFX fallback).
+Optional: `STABILITY_API_KEY` + `IMAGE_PROVIDER=stability` (cloud Stable Image), `STABILITY_AUDIO_MODEL=stable-audio-2` (Sound Designer), `REALESRGAN_URL=http://realesrgan:8080` (optional CPU Real-ESRGAN), `REPLICATE_API_TOKEN` (MusicGen fallback), `ELEVENLABS_API_KEY` (SFX fallback).
+
+Texture Upscaler uses Stability Fast Upscale (4×; UI 2× = 4× then downscale) when Real-ESRGAN is unavailable. Production does not fall back to silent PIL.
 
 ```bash
-# Texture upscaler (CPU VPS OK — slower than GPU)
+# Texture upscaler (optional CPU microservice — slower than Stability cloud)
 # REALESRGAN_URL=http://realesrgan:8080 in .env, then:
 docker compose --profile ai up -d --build realesrgan
 ```

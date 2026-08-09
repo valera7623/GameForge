@@ -61,7 +61,7 @@ def _synth_wav(description: str, kind: str, mood: str, duration_sec: int) -> byt
 
 
 def resolve_stability_audio_model(model: str) -> str:
-    key = (model or "stable-audio-2.5").strip().lower()
+    key = (model or "stable-audio-2").strip().lower()
     aliases = {
         "2": "stable-audio-2",
         "2.0": "stable-audio-2",
@@ -72,7 +72,7 @@ def resolve_stability_audio_model(model: str) -> str:
         "stable-audio-2.5": "stable-audio-2.5",
         "stable-audio-3": "stable-audio-3",
     }
-    return aliases.get(key, "stable-audio-2.5")
+    return aliases.get(key, "stable-audio-2")
 
 
 async def generate_sound(
@@ -123,6 +123,8 @@ async def generate_sound(
         if audio_bytes is None:
             if errors:
                 raise RuntimeError(f"Sound generation failed: {'; '.join(errors)}")
+            if settings.is_production:
+                raise RuntimeError("No sound provider configured (set STABILITY_API_KEY)")
             audio_bytes = _synth_wav(description, kind, mood, duration_sec)
             provider = "synthetic"
             fmt = "wav"

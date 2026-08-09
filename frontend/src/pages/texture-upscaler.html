@@ -95,7 +95,9 @@
         if (gen.status === "failed") throw new Error(gen.error_message || "Upscale failed");
         const out = gen.output_data;
         document.getElementById("resultPanel").hidden = false;
-        document.getElementById("sizeInfo").textContent = `${out.original_size.width}×${out.original_size.height} → ${out.upscaled_size.width}×${out.upscaled_size.height}`;
+        const provider = out.provider ? ` · ${out.provider}` : "";
+        document.getElementById("sizeInfo").textContent =
+          `${out.original_size.width}×${out.original_size.height} → ${out.upscaled_size.width}×${out.upscaled_size.height}${provider}`;
         document.getElementById("resultImg").src = out.url;
         document.getElementById("dlLink").href = out.url;
         toast(t("texture.toast", { xp: gen.xp_awarded }));
