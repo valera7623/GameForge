@@ -1943,8 +1943,9 @@ textarea {
 }
 
 .page-locforge .lf-brand-hero-block {
-  align-items: flex-start;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.85rem;
 }
 
 .page-locforge .lf-brand-hero-block .brand-mark--hero {
@@ -1968,7 +1969,8 @@ textarea {
   z-index: 1;
   min-height: calc(100vh - 4.5rem);
   display: grid;
-  align-items: end;
+  align-items: center;
+  justify-items: center;
   padding: 0;
   overflow: hidden;
 }
@@ -2037,8 +2039,10 @@ textarea {
 .page-locforge .lf-hero-copy {
   position: relative;
   z-index: 1;
+  width: min(100%, 36rem);
   max-width: 36rem;
-  padding: 4rem 2rem 5rem;
+  padding: 4rem 2rem 4.5rem;
+  justify-self: center;
 }
 
 .page-locforge .lf-brand-hero {
@@ -2049,6 +2053,7 @@ textarea {
   line-height: 0.95;
   margin: 0 0 1rem;
   color: var(--text);
+  text-align: center;
   animation: lf-brand-in 0.9s ease-out both;
 }
 

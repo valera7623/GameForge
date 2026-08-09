@@ -20,22 +20,22 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/" />
   </url>
   <url>
-    <loc>https://gameforge.website/locforge</loc>
-    <lastmod>2026-08-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.95</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/locforge" />
-    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/locforge" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/locforge" />
-  </url>
-  <url>
     <loc>https://gameforge.website/ru/locforge</loc>
     <lastmod>2026-08-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/locforge" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/en/locforge" />
     <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/locforge" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/locforge" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/ru/locforge" />
+  </url>
+  <url>
+    <loc>https://gameforge.website/en/locforge</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://gameforge.website/en/locforge" />
+    <xhtml:link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/locforge" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://gameforge.website/ru/locforge" />
   </url>
   <url>
     <loc>https://gameforge.website/tools/level-designer</loc>
