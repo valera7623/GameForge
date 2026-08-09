@@ -595,6 +595,14 @@ a:hover {
   font-size: 0.9rem;
 }
 
+.sidebar-account {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
 .sidebar-user {
   display: block;
   padding: 0.35rem 0.65rem 0.15rem;
@@ -690,6 +698,12 @@ a:hover {
   flex: 1;
   min-height: 0;
 }
+
+.sidebar-drawer > .sidebar-nav-desktop { order: 1; }
+.sidebar-drawer > .sidebar-nav-mobile { order: 1; }
+.sidebar-drawer > .sidebar-tools { order: 2; }
+.sidebar-drawer > .spacer { order: 3; }
+.sidebar-drawer > .sidebar-account { order: 4; }
 
 .sidebar-nav {
   display: flex;
@@ -1282,8 +1296,21 @@ textarea {
     display: flex;
   }
 
+  /* Keep account actions above the long tools list on mobile */
+  .sidebar-drawer > .sidebar-nav-mobile { order: 1; }
+  .sidebar-drawer > .sidebar-account { order: 2; }
+  .sidebar-drawer > .sidebar-tools { order: 3; }
+  .sidebar-drawer > .sidebar-nav-desktop,
+  .sidebar-drawer > .spacer { order: 4; }
+
   .sidebar-nav-mobile {
     display: flex;
+  }
+
+  .sidebar-account {
+    margin-top: 0.35rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--border);
   }
 
   .sidebar-tools {
@@ -1329,13 +1356,11 @@ textarea {
   }
 
   .sidebar-logout {
-    margin-top: 0.5rem;
-    border-top: 1px solid var(--border);
-    padding-top: 0.75rem;
+    margin-top: 0.15rem;
   }
 
   .sidebar-docs {
-    margin-top: 0.35rem;
+    margin-top: 0;
   }
 
   .nav-backdrop {

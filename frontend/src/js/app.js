@@ -177,7 +177,13 @@ export function sidebarHTML(active) {
           <a href="/dashboard" class="${activeKey === "dashboard" ? "active" : ""}">${t("nav.dashboard")}</a>
           <a href="/team" class="${activeKey === "team" ? "active" : ""}">${t("nav.team")}</a>
           ${adminLink}
-          <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer">${t("nav.docs")}</a>
+        </nav>
+        <nav class="sidebar-nav sidebar-nav-desktop" aria-label="${t("nav.menu")}">
+          ${ROUTES.map(
+            ([path, key]) =>
+              `<a href="/${path}" class="${activeKey === path ? "active" : ""}">${t(key)}</a>`
+          ).join("")}
+          ${adminLink}
         </nav>
         <div class="sidebar-tools">
           <p class="sidebar-tools-title">${t("dash.launch")}</p>
@@ -186,17 +192,12 @@ export function sidebarHTML(active) {
               `<a href="/${path}" class="sidebar-tool-link${activeKey === path ? " active" : ""}"><strong>${t(key)}</strong><span>${t(descKey)}</span></a>`
           ).join("")}
         </div>
-        <nav class="sidebar-nav sidebar-nav-desktop" aria-label="${t("nav.menu")}">
-          ${ROUTES.map(
-            ([path, key]) =>
-              `<a href="/${path}" class="${activeKey === path ? "active" : ""}">${t(key)}</a>`
-          ).join("")}
-          ${adminLink}
-        </nav>
         <div class="spacer"></div>
-        ${userBlock}
-        <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer" class="sidebar-docs">${t("nav.docs")}</a>
-        <a href="#" id="logoutBtn" class="sidebar-logout">${t("nav.signout")}</a>
+        <div class="sidebar-account">
+          ${userBlock}
+          <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer" class="sidebar-docs">${t("nav.docs")}</a>
+          <a href="#" id="logoutBtn" class="sidebar-logout">${t("nav.signout")}</a>
+        </div>
       </div>
     </aside>
     <div class="nav-backdrop" id="navBackdrop" hidden></div>
