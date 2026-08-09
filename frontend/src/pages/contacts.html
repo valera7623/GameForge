@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contacts &amp; details — GameForge</title>
+  <meta name="description" content="Seller contacts and details for GameForge / LocForge (YuKassa payments)." />
+  <link rel="canonical" href="https://gameforge.website/contacts" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/contacts" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/contacts" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="legal-wrap">
+    <nav class="legal-nav">
+      <a href="/">GameForge</a>
+      <a href="/offer">Offer</a>
+      <a href="/contacts">Contacts &amp; details</a>
+      <a href="/ru/contacts">RU</a>
+    </nav>
+
+    <article class="legal-doc">
+      <h1>Contacts &amp; details</h1>
+      <p class="legal-meta">Seller information for GameForge / LocForge (payments via YuKassa). Russian page: <a href="/ru/contacts">/ru/contacts</a>.</p>
+
+      <h2>Provider</h2>
+      <dl class="legal-dl">
+        <dt>Full name</dt>
+        <dd>Valeriy Mikhailovich Popov</dd>
+        <dt>Status</dt>
+        <dd>Self-employed (Russian professional income tax / NPD)</dd>
+        <dt>INN</dt>
+        <dd>220910861433</dd>
+      </dl>
+
+      <h2>Contact</h2>
+      <dl class="legal-dl">
+        <dt>Email</dt>
+        <dd><a href="mailto:valera7623@gmail.com">valera7623@gmail.com</a></dd>
+        <dt>Website</dt>
+        <dd><a href="https://gameforge.website">https://gameforge.website</a></dd>
+        <dt>Phone</dt>
+        <dd><a href="tel:+79612338264">+7 961 233-82-64</a></dd>
+        <dt>Postal address</dt>
+        <dd>Available on request by email (online service)</dd>
+      </dl>
+
+      <h2>Documents</h2>
+      <ul>
+        <li><a href="/offer">Public offer</a> (Russian version: <a href="/ru/offer">/ru/offer</a>)</li>
+        <li>Payments in RUB via YuKassa</li>
+      </ul>
+    </article>
+  </div>
+  <script type="module">
+    import { setLang } from "/src/js/i18n.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    import { initAnalytics } from "/src/js/analytics.js";
+    initAnalytics();
+    setLang("en");
+    applyTheme(getTheme());
+    bindThemeToggles();
+  </script>
+</body>
+</html>

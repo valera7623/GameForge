@@ -35,6 +35,11 @@
 
 Webhook: `POST /api/v1/billing/webhook/yukassa`.
 
+Юридические страницы на сайте (требования ЮKassa):
+
+- [Публичная оферта](https://gameforge.website/ru/offer)
+- [Контакты и реквизиты](https://gameforge.website/ru/contacts)
+
 Stripe остаётся опциональным fallback (`BILLING_PROVIDER=stripe`).
 
 ## Локальный mock

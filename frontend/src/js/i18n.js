@@ -168,6 +168,7 @@ const DICT = {
     "register.password_ph": "At least 10 characters",
     "register.password_hint": "Minimum 10 characters",
     "register.submit": "Create account",
+    "register.legal": "By creating an account you accept the <a href=\"/offer\">public offer</a> and confirm the <a href=\"/contacts\">seller details</a>.",
     "register.have": "Already have an account?",
     "register.signin": "Sign in",
 
@@ -888,6 +889,7 @@ const DICT = {
     "register.password_ph": "Не меньше 10 символов",
     "register.password_hint": "Минимум 10 символов",
     "register.submit": "Зарегистрироваться",
+    "register.legal": "Регистрируясь, вы принимаете <a href=\"/ru/offer\">публичную оферту</a> и подтверждаете ознакомление с <a href=\"/ru/contacts\">контактами и реквизитами</a>.",
     "register.have": "Уже есть аккаунт?",
     "register.signin": "Войти",
 

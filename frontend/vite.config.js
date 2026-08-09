@@ -70,9 +70,13 @@ const CLEAN_URLS = {
   "/faq": "/src/pages/faq.html",
   "/blog": "/src/pages/blog.html",
   "/blog/post": "/src/pages/blog-post.html",
+  "/offer": "/src/pages/offer.html",
+  "/contacts": "/src/pages/contacts.html",
   "/ru/faq": "/src/pages/ru/faq.html",
   "/ru/blog": "/src/pages/ru/blog.html",
   "/ru/blog/post": "/src/pages/ru/blog-post.html",
+  "/ru/offer": "/src/pages/ru/offer.html",
+  "/ru/contacts": "/src/pages/ru/contacts.html",
 };
 
 function cleanUrlsPlugin() {
@@ -168,9 +172,13 @@ export default defineConfig({
         faq: resolve(__dirname, "src/pages/faq.html"),
         blog: resolve(__dirname, "src/pages/blog.html"),
         blogPost: resolve(__dirname, "src/pages/blog-post.html"),
+        offer: resolve(__dirname, "src/pages/offer.html"),
+        contacts: resolve(__dirname, "src/pages/contacts.html"),
         ruFaq: resolve(__dirname, "src/pages/ru/faq.html"),
         ruBlog: resolve(__dirname, "src/pages/ru/blog.html"),
         ruBlogPost: resolve(__dirname, "src/pages/ru/blog-post.html"),
+        ruOffer: resolve(__dirname, "src/pages/ru/offer.html"),
+        ruContacts: resolve(__dirname, "src/pages/ru/contacts.html"),
       },
     },
   },

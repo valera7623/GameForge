@@ -35,6 +35,11 @@ When `DISABLE_BILLING=true`:
 
 Webhook: `POST /api/v1/billing/webhook/yukassa`.
 
+Legal pages (YuKassa store requirements):
+
+- [Public offer (RU)](https://gameforge.website/ru/offer)
+- [Contacts & details (RU)](https://gameforge.website/ru/contacts)
+
 Stripe remains an optional fallback (`BILLING_PROVIDER=stripe`).
 
 ## Local mock
