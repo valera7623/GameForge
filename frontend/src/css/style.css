@@ -1884,8 +1884,8 @@ textarea {
   --lf-citrus-ink: #1a2a0a;
   --lf-line: rgba(20, 53, 47, 0.12);
   --lf-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --font-display: "Syne", sans-serif;
-  --font-body: "Source Sans 3", sans-serif;
+  --font-display: "Orbitron", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --bg: var(--lf-paper);
   --bg-elevated: #ffffff;
   --bg-soft: var(--lf-mist);
@@ -1899,9 +1899,10 @@ textarea {
   --brand-grad-1: var(--lf-ink);
   --brand-grad-2: #1f6b5c;
   --brand-grad-3: #8fa82a;
-  background:
-    radial-gradient(ellipse 80% 50% at 85% 10%, rgba(183, 212, 58, 0.18), transparent 55%),
-    linear-gradient(165deg, var(--lf-mist) 0%, var(--lf-paper) 42%, #e8f0eb 100%);
+  --grid-line: rgba(31, 107, 92, 0.08);
+  --glow: rgba(183, 212, 58, 0.16);
+  --canvas-bg: #e4ebe7;
+  background: var(--bg);
 }
 
 [data-theme="dark"] .page-locforge {
@@ -1924,14 +1925,10 @@ textarea {
   --brand-grad-1: #e4efe9;
   --brand-grad-2: #6ec4b0;
   --brand-grad-3: #c5e04a;
-  background:
-    radial-gradient(ellipse 70% 45% at 90% 0%, rgba(197, 224, 74, 0.12), transparent 50%),
-    linear-gradient(165deg, #0a1210 0%, var(--lf-paper) 50%, #12201c 100%);
-}
-
-.page-locforge .bg-grid,
-.page-locforge .bg-glow {
-  display: none;
+  --grid-line: rgba(110, 196, 176, 0.06);
+  --glow: rgba(197, 224, 74, 0.12);
+  --canvas-bg: #0a1210;
+  background: var(--bg);
 }
 
 .page-locforge .lf-nav {
@@ -1939,18 +1936,7 @@ textarea {
 }
 
 .page-locforge .lf-brand {
-  letter-spacing: -0.02em;
-}
-
-.page-locforge .lf-brand-hero-block {
-  align-items: center;
-  width: 100%;
-  margin-bottom: 0.85rem;
-}
-
-.page-locforge .lf-brand-hero-block .brand-mark--hero {
-  width: clamp(3.2rem, 10vw, 5rem);
-  height: clamp(2.7rem, 8.5vw, 4.25rem);
+  letter-spacing: 0.06em;
 }
 
 .page-locforge .btn-primary {
@@ -1964,22 +1950,15 @@ textarea {
   text-decoration: none;
 }
 
-.page-locforge .lf-hero {
+.page-locforge .lf-stage-visual {
   position: relative;
-  z-index: 1;
-  min-height: calc(100vh - 4.5rem);
-  display: grid;
-  align-items: center;
-  justify-items: center;
-  padding: 0;
+  width: min(100%, 34rem);
+  height: min(62vh, 26rem);
+  border-radius: 14px;
   overflow: hidden;
-}
-
-.page-locforge .lf-hero-plane {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, var(--bg-elevated), var(--bg-soft));
+  box-shadow: var(--shadow);
 }
 
 .page-locforge .lf-string-sheet {
@@ -1987,17 +1966,17 @@ textarea {
   inset: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  padding: 1.5rem 2rem 8rem;
-  opacity: 0.55;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  opacity: 0.72;
 }
 
 .page-locforge .lf-string-col {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.55rem;
   font-family: var(--lf-mono);
-  font-size: clamp(0.72rem, 1.4vw, 0.92rem);
+  font-size: clamp(0.68rem, 1.2vw, 0.82rem);
   color: var(--text);
   animation: lf-sheet-drift 28s linear infinite;
 }
@@ -2005,82 +1984,21 @@ textarea {
 .page-locforge .lf-string-col--b {
   animation-duration: 36s;
   animation-direction: reverse;
-  margin-top: 2.5rem;
+  margin-top: 1.75rem;
   opacity: 0.85;
 }
 
 .page-locforge .lf-string-col span {
   display: block;
   white-space: nowrap;
-  padding: 0.35rem 0.6rem;
+  padding: 0.35rem 0.55rem;
   border-left: 2px solid var(--lf-citrus);
-  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
 }
 
 @keyframes lf-sheet-drift {
   from { transform: translateY(0); }
   to { transform: translateY(-40%); }
-}
-
-.page-locforge .lf-hero-fade {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, var(--lf-paper) 0%, color-mix(in srgb, var(--lf-paper) 55%, transparent) 42%, transparent 70%),
-    linear-gradient(0deg, var(--lf-paper) 0%, transparent 38%);
-}
-
-[data-theme="dark"] .page-locforge .lf-hero-fade {
-  background:
-    linear-gradient(90deg, var(--lf-paper) 0%, color-mix(in srgb, var(--lf-paper) 60%, transparent) 45%, transparent 72%),
-    linear-gradient(0deg, var(--lf-paper) 0%, transparent 40%);
-}
-
-.page-locforge .lf-hero-copy {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 36rem);
-  max-width: 36rem;
-  padding: 4rem 2rem 4.5rem;
-  justify-self: center;
-}
-
-.page-locforge .lf-brand-hero {
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 12vw, 5.5rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 0.95;
-  margin: 0 0 1rem;
-  color: var(--text);
-  text-align: center;
-  animation: lf-brand-in 0.9s ease-out both;
-}
-
-.page-locforge .lf-hero h1 {
-  font-family: var(--font-display);
-  font-size: clamp(1.35rem, 3.2vw, 1.85rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  margin: 0 0 1rem;
-  max-width: 18ch;
-  color: var(--text);
-  animation: fade-up 0.85s ease-out 0.12s both;
-}
-
-.page-locforge .lf-hero .lede {
-  max-width: 34ch;
-  animation: fade-up 0.85s ease-out 0.24s both;
-}
-
-.page-locforge .lf-hero .cta-row {
-  animation: fade-up 0.85s ease-out 0.36s both;
-}
-
-@keyframes lf-brand-in {
-  from { opacity: 0; transform: translateY(18px); letter-spacing: 0.06em; }
-  to { opacity: 1; transform: translateY(0); letter-spacing: -0.04em; }
 }
 
 .page-locforge .lf-section {
@@ -2223,19 +2141,20 @@ textarea {
 }
 
 @media (max-width: 800px) {
+  .page-locforge .lf-stage-visual {
+    width: 100%;
+    max-width: 28rem;
+    height: 20rem;
+    margin: 0 auto;
+  }
+
   .page-locforge .lf-string-sheet {
     grid-template-columns: 1fr;
-    padding-right: 1rem;
+    padding: 1rem;
   }
 
   .page-locforge .lf-string-col--b {
     display: none;
-  }
-
-  .page-locforge .lf-hero-fade {
-    background:
-      linear-gradient(90deg, var(--lf-paper) 0%, color-mix(in srgb, var(--lf-paper) 70%, transparent) 55%, transparent 100%),
-      linear-gradient(0deg, var(--lf-paper) 8%, transparent 45%);
   }
 
   .page-locforge .lf-price-row {

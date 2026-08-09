@@ -26,7 +26,7 @@
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
   <script type="application/ld+json">
   {
@@ -54,6 +54,8 @@
   </script>
 </head>
 <body class="page-landing page-locforge">
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
   <header class="topnav lf-nav">
     <a class="brand lf-brand" href="/en/locforge"><span class="brand-mark" aria-hidden="true"></span><span class="brand-text">LocForge</span></a>
     <nav>
@@ -67,55 +69,56 @@
   </header>
 
   <main>
-    <section class="lf-hero" aria-label="LocForge">
-      <div class="lf-hero-plane" aria-hidden="true">
-        <div class="lf-string-sheet">
-          <div class="lf-string-col lf-string-col--a">
-            <span>ui.start — Start</span>
-            <span>ui.start — Начать</span>
-            <span>ui.start — Empezar</span>
-            <span>ui.start — Starten</span>
-            <span>npc.mira — Mira</span>
-            <span>npc.mira — Mira</span>
-            <span>quest.01 — Find the key</span>
-            <span>quest.01 — Найди ключ</span>
-            <span>item.blade — Ashen Blade</span>
-            <span>item.blade — Клинок пепла</span>
-            <span>ui.start — Start</span>
-            <span>ui.start — Начать</span>
-            <span>ui.start — Empezar</span>
-            <span>ui.start — Starten</span>
-          </div>
-          <div class="lf-string-col lf-string-col--b">
-            <span>menu.quit — Quit</span>
-            <span>menu.quit — Выйти</span>
-            <span>menu.quit — Salir</span>
-            <span>dlg.guard — Halt!</span>
-            <span>dlg.guard — Стой!</span>
-            <span>hint.jump — Press Space</span>
-            <span>hint.jump — Нажмите Space</span>
-            <span>err.long — STRING TOO LONG</span>
-            <span>pseudo — àçćéñţš</span>
-            <span>menu.quit — Quit</span>
-            <span>menu.quit — Выйти</span>
-            <span>menu.quit — Salir</span>
-            <span>dlg.guard — Halt!</span>
-            <span>dlg.guard — Стой!</span>
-          </div>
-        </div>
-        <div class="lf-hero-fade"></div>
-      </div>
-
-      <div class="lf-hero-copy">
-        <div class="brand-hero-block lf-brand-hero-block">
+    <section class="hero hero--split lf-hero" aria-label="LocForge">
+      <div class="hero-copy">
+        <div class="brand-hero-block brand-hero-block--start">
           <span class="brand-mark brand-mark--hero" aria-hidden="true"></span>
-          <p class="lf-brand-hero">LocForge</p>
+          <p class="brand-hero">LocForge</p>
         </div>
         <h1>Indie game localization in one evening</h1>
         <p class="lede">CSV in, glossary-locked names, length QA, Unity and Godot out — without a translation bureau.</p>
         <div class="cta-row">
           <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary btn-lg">Localize your first CSV</a>
           <a href="#how" class="btn btn-ghost btn-lg">See how</a>
+        </div>
+      </div>
+
+      <div class="hero-stage" aria-hidden="true">
+        <div class="lf-stage-visual">
+          <div class="lf-string-sheet">
+            <div class="lf-string-col lf-string-col--a">
+              <span>ui.start — Start</span>
+              <span>ui.start — Начать</span>
+              <span>ui.start — Empezar</span>
+              <span>ui.start — Starten</span>
+              <span>npc.mira — Mira</span>
+              <span>npc.mira — Mira</span>
+              <span>quest.01 — Find the key</span>
+              <span>quest.01 — Найди ключ</span>
+              <span>item.blade — Ashen Blade</span>
+              <span>item.blade — Клинок пепла</span>
+              <span>ui.start — Start</span>
+              <span>ui.start — Начать</span>
+              <span>ui.start — Empezar</span>
+              <span>ui.start — Starten</span>
+            </div>
+            <div class="lf-string-col lf-string-col--b">
+              <span>menu.quit — Quit</span>
+              <span>menu.quit — Выйти</span>
+              <span>menu.quit — Salir</span>
+              <span>dlg.guard — Halt!</span>
+              <span>dlg.guard — Стой!</span>
+              <span>hint.jump — Press Space</span>
+              <span>hint.jump — Нажмите Space</span>
+              <span>err.long — STRING TOO LONG</span>
+              <span>pseudo — àçćéñţš</span>
+              <span>menu.quit — Quit</span>
+              <span>menu.quit — Выйти</span>
+              <span>menu.quit — Salir</span>
+              <span>dlg.guard — Halt!</span>
+              <span>dlg.guard — Стой!</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
