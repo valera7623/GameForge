@@ -16,7 +16,14 @@ from app.deps import get_current_user
 from app.models.generation import Generation, GenerationStatus
 from app.models.project import GameEngine, Project
 from app.models.user import User
-from app.schemas import ProjectCreate, ProjectResponse, ProjectUpdate
+from app.schemas import (
+    ProjectCreate,
+    ProjectGlossaryResponse,
+    ProjectGlossaryUpdate,
+    ProjectResponse,
+    ProjectUpdate,
+)
+from app.services.ai_localization import normalize_glossary
 from app.services.storage import download_bytes
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -126,6 +133,30 @@ async def delete_project(
 ):
     project = await _owned_project(db, user, project_id)
     await db.delete(project)
+
+
+@router.get("/{project_id}/glossary", response_model=ProjectGlossaryResponse)
+async def get_project_glossary(
+    project_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    project = await _owned_project(db, user, project_id)
+    glossary = normalize_glossary(project.localization_glossary) or {}
+    return ProjectGlossaryResponse(project_id=project.id, glossary=glossary)
+
+
+@router.put("/{project_id}/glossary", response_model=ProjectGlossaryResponse)
+async def put_project_glossary(
+    project_id: UUID,
+    body: ProjectGlossaryUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    project = await _owned_project(db, user, project_id)
+    project.localization_glossary = body.glossary or {}
+    await db.flush()
+    return ProjectGlossaryResponse(project_id=project.id, glossary=project.localization_glossary)
 
 
 @router.get("/{project_id}/export")

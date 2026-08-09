@@ -487,7 +487,67 @@ class LocalizationRequest(BaseModel):
     texts: dict[str, str]  # key -> source text
     source_lang: str = "en"
     target_langs: List[str] = Field(default_factory=lambda: ["ru", "es", "de", "fr", "ja"])
-    export_format: str = Field(default="json", pattern="^(json|csv)$")
+    export_format: str = Field(
+        default="json",
+        pattern="^(json|csv|unity_csv|unity_json|godot_csv)$",
+    )
+    # term (source spelling) → { lang_code → required translation }
+    glossary: Optional[dict[str, dict[str, str]]] = None
+    include_qa: bool = True
+    include_pseudo: bool = True
+
+    @model_validator(mode="after")
+    def _normalize_glossary(self) -> "LocalizationRequest":
+        if not self.glossary:
+            self.glossary = None
+            return self
+        cleaned: dict[str, dict[str, str]] = {}
+        for term, langs in self.glossary.items():
+            term_key = (term or "").strip()
+            if not term_key or not isinstance(langs, dict):
+                continue
+            lang_map = {
+                str(code).strip().lower(): str(val)
+                for code, val in langs.items()
+                if str(code).strip() and str(val).strip()
+            }
+            if lang_map:
+                cleaned[term_key] = lang_map
+        self.glossary = cleaned or None
+        return self
+
+
+class LocalizationCsvParseResponse(BaseModel):
+    texts: dict[str, str]
+    key_count: int
+    warnings: List[str] = Field(default_factory=list)
+    delimiter: str = ","
+
+
+class ProjectGlossaryResponse(BaseModel):
+    project_id: UUID
+    glossary: dict[str, dict[str, str]] = Field(default_factory=dict)
+
+
+class ProjectGlossaryUpdate(BaseModel):
+    glossary: dict[str, dict[str, str]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _normalize(self) -> "ProjectGlossaryUpdate":
+        cleaned: dict[str, dict[str, str]] = {}
+        for term, langs in (self.glossary or {}).items():
+            term_key = (term or "").strip()
+            if not term_key or not isinstance(langs, dict):
+                continue
+            lang_map = {
+                str(code).strip().lower(): str(val)
+                for code, val in langs.items()
+                if str(code).strip() and str(val).strip()
+            }
+            if lang_map:
+                cleaned[term_key] = lang_map
+        self.glossary = cleaned
+        return self
 
 
 # ── Billing ───────────────────────────────────────────────────────────

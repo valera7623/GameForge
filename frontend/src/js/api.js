@@ -104,6 +104,9 @@ export const ProjectsAPI = {
   create: (body) => api("/projects", { method: "POST", body: JSON.stringify(body) }),
   get: (id) => api(`/projects/${id}`),
   delete: (id) => api(`/projects/${id}`, { method: "DELETE" }),
+  getGlossary: (id) => api(`/projects/${id}/glossary`),
+  putGlossary: (id, glossary) =>
+    api(`/projects/${id}/glossary`, { method: "PUT", body: JSON.stringify({ glossary }) }),
   exportUrl: (id) => `${API_BASE}/projects/${id}/export`,
 };
 
@@ -116,6 +119,15 @@ export const ToolsAPI = {
   sound: (body) => api("/sound-designer", { method: "POST", body: JSON.stringify(body) }),
   playtest: (body) => api("/playtester", { method: "POST", body: JSON.stringify(body) }),
   localize: (body) => api("/localization", { method: "POST", body: JSON.stringify(body) }),
+  /** @param {File} file */
+  parseLocalizationCsv: async (file) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return api("/localization/parse-csv", { method: "POST", body: fd, headers: {} });
+  },
+  localizationLanguages: () => api("/localization/languages"),
+  /** Pseudo-locale only (no generation quota). */
+  localizationPseudo: (body) => api("/localization/pseudo", { method: "POST", body: JSON.stringify(body) }),
   balance: (body) => api("/game-balancer", { method: "POST", body: JSON.stringify(body) }),
   levelAnalyze: (body) => api("/level-analyzer", { method: "POST", body: JSON.stringify(body) }),
   levelCompare: (body) => api("/level-analyzer/compare", { method: "POST", body: JSON.stringify(body) }),

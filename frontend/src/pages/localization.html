@@ -8,6 +8,15 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .glossary-wrap { overflow-x: auto; margin-top: 0.5rem; }
+    .glossary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .glossary-table th, .glossary-table td { padding: 0.35rem 0.4rem; text-align: left; vertical-align: middle; }
+    .glossary-table th { color: var(--muted); font-weight: 500; white-space: nowrap; }
+    .glossary-table input[type="text"] { width: 100%; min-width: 5.5rem; }
+    .glossary-table td:last-child { width: 2.5rem; }
+    .glossary-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.5rem; }
+  </style>
   <script>
     (function () {
       var th = localStorage.getItem("gf_theme") || "light";
@@ -23,33 +32,99 @@
 
       <div class="page-header"><div>
         <h1 data-i18n="loc.h1">AI Localization</h1>
-        <p data-i18n="loc.sub">Translate game strings to 20+ languages. Export JSON or CSV.</p>
+        <p data-i18n="loc.sub">Translate game strings to 20+ languages. CSV, glossary, QA, Unity/Godot export.</p>
       </div></div>
       <div class="panel">
         <form id="form" class="form-grid">
           <label><span data-i18n="loc.texts">Source texts</span>
-            <textarea name="texts" required rows="8">{
+            <textarea name="texts" id="textsInput" required rows="8">{
   "ui.start": "Start game",
   "quest.intro": "Welcome, traveler."
 }</textarea>
           </label>
+          <div class="form-row" style="align-items:end">
+            <label style="flex:1">
+              <span data-i18n="loc.csv_upload">Or upload CSV</span>
+              <input type="file" id="csvFile" accept=".csv,text/csv" />
+            </label>
+            <p id="csvStatus" class="form-hint" style="margin:0;color:var(--muted);flex:1" hidden></p>
+          </div>
+          <p class="form-hint" style="margin:0;color:var(--muted);font-size:0.85rem" data-i18n="loc.csv_hint">
+            CSV columns: key,source (or key,en / key,text). UTF-8, comma or semicolon.
+          </p>
+
           <div class="form-row">
-            <label><span data-i18n="loc.source">Source lang</span> <input name="source_lang" value="en" /></label>
-            <label><span data-i18n="loc.targets">Target langs</span> <input name="target_langs" value="ru,es,de,fr,ja" /></label>
+            <label><span data-i18n="loc.source">Source lang</span> <input name="source_lang" id="sourceLang" value="en" /></label>
+            <label><span data-i18n="loc.targets">Target langs</span> <input name="target_langs" id="targetLangs" value="ru,es,de,fr,ja" /></label>
             <label><span data-i18n="loc.export">Export</span>
-              <select name="export_format"><option value="json">JSON</option><option value="csv">CSV</option></select>
+              <select name="export_format" id="exportFormat">
+                <option value="json">JSON</option>
+                <option value="csv">CSV</option>
+                <option value="unity_csv">Unity CSV</option>
+                <option value="unity_json">Unity JSON</option>
+                <option value="godot_csv">Godot CSV</option>
+              </select>
             </label>
             <label><span data-i18n="common.project">Project</span>
               <select name="project_id" id="projectSelect"><option value="" data-i18n="common.none">— none —</option></select>
             </label>
           </div>
-          <button class="btn btn-primary" type="submit" data-i18n="loc.submit">Translate</button>
+          <div class="form-row">
+            <label style="display:flex;align-items:center;gap:0.4rem">
+              <input type="checkbox" name="include_qa" id="includeQa" checked />
+              <span data-i18n="loc.include_qa">Length QA</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:0.4rem">
+              <input type="checkbox" name="include_pseudo" id="includePseudo" checked />
+              <span data-i18n="loc.include_pseudo">Pseudo-locale</span>
+            </label>
+          </div>
+
+          <div>
+            <span data-i18n="loc.glossary">Glossary (optional)</span>
+            <p class="form-hint" style="margin:0.25rem 0 0;color:var(--muted);font-size:0.85rem" data-i18n="loc.glossary_hint">
+              Force exact translations for character names and UI terms. Columns follow target langs.
+            </p>
+            <div class="glossary-wrap">
+              <table class="glossary-table" id="glossaryTable">
+                <thead><tr id="glossaryHead"></tr></thead>
+                <tbody id="glossaryBody"></tbody>
+              </table>
+            </div>
+            <div class="glossary-toolbar">
+              <button type="button" class="btn btn-ghost" id="glossaryAdd" data-i18n="loc.glossary_add">+ Term</button>
+              <button type="button" class="btn btn-ghost" id="glossaryClear" data-i18n="loc.glossary_clear">Clear</button>
+            </div>
+          </div>
+
+          <div class="form-row" style="gap:0.75rem">
+            <button class="btn btn-primary" type="submit" data-i18n="loc.submit">Translate</button>
+            <button class="btn btn-ghost" type="button" id="btnPseudo" data-i18n="loc.pseudo_btn">Pseudo only</button>
+          </div>
         </form>
         <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="loc.loading">Translating…</span></div>
       </div>
       <div class="panel" id="resultPanel" hidden>
         <h2 data-i18n="loc.result">Translations</h2>
-        <div class="actions"><button class="btn btn-ghost" id="dlExport" data-i18n="loc.dl">Download export</button></div>
+        <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+          <button class="btn btn-ghost" id="dlExport" data-i18n="loc.dl">Download export</button>
+          <button class="btn btn-ghost" id="dlPseudo" data-i18n="loc.dl_pseudo" hidden>Download pseudo</button>
+        </div>
+        <p id="qaSummary" style="color:var(--muted);margin-top:0.75rem" hidden></p>
+        <div class="glossary-wrap" id="qaWrap" hidden>
+          <table class="glossary-table" id="qaTable">
+            <thead>
+              <tr>
+                <th data-i18n="loc.qa_key">Key</th>
+                <th data-i18n="loc.qa_lang">Lang</th>
+                <th data-i18n="loc.qa_flag">Flag</th>
+                <th data-i18n="loc.qa_ratio">Ratio</th>
+                <th data-i18n="loc.qa_lengths">Lens</th>
+              </tr>
+            </thead>
+            <tbody id="qaBody"></tbody>
+          </table>
+        </div>
         <div class="result-box" style="margin-top:1rem"><pre id="jsonOut"></pre></div>
       </div>
       <div class="panel" id="toolHistory" style="margin-top:1rem"></div>
@@ -60,15 +135,181 @@
     import { ProjectsAPI, ToolsAPI, downloadJSON, downloadText } from "../js/api.js";
     import { mountToolHistory } from "../js/tool-history.js";
     import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
+    import { csvErrorToI18n, parseSourceCsv } from "../js/loc-csv.js";
+    import {
+      collectGlossaryFromDom,
+      loadGlossary,
+      makeGlossaryRow,
+      parseTargetLangs,
+      renderGlossaryTable,
+      saveGlossary,
+    } from "../js/loc-glossary.js";
+
     if (!requireAuth()) throw new Error("auth");
     mountShell("localization");
     applyDomI18n(document);
     mountToolHistory("localization");
+
     let last = null;
-    ProjectsAPI.list().then(list => {
-      const sel = document.getElementById("projectSelect");
-      list.forEach(p => { const o = document.createElement("option"); o.value = p.id; o.textContent = p.name; sel.appendChild(o); });
+    const textsInput = document.getElementById("textsInput");
+    const csvStatus = document.getElementById("csvStatus");
+    const projectSelect = document.getElementById("projectSelect");
+    const targetLangsInput = document.getElementById("targetLangs");
+    const glossaryHead = document.getElementById("glossaryHead");
+    const glossaryBody = document.getElementById("glossaryBody");
+
+    let lastProjectId = "";
+
+    function currentProjectId() {
+      return projectSelect.value || "";
+    }
+
+    function currentLangs() {
+      const langs = parseTargetLangs(targetLangsInput.value);
+      return langs.length ? langs : ["ru"];
+    }
+
+    function removeRow(row) {
+      row.remove();
+      if (!glossaryBody.querySelector("tr[data-glossary-row]")) {
+        glossaryBody.appendChild(makeGlossaryRow(currentLangs(), "", {}, removeRow, glossaryUiOpts()));
+      }
+      persistGlossary();
+    }
+
+    function glossaryUiOpts() {
+      return {
+        termHeader: t("loc.glossary_term"),
+        termPlaceholder: t("loc.glossary_term_ph"),
+        removeLabel: t("loc.glossary_remove"),
+      };
+    }
+
+    function applyGlossaryData(glossary) {
+      renderGlossaryTable(
+        glossaryBody,
+        glossaryHead,
+        currentLangs(),
+        glossary || {},
+        removeRow,
+        glossaryUiOpts(),
+      );
+    }
+
+    async function loadGlossaryForProject(projectId) {
+      if (!projectId) return loadGlossary("") || {};
+      try {
+        const res = await ProjectsAPI.getGlossary(projectId);
+        const glossary = res.glossary || {};
+        saveGlossary(projectId, glossary); // mirror to localStorage cache
+        return glossary;
+      } catch {
+        return loadGlossary(projectId) || {};
+      }
+    }
+
+    function refreshGlossaryColumns(fromDom) {
+      const langs = currentLangs();
+      if (fromDom && glossaryBody.querySelector("tr[data-glossary-row]")) {
+        const prevLangs = [...new Set(
+          [...glossaryBody.querySelectorAll("[data-g-lang]")].map((el) => el.dataset.gLang)
+        )];
+        const glossary = collectGlossaryFromDom(glossaryBody, prevLangs.length ? prevLangs : langs) || {};
+        applyGlossaryData(glossary);
+        return;
+      }
+      loadGlossaryForProject(currentProjectId()).then(applyGlossaryData);
+    }
+
+    function persistGlossary(projectId) {
+      const pid = projectId !== undefined ? projectId : currentProjectId();
+      const glossary = collectGlossaryFromDom(glossaryBody, currentLangs()) || {};
+      saveGlossary(pid, glossary);
+      if (pid) {
+        ProjectsAPI.putGlossary(pid, glossary).catch(() => {
+          toast(t("loc.glossary_save_failed"), true);
+        });
+      }
+    }
+
+    ProjectsAPI.list().then((list) => {
+      list.forEach((p) => {
+        const o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.name;
+        projectSelect.appendChild(o);
+      });
+      lastProjectId = currentProjectId();
+      refreshGlossaryColumns(false);
+    }).catch(() => {
+      lastProjectId = currentProjectId();
+      refreshGlossaryColumns(false);
     });
+
+    projectSelect.addEventListener("change", () => {
+      persistGlossary(lastProjectId);
+      lastProjectId = currentProjectId();
+      refreshGlossaryColumns(false);
+    });
+
+    let langsTimer = null;
+    targetLangsInput.addEventListener("input", () => {
+      clearTimeout(langsTimer);
+      langsTimer = setTimeout(() => refreshGlossaryColumns(true), 400);
+    });
+
+    glossaryBody.addEventListener("change", () => persistGlossary());
+    glossaryBody.addEventListener("blur", () => persistGlossary(), true);
+
+    document.getElementById("glossaryAdd").addEventListener("click", () => {
+      glossaryBody.appendChild(makeGlossaryRow(currentLangs(), "", {}, removeRow, glossaryUiOpts()));
+    });
+
+    document.getElementById("glossaryClear").addEventListener("click", () => {
+      applyGlossaryData({});
+      persistGlossary();
+    });
+
+    document.getElementById("csvFile").addEventListener("change", async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        let texts;
+        let warnings = [];
+        let keyCount = 0;
+        try {
+          const parsed = await ToolsAPI.parseLocalizationCsv(file);
+          texts = parsed.texts;
+          warnings = parsed.warnings || [];
+          keyCount = parsed.key_count || Object.keys(texts).length;
+        } catch {
+          // Fallback: client-side parser (offline / older API)
+          const content = await file.text();
+          const parsed = parseSourceCsv(content);
+          texts = parsed.texts;
+          warnings = parsed.warnings || [];
+          keyCount = parsed.keyCount;
+        }
+        textsInput.value = JSON.stringify(texts, null, 2);
+        csvStatus.hidden = false;
+        csvStatus.textContent = t("loc.csv_loaded", { count: keyCount, file: file.name });
+        if (warnings.length) {
+          toast(t("loc.csv_warnings", { count: warnings.length }), false);
+        } else {
+          toast(t("loc.csv_loaded", { count: keyCount, file: file.name }));
+        }
+      } catch (err) {
+        const mapped = csvErrorToI18n(err);
+        const msg = err?.message && !String(err.message).startsWith("csv_") && err.message !== "empty_csv"
+          ? err.message
+          : t(mapped.key, mapped.params || {});
+        csvStatus.hidden = false;
+        csvStatus.textContent = msg;
+        toast(msg, true);
+        e.target.value = "";
+      }
+    });
+
     document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -83,25 +324,128 @@
         if (!texts || typeof texts !== "object" || Array.isArray(texts)) {
           throw new Error(t("loc.json_object"));
         }
+        const target_langs = parseTargetLangs(fd.get("target_langs"));
+        const glossary = collectGlossaryFromDom(glossaryBody, target_langs);
+        persistGlossary();
         const body = {
           texts,
           source_lang: fd.get("source_lang"),
-          target_langs: String(fd.get("target_langs")).split(",").map(s => s.trim()).filter(Boolean),
+          target_langs,
           export_format: fd.get("export_format"),
+          include_qa: fd.get("include_qa") === "on",
+          include_pseudo: fd.get("include_pseudo") === "on",
         };
         if (fd.get("project_id")) body.project_id = fd.get("project_id");
+        if (glossary) body.glossary = glossary;
         const gen = await ToolsAPI.localize(body);
         last = gen.output_data;
-        document.getElementById("resultPanel").hidden = false;
-        document.getElementById("jsonOut").textContent = JSON.stringify(last.translations, null, 2);
-        toast(t("loc.toast", { count: last.key_count || Object.keys(texts).length, xp: gen.xp_awarded }));
+        renderResult(last, texts);
+        const hits = last.glossary_hits || 0;
+        const qa = last.qa_issue_count || 0;
+        let msg = t("loc.toast", { count: last.key_count || Object.keys(texts).length, xp: gen.xp_awarded });
+        if (hits) msg += ` · ${t("loc.glossary_hits", { count: hits })}`;
+        if (qa) msg += ` · ${t("loc.qa_toast", { count: qa })}`;
+        toast(msg);
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     });
+
+    function renderResult(data, texts) {
+      document.getElementById("resultPanel").hidden = false;
+      document.getElementById("jsonOut").textContent = JSON.stringify(data.translations, null, 2);
+
+      const qaWrap = document.getElementById("qaWrap");
+      const qaBody = document.getElementById("qaBody");
+      const qaSummary = document.getElementById("qaSummary");
+      const issues = data.qa_issues || [];
+      qaBody.innerHTML = "";
+      if (issues.length) {
+        qaWrap.hidden = false;
+        qaSummary.hidden = false;
+        qaSummary.textContent = t("loc.qa_summary", { count: issues.length });
+        issues.forEach((issue) => {
+          const tr = document.createElement("tr");
+          const flagLabel = issue.flag === "too_long" ? t("loc.qa_too_long") : t("loc.qa_too_short");
+          tr.innerHTML = `<td>${escapeHtml(issue.key)}</td><td>${escapeHtml(issue.lang)}</td><td>${escapeHtml(flagLabel)}</td><td>${issue.ratio}</td><td>${issue.source_len}→${issue.trans_len}</td>`;
+          qaBody.appendChild(tr);
+        });
+      } else if (typeof data.qa_issue_count === "number") {
+        qaWrap.hidden = true;
+        qaSummary.hidden = false;
+        qaSummary.textContent = t("loc.qa_ok");
+      } else {
+        qaWrap.hidden = true;
+        qaSummary.hidden = true;
+      }
+
+      const dlPseudo = document.getElementById("dlPseudo");
+      dlPseudo.hidden = !data.pseudo;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function parseTextsFromForm() {
+      const raw = String(document.getElementById("textsInput").value || "").trim();
+      const texts = JSON.parse(raw);
+      if (!texts || typeof texts !== "object" || Array.isArray(texts)) {
+        throw new Error(t("loc.json_object"));
+      }
+      return texts;
+    }
+
+    document.getElementById("btnPseudo").addEventListener("click", async () => {
+      setLoading(document.getElementById("loader"), true);
+      try {
+        const texts = parseTextsFromForm();
+        const data = await ToolsAPI.localizationPseudo({
+          texts,
+          source_lang: document.getElementById("sourceLang").value || "en",
+        });
+        last = {
+          export_format: "json",
+          export: data.pseudo,
+          translations: { pseudo: data.pseudo },
+          pseudo: data.pseudo,
+          key_count: data.key_count,
+        };
+        document.getElementById("resultPanel").hidden = false;
+        document.getElementById("jsonOut").textContent = JSON.stringify(data.pseudo, null, 2);
+        document.getElementById("qaWrap").hidden = true;
+        document.getElementById("qaSummary").hidden = true;
+        document.getElementById("dlPseudo").hidden = false;
+        toast(t("loc.pseudo_toast", { count: data.key_count }));
+      } catch (err) {
+        toast(err.message || t("loc.json_invalid"), true);
+      } finally {
+        setLoading(document.getElementById("loader"), false);
+      }
+    });
+
     document.getElementById("dlExport").addEventListener("click", () => {
       if (!last) return;
-      if (last.export_format === "csv") downloadText("localization.csv", last.export, "text/csv");
-      else downloadJSON("localization.json", last.export || last.translations);
+      const fmt = last.export_format || "json";
+      const payload = last.export ?? last.translations;
+      if (fmt === "csv" || fmt === "unity_csv" || fmt === "godot_csv") {
+        const name = fmt === "godot_csv" ? "translations_godot.csv"
+          : fmt === "unity_csv" ? "Localization_StringTable.csv"
+          : "localization.csv";
+        downloadText(name, payload, "text/csv");
+      } else if (fmt === "unity_json") {
+        downloadJSON("Localization_StringTables.json", payload);
+      } else {
+        downloadJSON("localization.json", payload || last.translations);
+      }
+    });
+
+    document.getElementById("dlPseudo").addEventListener("click", () => {
+      if (!last?.pseudo) return;
+      downloadJSON("pseudo_locale.json", last.pseudo);
     });
   </script>
 </body>
