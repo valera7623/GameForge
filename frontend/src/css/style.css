@@ -1411,3 +1411,342 @@ textarea {
     padding-top: 3rem;
   }
 }
+
+/* LocForge offer landing (/locforge) */
+.page-locforge {
+  --lf-ink: #14352f;
+  --lf-mist: #dfe9e4;
+  --lf-paper: #f2f6f3;
+  --lf-citrus: #b7d43a;
+  --lf-citrus-ink: #1a2a0a;
+  --lf-line: rgba(20, 53, 47, 0.12);
+  --lf-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Syne", sans-serif;
+  --font-body: "Source Sans 3", sans-serif;
+  --bg: var(--lf-paper);
+  --bg-elevated: #ffffff;
+  --bg-soft: var(--lf-mist);
+  --border: rgba(20, 53, 47, 0.16);
+  --text: var(--lf-ink);
+  --muted: #4a635c;
+  --accent: #1f6b5c;
+  --accent-2: #8fa82a;
+  --btn-primary-text: var(--lf-citrus-ink);
+  --topnav-bg: rgba(242, 246, 243, 0.9);
+  --brand-grad-1: var(--lf-ink);
+  --brand-grad-2: #1f6b5c;
+  --brand-grad-3: #8fa82a;
+  background:
+    radial-gradient(ellipse 80% 50% at 85% 10%, rgba(183, 212, 58, 0.18), transparent 55%),
+    linear-gradient(165deg, var(--lf-mist) 0%, var(--lf-paper) 42%, #e8f0eb 100%);
+}
+
+[data-theme="dark"] .page-locforge {
+  --lf-ink: #e4efe9;
+  --lf-mist: #12201c;
+  --lf-paper: #0d1613;
+  --lf-citrus: #c5e04a;
+  --lf-citrus-ink: #132008;
+  --lf-line: rgba(228, 239, 233, 0.1);
+  --bg: var(--lf-paper);
+  --bg-elevated: #15241f;
+  --bg-soft: #1a2c26;
+  --border: rgba(228, 239, 233, 0.14);
+  --text: var(--lf-ink);
+  --muted: #9bb5ab;
+  --accent: #6ec4b0;
+  --accent-2: #c5e04a;
+  --btn-primary-text: var(--lf-citrus-ink);
+  --topnav-bg: rgba(13, 22, 19, 0.88);
+  --brand-grad-1: #e4efe9;
+  --brand-grad-2: #6ec4b0;
+  --brand-grad-3: #c5e04a;
+  background:
+    radial-gradient(ellipse 70% 45% at 90% 0%, rgba(197, 224, 74, 0.12), transparent 50%),
+    linear-gradient(165deg, #0a1210 0%, var(--lf-paper) 50%, #12201c 100%);
+}
+
+.page-locforge .bg-grid,
+.page-locforge .bg-glow {
+  display: none;
+}
+
+.page-locforge .lf-nav {
+  border-bottom-color: var(--lf-line);
+}
+
+.page-locforge .lf-brand {
+  letter-spacing: -0.02em;
+}
+
+.page-locforge .lf-mark {
+  display: inline-block;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.page-locforge .lf-mark::after {
+  content: "文";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.page-locforge .btn-primary {
+  background: var(--lf-citrus);
+  color: var(--lf-citrus-ink);
+  border-color: transparent;
+}
+
+.page-locforge .btn-primary:hover {
+  filter: brightness(1.05);
+  text-decoration: none;
+}
+
+.page-locforge .lf-hero {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100vh - 4.5rem);
+  display: grid;
+  align-items: end;
+  padding: 0;
+  overflow: hidden;
+}
+
+.page-locforge .lf-hero-plane {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.page-locforge .lf-string-sheet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem 8rem;
+  opacity: 0.55;
+}
+
+.page-locforge .lf-string-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  font-family: var(--lf-mono);
+  font-size: clamp(0.72rem, 1.4vw, 0.92rem);
+  color: var(--text);
+  animation: lf-sheet-drift 28s linear infinite;
+}
+
+.page-locforge .lf-string-col--b {
+  animation-duration: 36s;
+  animation-direction: reverse;
+  margin-top: 2.5rem;
+  opacity: 0.85;
+}
+
+.page-locforge .lf-string-col span {
+  display: block;
+  white-space: nowrap;
+  padding: 0.35rem 0.6rem;
+  border-left: 2px solid var(--lf-citrus);
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+}
+
+@keyframes lf-sheet-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-40%); }
+}
+
+.page-locforge .lf-hero-fade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--lf-paper) 0%, color-mix(in srgb, var(--lf-paper) 55%, transparent) 42%, transparent 70%),
+    linear-gradient(0deg, var(--lf-paper) 0%, transparent 38%);
+}
+
+[data-theme="dark"] .page-locforge .lf-hero-fade {
+  background:
+    linear-gradient(90deg, var(--lf-paper) 0%, color-mix(in srgb, var(--lf-paper) 60%, transparent) 45%, transparent 72%),
+    linear-gradient(0deg, var(--lf-paper) 0%, transparent 40%);
+}
+
+.page-locforge .lf-hero-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 36rem;
+  padding: 4rem 2rem 5rem;
+}
+
+.page-locforge .lf-brand-hero {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 12vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin: 0 0 1rem;
+  color: var(--text);
+  animation: lf-brand-in 0.9s ease-out both;
+}
+
+.page-locforge .lf-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3.2vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0 0 1rem;
+  max-width: 18ch;
+  color: var(--text);
+  animation: fade-up 0.85s ease-out 0.12s both;
+}
+
+.page-locforge .lf-hero .lede {
+  max-width: 34ch;
+  animation: fade-up 0.85s ease-out 0.24s both;
+}
+
+.page-locforge .lf-hero .cta-row {
+  animation: fade-up 0.85s ease-out 0.36s both;
+}
+
+@keyframes lf-brand-in {
+  from { opacity: 0; transform: translateY(18px); letter-spacing: 0.06em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: -0.04em; }
+}
+
+.page-locforge .lf-section {
+  max-width: 920px;
+}
+
+.page-locforge .lf-section h2 {
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.page-locforge .lf-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.page-locforge .lf-points li {
+  display: grid;
+  gap: 0.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--lf-line);
+}
+
+.page-locforge .lf-points li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.page-locforge .lf-points strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.page-locforge .lf-points span {
+  color: var(--muted);
+  max-width: 48ch;
+}
+
+.page-locforge .lf-points code {
+  font-family: var(--lf-mono);
+  font-size: 0.9em;
+  padding: 0.05em 0.3em;
+  background: var(--bg-soft);
+  border-radius: 3px;
+}
+
+.page-locforge .lf-price-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.page-locforge .lf-price {
+  display: block;
+  padding: 1.25rem 1.1rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.page-locforge .lf-price:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.page-locforge .lf-price--featured {
+  border-color: var(--lf-citrus);
+  background: color-mix(in srgb, var(--lf-citrus) 14%, var(--bg-elevated));
+}
+
+.page-locforge .lf-price h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.page-locforge .lf-price-amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.page-locforge .lf-price-meta {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.page-locforge .lf-footer {
+  border-top: 1px solid var(--lf-line);
+}
+
+@media (max-width: 800px) {
+  .page-locforge .lf-string-sheet {
+    grid-template-columns: 1fr;
+    padding-right: 1rem;
+  }
+
+  .page-locforge .lf-string-col--b {
+    display: none;
+  }
+
+  .page-locforge .lf-hero-fade {
+    background:
+      linear-gradient(90deg, var(--lf-paper) 0%, color-mix(in srgb, var(--lf-paper) 70%, transparent) 55%, transparent 100%),
+      linear-gradient(0deg, var(--lf-paper) 8%, transparent 45%);
+  }
+
+  .page-locforge .lf-price-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LocForge — локализация инди-игры за один вечер</title>
+  <meta name="description" content="Загрузите CSV, закрепите имена в глоссарии, поймайте переполнение UI. Экспорт Unity и Godot. Пакеты слов от $49." />
+  <link rel="canonical" href="https://gameforge.website/ru/locforge" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/locforge" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/locforge" />
+  <link rel="alternate" hreflang="x-default" href="https://gameforge.website/locforge" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="LocForge" />
+  <meta property="og:title" content="LocForge — локализация инди-игры за один вечер" />
+  <meta property="og:description" content="Загрузите CSV, закрепите имена в глоссарии, поймайте переполнение UI. Экспорт Unity и Godot. Пакеты слов от $49." />
+  <meta property="og:url" content="https://gameforge.website/ru/locforge" />
+  <meta property="og:image" content="https://gameforge.website/og-image.png" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LocForge — локализация инди-игры за один вечер" />
+  <meta name="twitter:description" content="Загрузите CSV, закрепите имена в глоссарии, поймайте переполнение UI. Экспорт Unity и Godot." />
+  <meta name="twitter:image" content="https://gameforge.website/og-image.png" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "LocForge",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "url": "https://gameforge.website/ru/locforge",
+    "description": "Локализация инди-игр: CSV, глоссарий, QA длины, экспорт Unity и Godot.",
+    "inLanguage": "ru",
+    "isPartOf": { "@type": "SoftwareApplication", "name": "GameForge", "url": "https://gameforge.website/" },
+    "offers": [
+      { "@type": "Offer", "name": "Starter", "price": "49", "priceCurrency": "USD", "description": "5 000 слов" },
+      { "@type": "Offer", "name": "Indie", "price": "149", "priceCurrency": "USD", "description": "25 000 слов" },
+      { "@type": "Offer", "name": "Studio", "price": "399", "priceCurrency": "USD", "description": "100 000 слов" }
+    ]
+  }
+  </script>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body class="page-landing page-locforge">
+  <header class="topnav lf-nav">
+    <a class="brand lf-brand" href="/ru/locforge"><span class="lf-mark" aria-hidden="true"></span><span class="brand-text">LocForge</span></a>
+    <nav>
+      <a href="#pricing">Цены</a>
+      <a class="btn-icon" href="/locforge" title="English" lang="en">EN</a>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Переключить тему">☾</button>
+      <a href="/login?next=/localization" class="btn btn-ghost">Войти</a>
+      <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary">Начать бесплатно</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="lf-hero" aria-label="LocForge">
+      <div class="lf-hero-plane" aria-hidden="true">
+        <div class="lf-string-sheet">
+          <div class="lf-string-col lf-string-col--a">
+            <span>ui.start — Start</span>
+            <span>ui.start — Начать</span>
+            <span>ui.start — Empezar</span>
+            <span>ui.start — Starten</span>
+            <span>npc.mira — Mira</span>
+            <span>npc.mira — Mira</span>
+            <span>quest.01 — Find the key</span>
+            <span>quest.01 — Найди ключ</span>
+            <span>item.blade — Ashen Blade</span>
+            <span>item.blade — Клинок пепла</span>
+            <span>ui.start — Start</span>
+            <span>ui.start — Начать</span>
+            <span>ui.start — Empezar</span>
+            <span>ui.start — Starten</span>
+          </div>
+          <div class="lf-string-col lf-string-col--b">
+            <span>menu.quit — Quit</span>
+            <span>menu.quit — Выйти</span>
+            <span>menu.quit — Salir</span>
+            <span>dlg.guard — Halt!</span>
+            <span>dlg.guard — Стой!</span>
+            <span>hint.jump — Press Space</span>
+            <span>hint.jump — Нажмите Space</span>
+            <span>err.long — STRING TOO LONG</span>
+            <span>pseudo — àçćéñţš</span>
+            <span>menu.quit — Quit</span>
+            <span>menu.quit — Выйти</span>
+            <span>menu.quit — Salir</span>
+            <span>dlg.guard — Halt!</span>
+            <span>dlg.guard — Стой!</span>
+          </div>
+        </div>
+        <div class="lf-hero-fade"></div>
+      </div>
+
+      <div class="lf-hero-copy">
+        <p class="lf-brand-hero">LocForge</p>
+        <h1>Локализация инди-игры за один вечер</h1>
+        <p class="lede">CSV на входе, имена в глоссарии, QA длины, Unity и Godot на выходе — без бюро переводов.</p>
+        <div class="cta-row">
+          <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary btn-lg">Локализовать первый CSV</a>
+          <a href="#how" class="btn btn-ghost btn-lg">Как это работает</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section lf-section">
+      <h2>Для игрового UI, не для общих документов</h2>
+      <p class="section-sub">Три вещи, которые нужны инди до мультиязычного Steam.</p>
+      <ul class="lf-points">
+        <li>
+          <strong>Загрузка CSV</strong>
+          <span>Бросаете <code>key,source</code> — без ручного paste JSON.</span>
+        </li>
+        <li>
+          <strong>Глоссарий персонажей</strong>
+          <span>Жёстко фиксируете имена: Mira остаётся Mira на любом языке.</span>
+        </li>
+        <li>
+          <strong>QA длины и псевдо-лок</strong>
+          <span>Ловите переполнение HUD до релиза; проверяете вёрстку на àçćéñţš.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section id="pricing" class="section lf-section lf-pricing">
+      <h2>Платите за слова, не за ферму мест</h2>
+      <p class="section-sub">Пакеты на один цикл релиза. Оплата подключится следом — сегодня можно начать бесплатно.</p>
+      <div class="lf-price-row">
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=starter">
+          <h3>Starter</h3>
+          <p class="lf-price-amount">$49</p>
+          <p class="lf-price-meta">5 000 слов</p>
+        </a>
+        <a class="lf-price lf-price--featured" href="/register?from=locforge&amp;next=/localization&amp;pack=indie">
+          <h3>Indie</h3>
+          <p class="lf-price-amount">$149</p>
+          <p class="lf-price-meta">25 000 слов</p>
+        </a>
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=studio">
+          <h3>Studio</h3>
+          <p class="lf-price-amount">$399</p>
+          <p class="lf-price-meta">100 000 слов</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer lf-footer">
+    <span>LocForge — на базе <a href="/ru/">GameForge</a></span>
+    <a href="/ru/tools/localization">Страница продукта</a>
+  </footer>
+
+  <script type="module">
+    import { setLang } from "/src/js/i18n.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    import { initAnalytics } from "/src/js/analytics.js";
+    initAnalytics();
+    setLang("ru");
+    applyTheme(getTheme());
+    bindThemeToggles();
+  </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LocForge — Indie game localization in one evening</title>
+  <meta name="description" content="Upload CSV, lock character names with a glossary, catch UI overflow with length QA. Export Unity and Godot. Word packs from $49." />
+  <link rel="canonical" href="https://gameforge.website/locforge" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/locforge" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/locforge" />
+  <link rel="alternate" hreflang="x-default" href="https://gameforge.website/locforge" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="LocForge" />
+  <meta property="og:title" content="LocForge — Indie game localization in one evening" />
+  <meta property="og:description" content="Upload CSV, lock character names with a glossary, catch UI overflow with length QA. Export Unity and Godot. Word packs from $49." />
+  <meta property="og:url" content="https://gameforge.website/locforge" />
+  <meta property="og:image" content="https://gameforge.website/og-image.png" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="ru_RU" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LocForge — Indie game localization in one evening" />
+  <meta name="twitter:description" content="Upload CSV, lock character names with a glossary, catch UI overflow with length QA. Export Unity and Godot." />
+  <meta name="twitter:image" content="https://gameforge.website/og-image.png" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "LocForge",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Web",
+    "url": "https://gameforge.website/locforge",
+    "description": "Indie game localization: CSV upload, glossary, length QA, Unity and Godot export.",
+    "isPartOf": { "@type": "SoftwareApplication", "name": "GameForge", "url": "https://gameforge.website/" },
+    "offers": [
+      { "@type": "Offer", "name": "Starter", "price": "49", "priceCurrency": "USD", "description": "5,000 words" },
+      { "@type": "Offer", "name": "Indie", "price": "149", "priceCurrency": "USD", "description": "25,000 words" },
+      { "@type": "Offer", "name": "Studio", "price": "399", "priceCurrency": "USD", "description": "100,000 words" }
+    ]
+  }
+  </script>
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+    })();
+  </script>
+</head>
+<body class="page-landing page-locforge">
+  <header class="topnav lf-nav">
+    <a class="brand lf-brand" href="/locforge"><span class="lf-mark" aria-hidden="true"></span><span class="brand-text">LocForge</span></a>
+    <nav>
+      <a href="#pricing">Pricing</a>
+      <a class="btn-icon" href="/ru/locforge" title="Русский" lang="ru">RU</a>
+      <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
+      <a href="/login?next=/localization" class="btn btn-ghost">Sign in</a>
+      <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary">Start free</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="lf-hero" aria-label="LocForge">
+      <div class="lf-hero-plane" aria-hidden="true">
+        <div class="lf-string-sheet">
+          <div class="lf-string-col lf-string-col--a">
+            <span>ui.start — Start</span>
+            <span>ui.start — Начать</span>
+            <span>ui.start — Empezar</span>
+            <span>ui.start — Starten</span>
+            <span>npc.mira — Mira</span>
+            <span>npc.mira — Mira</span>
+            <span>quest.01 — Find the key</span>
+            <span>quest.01 — Найди ключ</span>
+            <span>item.blade — Ashen Blade</span>
+            <span>item.blade — Клинок пепла</span>
+            <span>ui.start — Start</span>
+            <span>ui.start — Начать</span>
+            <span>ui.start — Empezar</span>
+            <span>ui.start — Starten</span>
+          </div>
+          <div class="lf-string-col lf-string-col--b">
+            <span>menu.quit — Quit</span>
+            <span>menu.quit — Выйти</span>
+            <span>menu.quit — Salir</span>
+            <span>dlg.guard — Halt!</span>
+            <span>dlg.guard — Стой!</span>
+            <span>hint.jump — Press Space</span>
+            <span>hint.jump — Нажмите Space</span>
+            <span>err.long — STRING TOO LONG</span>
+            <span>pseudo — àçćéñţš</span>
+            <span>menu.quit — Quit</span>
+            <span>menu.quit — Выйти</span>
+            <span>menu.quit — Salir</span>
+            <span>dlg.guard — Halt!</span>
+            <span>dlg.guard — Стой!</span>
+          </div>
+        </div>
+        <div class="lf-hero-fade"></div>
+      </div>
+
+      <div class="lf-hero-copy">
+        <p class="lf-brand-hero">LocForge</p>
+        <h1>Indie game localization in one evening</h1>
+        <p class="lede">CSV in, glossary-locked names, length QA, Unity and Godot out — without a translation bureau.</p>
+        <div class="cta-row">
+          <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary btn-lg">Localize your first CSV</a>
+          <a href="#how" class="btn btn-ghost btn-lg">See how</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section lf-section">
+      <h2>Built for game UI, not generic docs</h2>
+      <p class="section-sub">Three things indie teams need before Steam multilingual.</p>
+      <ul class="lf-points">
+        <li>
+          <strong>CSV upload</strong>
+          <span>Drop <code>key,source</code> — no paste JSON dance.</span>
+        </li>
+        <li>
+          <strong>Character glossary</strong>
+          <span>Force names and terms so Mira stays Mira in every language.</span>
+        </li>
+        <li>
+          <strong>Length QA + pseudo-locale</strong>
+          <span>Flag overflow before it breaks your HUD; stress-test layout with àçćéñţš.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section id="pricing" class="section lf-section lf-pricing">
+      <h2>Pay for words, not a seat farm</h2>
+      <p class="section-sub">Packs for one ship cycle. Checkout wires next — start free today.</p>
+      <div class="lf-price-row">
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=starter">
+          <h3>Starter</h3>
+          <p class="lf-price-amount">$49</p>
+          <p class="lf-price-meta">5,000 words</p>
+        </a>
+        <a class="lf-price lf-price--featured" href="/register?from=locforge&amp;next=/localization&amp;pack=indie">
+          <h3>Indie</h3>
+          <p class="lf-price-amount">$149</p>
+          <p class="lf-price-meta">25,000 words</p>
+        </a>
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=studio">
+          <h3>Studio</h3>
+          <p class="lf-price-amount">$399</p>
+          <p class="lf-price-meta">100,000 words</p>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer lf-footer">
+    <span>LocForge — powered by <a href="/">GameForge</a></span>
+    <a href="/tools/localization">Product page</a>
+  </footer>
+
+  <script type="module">
+    import { setLang } from "/src/js/i18n.js";
+    import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    import { initAnalytics } from "/src/js/analytics.js";
+    initAnalytics();
+    setLang("en");
+    applyTheme(getTheme());
+    bindThemeToggles();
+  </script>
+</body>
+</html>
