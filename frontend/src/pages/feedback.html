@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feedback — GameForge</title>
+  <meta name="description" content="Send feedback, report a bug, or share an idea with the GameForge team." />
+  <link rel="canonical" href="https://gameforge.website/feedback" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/feedback" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/feedback" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .feedback-page { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2.5rem 1.25rem 4rem; }
+    .feedback-card { width: 100%; max-width: 36rem; }
+    .feedback-card h1 { font-family: Orbitron, sans-serif; font-size: 1.5rem; margin: .75rem 0 .35rem; }
+    .feedback-card .sub { opacity: .75; margin-bottom: 1.5rem; line-height: 1.45; }
+    .feedback-card .legal-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: .9rem; }
+    .auth-form textarea { width: 100%; min-height: 8rem; resize: vertical; font: inherit; padding: .75rem .9rem; border-radius: 8px; border: 1px solid var(--border, #3333); background: var(--input-bg, transparent); color: inherit; }
+    .auth-form textarea:focus { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+    .auth-form select { width: 100%; font: inherit; padding: .7rem .9rem; border-radius: 8px; border: 1px solid var(--border, #3333); background: var(--input-bg, transparent); color: inherit; }
+    .consent-row { display: flex; gap: .65rem; align-items: flex-start; font-size: .9rem; line-height: 1.4; }
+    .consent-row input { margin-top: .2rem; flex-shrink: 0; }
+    .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .feedback-success { padding: 1rem 0; }
+    .feedback-success h2 { font-family: Orbitron, sans-serif; font-size: 1.15rem; margin-bottom: .5rem; }
+    .form-error { color: #c2410c; font-size: .9rem; margin-top: .75rem; }
+    .feedback-meta { margin-top: 1.25rem; font-size: .85rem; opacity: .7; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle aria-label="Toggle theme">☾</button>
+  <div class="feedback-page">
+    <div class="feedback-card auth-card">
+      <nav class="legal-nav" aria-label="Site">
+        <a href="/">GameForge</a>
+        <a href="/contacts">Contacts</a>
+        <a href="/ru/feedback">RU</a>
+      </nav>
+      <h1 id="fbTitle">Feedback</h1>
+      <p class="sub" id="fbSub">Report a bug, share an idea, or ask about billing. We read every message.</p>
+
+      <div id="fbSuccess" class="feedback-success" hidden>
+        <h2>Thank you</h2>
+        <p id="fbSuccessMsg">We received your message and will reply by email if a response is needed.</p>
+        <p style="margin-top:1rem"><a class="btn btn-ghost" href="/">Back to home</a></p>
+      </div>
+
+      <form id="feedbackForm" class="auth-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="fbCategory">Category</label>
+          <select id="fbCategory" name="category" required>
+            <option value="bug">Bug report</option>
+            <option value="idea">Feature idea</option>
+            <option value="billing">Billing / payments</option>
+            <option value="other" selected>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="fbEmail">Email</label>
+          <input id="fbEmail" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="you@email.com" />
+          <p class="field-hint">We’ll only use this to follow up on your request.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="fbSubject">Subject <span style="opacity:.6;font-weight:400">(optional)</span></label>
+          <input id="fbSubject" type="text" name="subject" maxlength="200" autocomplete="off" placeholder="Short summary" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="fbMessage">Message</label>
+          <textarea id="fbMessage" name="message" required minlength="10" maxlength="5000" placeholder="What happened? What did you expect? Steps to reproduce help a lot."></textarea>
+        </div>
+        <div class="hp-field" aria-hidden="true">
+          <label for="fbWebsite">Website</label>
+          <input id="fbWebsite" type="text" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="consent-row">
+            <input id="fbConsent" type="checkbox" name="consent" required />
+            <span>I agree that GameForge may process this message and my email to handle the request. See <a href="/contacts">contacts</a> and the <a href="/offer">public offer</a>.</span>
+          </label>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="fbSubmit">Send feedback</button>
+        <p class="form-error" id="fbError" hidden role="alert"></p>
+        <p class="feedback-meta">For legal / seller details use <a href="/contacts">Contacts</a>. This form is for product support and ideas.</p>
+      </form>
+    </div>
+  </div>
+  <script type="module">
+    import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    import { initAnalytics } from "/src/js/analytics.js";
+    initAnalytics();
+    applyTheme(getTheme());
+    bindThemeToggles();
+
+    try {
+      const u = JSON.parse(localStorage.getItem("gf_user") || "null");
+      if (u?.email) document.getElementById("fbEmail").value = u.email;
+    } catch (_) {}
+
+    const form = document.getElementById("feedbackForm");
+    const errEl = document.getElementById("fbError");
+    const btn = document.getElementById("fbSubmit");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errEl.hidden = true;
+      const email = document.getElementById("fbEmail").value.trim();
+      const message = document.getElementById("fbMessage").value.trim();
+      const consent = document.getElementById("fbConsent").checked;
+      if (!email || !message || message.length < 10) {
+        errEl.textContent = "Please fill email and a message of at least 10 characters.";
+        errEl.hidden = false;
+        return;
+      }
+      if (!consent) {
+        errEl.textContent = "Please confirm consent to process your message.";
+        errEl.hidden = false;
+        return;
+      }
+      btn.disabled = true;
+      const headers = { "Content-Type": "application/json" };
+      const token = localStorage.getItem("gf_token");
+      if (token) headers.Authorization = `Bearer ${token}`;
+      try {
+        const res = await fetch("/api/v1/feedback", {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            category: document.getElementById("fbCategory").value,
+            email,
+            subject: document.getElementById("fbSubject").value.trim(),
+            message,
+            consent: true,
+            website: document.getElementById("fbWebsite").value,
+            page_url: location.href,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = data.detail;
+          errEl.textContent = typeof detail === "string" ? detail : (Array.isArray(detail) ? detail.map(d => d.msg).join("; ") : "Could not send. Try again later.");
+          errEl.hidden = false;
+          btn.disabled = false;
+          return;
+        }
+        form.hidden = true;
+        document.getElementById("fbTitle").hidden = true;
+        document.getElementById("fbSub").hidden = true;
+        document.getElementById("fbSuccess").hidden = false;
+      } catch (_) {
+        errEl.textContent = "Network error. Please try again.";
+        errEl.hidden = false;
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -19,6 +19,7 @@ const NAV = [
   ["ai-models", "admin.nav.ai_models", "/admin/ai-models"],
   ["content", "admin.nav.content", "/admin/content"],
   ["logs", "admin.nav.logs", "/admin/logs"],
+  ["feedback", "admin.nav.feedback", "/admin/feedback"],
   ["settings", "admin.nav.settings", "/admin/settings"],
 ];
 
@@ -128,6 +129,11 @@ export const AdminAPI = {
   deleteContent: (id) => api(`/admin/content/${id}`, { method: "DELETE" }),
   publishContent: (id) => api(`/admin/content/${id}/publish`, { method: "POST", body: "{}" }),
   unpublishContent: (id) => api(`/admin/content/${id}/unpublish`, { method: "POST", body: "{}" }),
+  feedbackList: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/admin/feedback${q ? `?${q}` : ""}`);
+  },
+  feedbackPatch: (id, body) => api(`/admin/feedback/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 };
 
 function adminSidebar(active) {

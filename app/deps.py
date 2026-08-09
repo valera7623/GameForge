@@ -77,6 +77,16 @@ async def get_current_user(
     return user
 
 
+async def get_optional_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+    db: AsyncSession = Depends(get_db),
+) -> Optional[User]:
+    """Return authenticated user if present; otherwise None (no 401)."""
+    return await resolve_user_from_request(request, db, credentials, x_api_key, required=False)
+
+
 async def require_admin(user: User = Depends(get_current_user)) -> User:
     """Legacy alias — platform admin or super_admin."""
     if user.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN):

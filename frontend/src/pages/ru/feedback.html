@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Обратная связь — GameForge</title>
+  <meta name="description" content="Отправьте отзыв, сообщите об ошибке или предложите идею команде GameForge." />
+  <link rel="canonical" href="https://gameforge.website/ru/feedback" />
+  <link rel="alternate" hreflang="en" href="https://gameforge.website/feedback" />
+  <link rel="alternate" hreflang="ru" href="https://gameforge.website/ru/feedback" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <style>
+    .feedback-page { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2.5rem 1.25rem 4rem; }
+    .feedback-card { width: 100%; max-width: 36rem; }
+    .feedback-card h1 { font-family: Orbitron, sans-serif; font-size: 1.5rem; margin: .75rem 0 .35rem; }
+    .feedback-card .sub { opacity: .75; margin-bottom: 1.5rem; line-height: 1.45; }
+    .feedback-card .legal-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: .9rem; }
+    .auth-form textarea { width: 100%; min-height: 8rem; resize: vertical; font: inherit; padding: .75rem .9rem; border-radius: 8px; border: 1px solid var(--border, #3333); background: var(--input-bg, transparent); color: inherit; }
+    .auth-form textarea:focus { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+    .auth-form select { width: 100%; font: inherit; padding: .7rem .9rem; border-radius: 8px; border: 1px solid var(--border, #3333); background: var(--input-bg, transparent); color: inherit; }
+    .consent-row { display: flex; gap: .65rem; align-items: flex-start; font-size: .9rem; line-height: 1.4; }
+    .consent-row input { margin-top: .2rem; flex-shrink: 0; }
+    .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .feedback-success { padding: 1rem 0; }
+    .feedback-success h2 { font-family: Orbitron, sans-serif; font-size: 1.15rem; margin-bottom: .5rem; }
+    .form-error { color: #c2410c; font-size: .9rem; margin-top: .75rem; }
+    .feedback-meta { margin-top: 1.25rem; font-size: .85rem; opacity: .7; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <button type="button" class="btn-icon theme-toggle theme-toggle-float" data-theme-toggle aria-label="Тема">☾</button>
+  <div class="feedback-page">
+    <div class="feedback-card auth-card">
+      <nav class="legal-nav" aria-label="Навигация">
+        <a href="/ru/">GameForge</a>
+        <a href="/ru/contacts">Контакты</a>
+        <a href="/feedback">EN</a>
+      </nav>
+      <h1 id="fbTitle">Обратная связь</h1>
+      <p class="sub" id="fbSub">Сообщите об ошибке, предложите идею или спросите про оплату. Мы читаем каждое сообщение.</p>
+
+      <div id="fbSuccess" class="feedback-success" hidden>
+        <h2>Спасибо</h2>
+        <p id="fbSuccessMsg">Мы получили ваше сообщение и ответим по email, если нужен ответ.</p>
+        <p style="margin-top:1rem"><a class="btn btn-ghost" href="/ru/">На главную</a></p>
+      </div>
+
+      <form id="feedbackForm" class="auth-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="fbCategory">Тема обращения</label>
+          <select id="fbCategory" name="category" required>
+            <option value="bug">Ошибка / баг</option>
+            <option value="idea">Идея / улучшение</option>
+            <option value="billing">Оплата / биллинг</option>
+            <option value="other" selected>Другое</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label" for="fbEmail">Email</label>
+          <input id="fbEmail" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="you@email.com" />
+          <p class="field-hint">Используем только чтобы ответить на ваш запрос.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="fbSubject">Заголовок <span style="opacity:.6;font-weight:400">(необязательно)</span></label>
+          <input id="fbSubject" type="text" name="subject" maxlength="200" autocomplete="off" placeholder="Кратко о сути" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="fbMessage">Сообщение</label>
+          <textarea id="fbMessage" name="message" required minlength="10" maxlength="5000" placeholder="Что произошло? Что ожидали? Шаги воспроизведения очень помогают."></textarea>
+        </div>
+        <div class="hp-field" aria-hidden="true">
+          <label for="fbWebsite">Website</label>
+          <input id="fbWebsite" type="text" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="consent-row">
+            <input id="fbConsent" type="checkbox" name="consent" required />
+            <span>Согласен(на), что GameForge обработает это сообщение и мой email для ответа. См. <a href="/ru/contacts">контакты</a> и <a href="/ru/offer">оферту</a>.</span>
+          </label>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="fbSubmit">Отправить</button>
+        <p class="form-error" id="fbError" hidden role="alert"></p>
+        <p class="feedback-meta">Реквизиты продавца — на странице <a href="/ru/contacts">Контакты</a>. Эта форма — для поддержки продукта и идей.</p>
+      </form>
+    </div>
+  </div>
+  <script type="module">
+    import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
+    import { setLang } from "/src/js/i18n.js";
+    import { initAnalytics } from "/src/js/analytics.js";
+    initAnalytics();
+    setLang("ru");
+    applyTheme(getTheme());
+    bindThemeToggles();
+
+    try {
+      const u = JSON.parse(localStorage.getItem("gf_user") || "null");
+      if (u?.email) document.getElementById("fbEmail").value = u.email;
+    } catch (_) {}
+
+    const form = document.getElementById("feedbackForm");
+    const errEl = document.getElementById("fbError");
+    const btn = document.getElementById("fbSubmit");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errEl.hidden = true;
+      const email = document.getElementById("fbEmail").value.trim();
+      const message = document.getElementById("fbMessage").value.trim();
+      const consent = document.getElementById("fbConsent").checked;
+      if (!email || !message || message.length < 10) {
+        errEl.textContent = "Укажите email и сообщение не короче 10 символов.";
+        errEl.hidden = false;
+        return;
+      }
+      if (!consent) {
+        errEl.textContent = "Нужно согласие на обработку обращения.";
+        errEl.hidden = false;
+        return;
+      }
+      btn.disabled = true;
+      const headers = { "Content-Type": "application/json" };
+      const token = localStorage.getItem("gf_token");
+      if (token) headers.Authorization = `Bearer ${token}`;
+      try {
+        const res = await fetch("/api/v1/feedback", {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            category: document.getElementById("fbCategory").value,
+            email,
+            subject: document.getElementById("fbSubject").value.trim(),
+            message,
+            consent: true,
+            website: document.getElementById("fbWebsite").value,
+            page_url: location.href,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = data.detail;
+          errEl.textContent = typeof detail === "string" ? detail : (Array.isArray(detail) ? detail.map(d => d.msg).join("; ") : "Не удалось отправить. Попробуйте позже.");
+          errEl.hidden = false;
+          btn.disabled = false;
+          return;
+        }
+        form.hidden = true;
+        document.getElementById("fbTitle").hidden = true;
+        document.getElementById("fbSub").hidden = true;
+        document.getElementById("fbSuccess").hidden = false;
+      } catch (_) {
+        errEl.textContent = "Ошибка сети. Попробуйте ещё раз.";
+        errEl.hidden = false;
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

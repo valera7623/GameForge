@@ -16,6 +16,7 @@ from app.api.v1 import (
     character_creator,
     dashboard,
     discord_bot,
+    feedback,
     game_balancer,
     health,
     level_analyzer,
@@ -152,6 +153,7 @@ app.include_router(trailer_script.router, prefix=prefix)
 app.include_router(review_analyzer.router, prefix=prefix)
 app.include_router(discord_bot.router, prefix=prefix)
 app.include_router(billing.router, prefix=prefix)
+app.include_router(feedback.router, prefix=prefix)
 app.include_router(dashboard.router, prefix=prefix)
 app.include_router(admin_router, prefix=prefix)
 app.include_router(public_content.router, prefix=prefix)

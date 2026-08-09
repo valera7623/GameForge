@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Feedback — Admin — GameForge</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/css/style.css" />
+  <link rel="stylesheet" href="/src/css/admin.css" />
+  <script>
+    (function () {
+      var th = localStorage.getItem("gf_theme") || "light";
+      document.documentElement.setAttribute("data-theme", th === "dark" ? "dark" : "light");
+      if (localStorage.getItem("gf_lang") === "ru") document.documentElement.lang = "ru";
+    })();
+  </script>
+  <style>
+    .fb-detail { white-space: pre-wrap; max-width: 28rem; font-size: .9rem; }
+    .fb-actions { display: flex; flex-wrap: wrap; gap: .35rem; }
+    .fb-actions select { font: inherit; font-size: .85rem; padding: .25rem .4rem; }
+  </style>
+</head>
+<body class="page-admin">
+  <div class="bg-grid"></div>
+  <div class="app-shell"><main class="main-panel">
+    <div class="page-header"><div><h1 data-i18n="admin.feedback.h1">Feedback</h1><p data-i18n="admin.feedback.sub">Inbox from the public form</p></div></div>
+    <div class="admin-filters">
+      <select id="statusFilter">
+        <option value="">All statuses</option>
+        <option value="new">New</option>
+        <option value="read">Read</option>
+        <option value="closed">Closed</option>
+      </select>
+      <select id="catFilter">
+        <option value="">All categories</option>
+        <option value="bug">Bug</option>
+        <option value="idea">Idea</option>
+        <option value="billing">Billing</option>
+        <option value="other">Other</option>
+      </select>
+      <button class="btn btn-ghost" id="reload" type="button">Refresh</button>
+    </div>
+    <div class="panel"><div class="admin-table-wrap"><table class="admin-table" id="tbl"><thead>
+      <tr><th>When</th><th>Cat</th><th>From</th><th>Subject / message</th><th>Status</th><th></th></tr>
+    </thead><tbody></tbody></table></div><div id="pager"></div></div>
+  </main></div>
+  <script type="module">
+import { requireStaff, mountAdminShell, AdminAPI, escapeHtml, applyDomI18n, pagerHtml, t } from "../../js/admin.js";
+import { toast } from "../../js/app.js";
+(async () => {
+  const me = await requireStaff();
+  if (!me) throw new Error("staff");
+  mountAdminShell("feedback");
+  applyDomI18n(document);
+  let page = 1;
+  const statusFilter = document.getElementById("statusFilter");
+  const catFilter = document.getElementById("catFilter");
+  document.getElementById("reload").onclick = () => { page = 1; load(); };
+  statusFilter.onchange = () => { page = 1; load(); };
+  catFilter.onchange = () => { page = 1; load(); };
+
+  async function load() {
+    const params = { page, per_page: 25 };
+    if (statusFilter.value) params.status = statusFilter.value;
+    if (catFilter.value) params.category = catFilter.value;
+    const data = await AdminAPI.feedbackList(params);
+    const tbody = document.querySelector("#tbl tbody");
+    tbody.innerHTML = data.items.map((r) => {
+      const subj = r.subject || "";
+      const preview = (subj ? subj + " — " : "") + (r.message || "").slice(0, 160);
+      return `<tr data-id="${escapeHtml(r.id)}">
+        <td>${escapeHtml(r.created_at)}</td>
+        <td>${escapeHtml(r.category)}</td>
+        <td class="admin-mono">${escapeHtml(r.email || r.user_email || "")}</td>
+        <td class="fb-detail">${escapeHtml(preview)}${(r.message||"").length > 160 ? "…" : ""}</td>
+        <td>${escapeHtml(r.status)}</td>
+        <td class="fb-actions">
+          <select data-status="${escapeHtml(r.id)}">
+            <option value="new" ${r.status==="new"?"selected":""}>new</option>
+            <option value="read" ${r.status==="read"?"selected":""}>read</option>
+            <option value="closed" ${r.status==="closed"?"selected":""}>closed</option>
+          </select>
+          <button type="button" class="btn btn-ghost" data-view="${escapeHtml(r.id)}">Open</button>
+        </td>
+      </tr>`;
+    }).join("") || `<tr><td colspan="6">${escapeHtml(t("admin.empty"))}</td></tr>`;
+
+    tbody.querySelectorAll("[data-status]").forEach((sel) => {
+      sel.onchange = async () => {
+        try {
+          await AdminAPI.feedbackPatch(sel.dataset.status, { status: sel.value });
+          toast("Updated");
+          load();
+        } catch (e) { toast(e.message, true); }
+      };
+    });
+    tbody.querySelectorAll("[data-view]").forEach((b) => {
+      b.onclick = () => {
+        const row = data.items.find((x) => x.id === b.dataset.view);
+        if (!row) return;
+        const note = prompt(`Full message:\n\n${row.message}\n\nAdmin note (edit):`, row.admin_note || "");
+        if (note === null) return;
+        AdminAPI.feedbackPatch(row.id, { admin_note: note, status: row.status === "new" ? "read" : row.status })
+          .then(() => { toast("Saved"); load(); })
+          .catch((e) => toast(e.message, true));
+      };
+    });
+
+    document.getElementById("pager").innerHTML = pagerHtml(data.page, data.per_page, data.total);
+    document.querySelectorAll("#pager [data-page]").forEach((b) => b.addEventListener("click", () => {
+      const p = Number(b.dataset.page); if (p >= 1) { page = p; load(); }
+    }));
+  }
+  load();
+})().catch(console.error);
+</script>
+</body>
+</html>

@@ -76,6 +76,8 @@ class Settings(BaseSettings):
     # Email
     EMAIL_PROVIDER: str = "console"
     EMAIL_FROM: str = "GameForge <noreply@gamedev.ai>"
+    # Where to send new feedback notifications (defaults to valera7623@gmail.com if empty at runtime)
+    FEEDBACK_NOTIFY_EMAIL: str = ""
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
     SMTP_USER: str = ""

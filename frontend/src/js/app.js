@@ -196,6 +196,7 @@ export function sidebarHTML(active) {
         <div class="sidebar-account">
           ${userBlock}
           <a href="${getDocsUrl()}" target="_blank" rel="noopener noreferrer" class="sidebar-docs">${t("nav.docs")}</a>
+          <a href="/feedback" class="sidebar-docs">${t("nav.feedback")}</a>
           <a href="#" id="logoutBtn" class="sidebar-logout">${t("nav.signout")}</a>
         </div>
       </div>

@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.api.v1.admin import ai_models as admin_ai_models
 from app.api.v1.admin import content as admin_content
+from app.api.v1.admin import feedback as admin_feedback
 from app.api.v1.admin import logs as admin_logs
 from app.api.v1.admin.schemas import (
     AdminGenerationListOut,
@@ -58,6 +59,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 router.include_router(admin_ai_models.router)
 router.include_router(admin_logs.router)
 router.include_router(admin_content.router)
+router.include_router(admin_feedback.router)
 
 
 def _user_out(user: User) -> AdminUserOut:
