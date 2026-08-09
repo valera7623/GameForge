@@ -377,7 +377,7 @@ def _to_unity_csv(
     """Unity Localization Package string-table CSV (Key, Id, Locale columns)."""
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["Key", "Id", *[_unity_col(l) for l in langs]])
+    writer.writerow(["Key", "Id", *[_unity_col(lang) for lang in langs]])
     for i, key in enumerate(keys):
         row = [key, str(i)] + [translations.get(lang, {}).get(key, "") for lang in langs]
         writer.writerow(row)
