@@ -15,18 +15,24 @@
     .feedback-page { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2.5rem 1.25rem 4rem; }
     .feedback-card { width: 100%; max-width: 36rem; }
     .feedback-card h1 { font-family: Orbitron, sans-serif; font-size: 1.5rem; margin: .75rem 0 .35rem; }
-    .feedback-card .sub { opacity: .75; margin-bottom: 1.5rem; line-height: 1.45; }
+    .feedback-card .sub { color: var(--muted); margin-bottom: 1.5rem; line-height: 1.45; }
     .feedback-card .legal-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: .9rem; }
-    .auth-form textarea { width: 100%; min-height: 8rem; resize: vertical; font: inherit; padding: .75rem .9rem; border-radius: 8px; border: 1px solid var(--border, #3333); background: var(--input-bg, transparent); color: inherit; }
-    .auth-form textarea:focus { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
-    .auth-form select { width: 100%; font: inherit; padding: .7rem .9rem; border-radius: 8px; border: 1px solid var(--border, #3333); background: var(--input-bg, transparent); color: inherit; }
-    .consent-row { display: flex; gap: .65rem; align-items: flex-start; font-size: .9rem; line-height: 1.4; }
-    .consent-row input { margin-top: .2rem; flex-shrink: 0; }
+    .fb-cats { display: grid; gap: .5rem; }
+    .fb-cat {
+      display: flex; align-items: center; gap: .65rem;
+      margin: 0; padding: .7rem .85rem; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      cursor: pointer; font-size: .95rem; line-height: 1.3;
+    }
+    .fb-cat:has(input:checked) { border-color: var(--accent); background: var(--bg-soft); }
+    .fb-cat input { width: auto; min-height: auto; margin: 0; flex-shrink: 0; accent-color: var(--accent); }
+    .consent-row { display: flex; gap: .65rem; align-items: flex-start; font-size: .9rem; line-height: 1.4; color: var(--text); }
+    .consent-row input { margin-top: .2rem; flex-shrink: 0; width: auto; min-height: auto; }
     .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
     .feedback-success { padding: 1rem 0; }
     .feedback-success h2 { font-family: Orbitron, sans-serif; font-size: 1.15rem; margin-bottom: .5rem; }
-    .form-error { color: #c2410c; font-size: .9rem; margin-top: .75rem; }
-    .feedback-meta { margin-top: 1.25rem; font-size: .85rem; opacity: .7; }
+    .form-error { color: var(--danger, #c2410c); font-size: .9rem; margin-top: .75rem; }
+    .feedback-meta { margin-top: 1.25rem; font-size: .85rem; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -49,15 +55,15 @@
       </div>
 
       <form id="feedbackForm" class="auth-form" novalidate>
-        <div class="field">
-          <label class="field-label" for="fbCategory">Category</label>
-          <select id="fbCategory" name="category" required>
-            <option value="bug">Bug report</option>
-            <option value="idea">Feature idea</option>
-            <option value="billing">Billing / payments</option>
-            <option value="other" selected>Other</option>
-          </select>
-        </div>
+        <fieldset class="field" style="border:0;padding:0;margin:0">
+          <legend class="field-label">Category</legend>
+          <div class="fb-cats" role="radiogroup" aria-label="Category">
+            <label class="fb-cat"><input type="radio" name="category" value="bug" /> Bug report</label>
+            <label class="fb-cat"><input type="radio" name="category" value="idea" /> Feature idea</label>
+            <label class="fb-cat"><input type="radio" name="category" value="billing" /> Billing / payments</label>
+            <label class="fb-cat"><input type="radio" name="category" value="other" checked /> Other</label>
+          </div>
+        </fieldset>
         <div class="field">
           <label class="field-label" for="fbEmail">Email</label>
           <input id="fbEmail" type="email" name="email" required autocomplete="email" inputmode="email" placeholder="you@email.com" />
@@ -129,7 +135,7 @@
           headers,
           credentials: "include",
           body: JSON.stringify({
-            category: document.getElementById("fbCategory").value,
+            category: (document.querySelector('input[name="category"]:checked') || {}).value || "other",
             email,
             subject: document.getElementById("fbSubject").value.trim(),
             message,
