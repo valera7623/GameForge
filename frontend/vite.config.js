@@ -24,6 +24,8 @@ const CLEAN_URLS = {
   "/accept-invite": "/src/pages/accept-invite.html",
   "/ru": "/src/pages/ru/index.html",
   "/ru/": "/src/pages/ru/index.html",
+  "/en": "/index.html",
+  "/en/": "/index.html",
   "/locforge": "/src/pages/locforge.html",
   "/ru/locforge": "/src/pages/ru/locforge.html",
   "/tools/level-designer": "/src/pages/tools/level-designer.html",

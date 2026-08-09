@@ -1486,7 +1486,8 @@ const DICT = {
 };
 
 export function getLang() {
-  return localStorage.getItem("gf_lang") === "ru" ? "ru" : "en";
+  // Russia-first: default RU unless user explicitly chose EN
+  return localStorage.getItem("gf_lang") === "en" ? "en" : "ru";
 }
 
 export function setLang(lang) {
