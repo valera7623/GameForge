@@ -12,8 +12,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database import get_db
 from app.core.rbac import require_permission
+from app.database import get_db
 from app.models.feedback import FeedbackCategory, FeedbackMessage, FeedbackStatus
 from app.models.user import User
 
