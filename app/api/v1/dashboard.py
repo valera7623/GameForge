@@ -1,22 +1,33 @@
 """Dashboard, generations history, leaderboard."""
 
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
+from app.core.rbac import is_staff
 from app.database import get_db
 from app.deps import get_current_user
 from app.models.generation import Generation
 from app.models.project import Project
+from app.models.subscription import PlanType
 from app.models.user import User
 from app.schemas import DashboardStats, GenerationResponse, LeaderboardEntry
 from app.services.billing_service import get_or_create_subscription
 from app.services.generation_tracker import current_month_key, ensure_monthly_counters, get_user_achievements
 
 router = APIRouter(tags=["dashboard"])
+
+
+def _can_reset_usage(user: User, plan: PlanType) -> bool:
+    """Staff / enterprise may reset; everyone may in non-production (local/test)."""
+    if is_staff(user) or plan == PlanType.ENTERPRISE:
+        return True
+    return not get_settings().is_production
 
 
 @router.get("/dashboard", response_model=DashboardStats)
@@ -54,7 +65,25 @@ async def dashboard(user: User = Depends(get_current_user), db: AsyncSession = D
         recent_generations=[_gen(g) for g in recent],
         achievements=achievements,
         leaderboard_rank=rank,
+        can_reset_usage=_can_reset_usage(user, sub.plan),
     )
+
+
+@router.post("/dashboard/reset-usage", response_model=DashboardStats)
+async def reset_usage(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Zero usage counters on the dashboard (quota / XP / totals). Does not delete projects or history."""
+    sub = await get_or_create_subscription(db, user)
+    if not _can_reset_usage(user, sub.plan):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Reset usage is not allowed")
+
+    now = datetime.now(timezone.utc)
+    user.generations_this_month = 0
+    user.generation_reset_at = now
+    user.xp_this_month = 0
+    user.xp_month_key = current_month_key(now)
+    user.total_generations = 0
+    await db.flush()
+    return await dashboard(user=user, db=db)
 
 
 @router.get("/generations", response_model=List[GenerationResponse])

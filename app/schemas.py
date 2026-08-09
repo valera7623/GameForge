@@ -594,6 +594,7 @@ class DashboardStats(BaseModel):
     recent_generations: List[GenerationResponse]
     achievements: List[dict[str, Any]]
     leaderboard_rank: Optional[int] = None
+    can_reset_usage: bool = False
 
 
 class LeaderboardEntry(BaseModel):

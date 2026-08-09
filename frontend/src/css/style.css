@@ -796,11 +796,20 @@ a:hover {
   margin-top: 0;
 }
 
+.stats-block {
+  margin-bottom: 1rem;
+}
+
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.65rem;
-  margin-bottom: 1rem;
+}
+
+.stats-actions {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .stat {

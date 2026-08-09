@@ -160,6 +160,7 @@ export const DiscordBotAPI = {
 
 export const DashboardAPI = {
   stats: () => api("/dashboard"),
+  resetUsage: () => api("/dashboard/reset-usage", { method: "POST", body: "{}" }),
   generations: (params = {}) => {
     const q = new URLSearchParams(params).toString();
     return api(`/generations${q ? `?${q}` : ""}`);

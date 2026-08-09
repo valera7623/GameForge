@@ -34,7 +34,12 @@
 
       <div class="loader visible" id="dashLoader"><div class="spinner"></div> <span data-i18n="common.loading">Loading…</span></div>
       <div id="dashContent" hidden>
-      <div class="stats-row" id="stats"></div>
+      <div class="stats-block">
+        <div class="stats-row" id="stats"></div>
+        <div class="stats-actions" id="statsActions" hidden>
+          <button type="button" class="btn btn-ghost btn-sm" id="resetUsageBtn" data-i18n="dash.reset_usage">Reset usage</button>
+        </div>
+      </div>
 
       <div class="panel panel-tool-launch">
         <h2 data-i18n="dash.launch">Launch a tool</h2>
@@ -105,6 +110,7 @@
           <div class="stat"><div class="label">${escapeHtml(t("dash.stat_xp"))}</div><div class="value">${stats.xp_this_month}</div></div>
           <div class="stat"><div class="label">${escapeHtml(t("dash.stat_projects"))}</div><div class="value">${stats.projects_count}</div></div>
         `;
+        document.getElementById("statsActions").hidden = !stats.can_reset_usage;
 
         document.getElementById("projects").innerHTML = projects.length
           ? projects.map(p => `
@@ -168,6 +174,15 @@
         setLoading(document.getElementById("dashLoader"), false);
       }
     }
+
+    document.getElementById("resetUsageBtn").addEventListener("click", async () => {
+      if (!confirm(t("dash.confirm_reset_usage"))) return;
+      try {
+        await DashboardAPI.resetUsage();
+        toast(t("dash.toast_reset_usage"));
+        load();
+      } catch (e) { toast(e.message, true); }
+    });
 
     document.getElementById("newProjectBtn").addEventListener("click", async () => {
       const data = await showModal({
