@@ -1479,26 +1479,14 @@ textarea {
   letter-spacing: -0.02em;
 }
 
-.page-locforge .lf-mark {
-  display: inline-block;
-  width: 1.35rem;
-  height: 1.35rem;
-  border: 2px solid currentColor;
-  border-radius: 3px;
-  position: relative;
-  flex-shrink: 0;
+.page-locforge .lf-brand-hero-block {
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
 }
 
-.page-locforge .lf-mark::after {
-  content: "文";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 0.72rem;
-  font-family: var(--font-body);
-  font-weight: 700;
-  line-height: 1;
+.page-locforge .lf-brand-hero-block .brand-mark--hero {
+  width: clamp(3.2rem, 10vw, 5rem);
+  height: clamp(2.7rem, 8.5vw, 4.25rem);
 }
 
 .page-locforge .btn-primary {
