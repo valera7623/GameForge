@@ -59,12 +59,57 @@ async def send_password_reset(to: str, token: str) -> bool:
 
 async def send_welcome(to: str, name: Optional[str] = None) -> bool:
     greet = name or "developer"
+    base = settings.FRONTEND_URL.rstrip("/")
     subject = f"Welcome to {settings.APP_NAME}"
     html = f"""
     <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
       <h2>Welcome, {greet}!</h2>
       <p>Your GameForge account is ready. Start forging levels, quests, characters, and more.</p>
-      <p><a href="{settings.FRONTEND_URL}/src/pages/dashboard.html">Open dashboard</a></p>
+      <p><a href="{base}/dashboard">Open dashboard</a></p>
+    </div>
+    """
+    return await send_email(to, subject, html)
+
+
+async def send_locforge_welcome(to: str, name: Optional[str] = None, pack: Optional[str] = None) -> bool:
+    """Welcome email for users who signed up from LocForge."""
+    greet = name or "developer"
+    base = settings.FRONTEND_URL.rstrip("/")
+    pack_note = ""
+    if pack:
+        pack_note = f"<p>You selected the <strong>{pack}</strong> word pack — you can buy it after your first translate.</p>"
+    subject = "LocForge — localize your first CSV"
+    html = f"""
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+      <h2>Welcome to LocForge, {greet}!</h2>
+      <p>CSV in → glossary + length QA → Unity / Godot export. Start with a free translate slot or a word pack.</p>
+      {pack_note}
+      <p><a href="{base}/localization" style="display:inline-block;padding:12px 18px;background:#b7d43a;color:#132008;text-decoration:none;border-radius:8px;font-weight:600">
+        Open Localization
+      </a></p>
+      <p style="color:#666;font-size:13px">Tip: load the Ashen Hollow sample CSV on the tool page to try the full pipeline in one click.</p>
+      <p style="color:#666;font-size:13px">LocForge is powered by <a href="{base}/">{settings.APP_NAME}</a> — 14 AI tools for game dev.</p>
+    </div>
+    """
+    return await send_email(to, subject, html)
+
+
+async def send_post_localize_upsell(to: str, name: Optional[str] = None) -> bool:
+    """One-shot email after first successful localization."""
+    greet = name or "developer"
+    base = settings.FRONTEND_URL.rstrip("/")
+    subject = "Next: word pack or explore GameForge tools"
+    html = f"""
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
+      <h2>Nice work, {greet}!</h2>
+      <p>Your first LocForge translate is done. Two good next steps:</p>
+      <ol>
+        <li><a href="{base}/localization">Buy a word pack</a> (Starter from 4&nbsp;990&nbsp;₽) so larger CSVs do not burn generation slots.</li>
+        <li>Try other GameForge tools — Character Creator, Level Designer, Store Description, and 11 more.</li>
+      </ol>
+      <p><a href="{base}/dashboard" style="display:inline-block;padding:12px 18px;background:#0d9f90;color:#fff;text-decoration:none;border-radius:8px">
+        Open GameForge dashboard
+      </a></p>
     </div>
     """
     return await send_email(to, subject, html)

@@ -123,9 +123,11 @@
                 <span data-i18n="loc.csv_choose">Choose file</span>
                 <input type="file" id="csvFile" accept=".csv,text/csv" />
               </label>
+              <button type="button" class="btn btn-ghost" id="btnSampleCsv" data-i18n="loc.sample_btn">Load Ashen Hollow sample</button>
               <span id="csvFileName" class="loc-file-name" data-i18n="loc.csv_no_file">No file chosen</span>
             </div>
             <p id="csvStatus" hidden></p>
+            <p id="packHint" class="form-hint" style="margin:0.35rem 0 0;color:var(--accent);font-size:0.85rem" hidden></p>
           </div>
           <p class="form-hint" style="margin:0;color:var(--muted);font-size:0.85rem" data-i18n="loc.csv_hint">
             CSV columns: key,source (or key,en / key,text). UTF-8, comma or semicolon.
@@ -182,6 +184,14 @@
         </form>
         <div class="loader" id="loader"><div class="spinner"></div> <span data-i18n="loc.loading">Translating…</span></div>
       </div>
+      <div class="panel" id="upsellPanel" hidden style="margin-bottom:1rem;border-color:var(--accent)">
+        <h2 style="margin:0 0 0.35rem;font-size:1.1rem" data-i18n="loc.upsell_title">Next step</h2>
+        <p style="margin:0 0 0.75rem;color:var(--muted)" data-i18n="loc.upsell_body">Buy a word pack for larger CSVs, or explore 13 more GameForge tools.</p>
+        <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
+          <button type="button" class="btn btn-primary" id="upsellPack" data-i18n="loc.upsell_pack">Buy Starter pack</button>
+          <a class="btn btn-ghost" href="/dashboard" data-i18n="loc.upsell_tools">Explore all tools</a>
+        </div>
+      </div>
       <div class="panel" id="resultPanel" hidden>
         <h2 data-i18n="loc.result">Translations</h2>
         <div class="actions" style="flex-wrap:wrap;gap:0.5rem">
@@ -209,7 +219,8 @@
     </main>
   </div>
   <script type="module">
-    import { requireAuth } from "../js/auth.js";
+    import { packToPlan, trackEvent } from "../js/analytics.js";
+    import { currentUser, requireAuth } from "../js/auth.js";
     import { BillingAPI, ProjectsAPI, ToolsAPI, downloadJSON, downloadText } from "../js/api.js";
     import { mountToolHistory } from "../js/tool-history.js";
     import { applyDomI18n, mountShell, setLoading, toast, t } from "../js/app.js";
@@ -226,6 +237,22 @@
     if (!requireAuth()) throw new Error("auth");
     mountShell("localization");
     applyDomI18n(document);
+
+    const urlParams = new URLSearchParams(location.search);
+    const packParam = urlParams.get("pack") || (currentUser()?.signup_pack || "");
+    const packPlan = packToPlan(packParam);
+    if (packPlan) {
+      const hint = document.getElementById("packHint");
+      if (hint) {
+        hint.hidden = false;
+        hint.textContent = t("loc.pack_hint", { pack: packParam.replace(/^loc_/, "") });
+      }
+      const featured = document.querySelector(`[data-loc-pack="${packPlan}"]`);
+      if (featured) {
+        featured.classList.add("btn-primary");
+        featured.classList.remove("btn-ghost");
+      }
+    }
 
     const wordsBalanceEl = document.getElementById("wordsBalance");
 
@@ -247,6 +274,7 @@
       btn.addEventListener("click", async () => {
         const plan = btn.getAttribute("data-loc-pack");
         if (!plan) return;
+        trackEvent("loc_pack_click", { plan });
         btn.disabled = true;
         try {
           const origin = location.origin;
@@ -400,6 +428,40 @@
       persistGlossary();
     });
 
+    async function applyParsedTexts(texts, keyCount, label) {
+      textsInput.value = JSON.stringify(texts, null, 2);
+      csvStatus.hidden = false;
+      csvStatus.textContent = t("loc.sample_loaded", { count: keyCount });
+      document.getElementById("csvFileName").textContent = label;
+      toast(t("loc.sample_loaded", { count: keyCount }));
+    }
+
+    document.getElementById("btnSampleCsv").addEventListener("click", async () => {
+      try {
+        const res = await fetch("/samples/locforge/ashen-hollow-en.csv");
+        if (!res.ok) throw new Error("sample_fetch_failed");
+        const content = await res.text();
+        const parsed = parseSourceCsv(content);
+        await applyParsedTexts(parsed.texts, parsed.keyCount, "ashen-hollow-en.csv");
+        trackEvent("loc_sample_loaded", { keys: parsed.keyCount });
+        // Seed glossary names from the demo pilot
+        applyGlossaryData({
+          Mira: { ru: "Mira", es: "Mira", de: "Mira" },
+          Torren: { ru: "Torren", es: "Torren", de: "Torren" },
+          "Ashen Hollow": { ru: "Ashen Hollow", es: "Ashen Hollow", de: "Ashen Hollow" },
+        });
+        persistGlossary();
+      } catch (err) {
+        toast(err.message || t("loc.csv_no_file"), true);
+      }
+    });
+
+    document.getElementById("upsellPack")?.addEventListener("click", () => {
+      const plan = packPlan || "loc_starter";
+      const btn = document.querySelector(`[data-loc-pack="${plan}"]`);
+      if (btn) btn.click();
+    });
+
     document.getElementById("csvFile").addEventListener("change", async (e) => {
       const file = e.target.files && e.target.files[0];
       const csvFileName = document.getElementById("csvFileName");
@@ -490,6 +552,13 @@
           msg += ` · ${t("loc.words_used", { count: gen.words_used })}`;
         }
         toast(msg);
+        trackEvent("localize_success", {
+          keys: last.key_count || Object.keys(texts).length,
+          quota_kind: gen.quota_kind || "generations",
+        });
+        const upsell = document.getElementById("upsellPanel");
+        if (upsell) upsell.hidden = false;
+        localStorage.setItem("gf_loc_translated", "1");
       } catch (err) { toast(err.message, true); }
       finally { setLoading(document.getElementById("loader"), false); }
     });

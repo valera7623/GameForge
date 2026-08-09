@@ -2,6 +2,7 @@
  * Auth helpers and route guards.
  */
 
+import { getAttribution, trackEvent } from "./analytics.js";
 import { AuthAPI, clearTokens, isLoggedIn, setTokens } from "./api.js";
 import { t } from "./i18n.js";
 
@@ -37,11 +38,27 @@ export async function login(email, password) {
   return me;
 }
 
-export async function register(email, password, full_name) {
-  const tokens = await AuthAPI.register({ email, password, full_name });
+export async function register(email, password, full_name, extras = {}) {
+  const attr = { ...getAttribution(), ...(extras.attribution || {}) };
+  const signup_source = extras.signup_source || attr.from || null;
+  const signup_pack = extras.signup_pack || attr.pack || null;
+  const body = {
+    email,
+    password,
+    full_name,
+    signup_source: signup_source || undefined,
+    signup_pack: signup_pack || undefined,
+    attribution: Object.keys(attr).length ? attr : undefined,
+  };
+  const tokens = await AuthAPI.register(body);
   setTokens(tokens.access_token, tokens.refresh_token);
   const me = await AuthAPI.me();
   localStorage.setItem("gf_user", JSON.stringify(me));
+  trackEvent("sign_up", {
+    method: "email",
+    from: signup_source || undefined,
+    pack: signup_pack || undefined,
+  });
   return me;
 }
 

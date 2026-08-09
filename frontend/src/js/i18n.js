@@ -149,6 +149,15 @@ const DICT = {
     "land.choose_studio": "Choose Studio",
     "land.footer": "GameForge — AI Game Dev Toolkit",
 
+    "register.sub_locforge": "LocForge: localize your first CSV in under a minute",
+    "loc.sample_btn": "Load Ashen Hollow sample",
+    "loc.sample_loaded": "Sample loaded — {count} keys. Hit Translate.",
+    "loc.upsell_title": "Next step",
+    "loc.upsell_body": "Buy a word pack for larger CSVs, or explore 13 more GameForge tools.",
+    "loc.upsell_pack": "Buy Starter pack",
+    "loc.upsell_tools": "Explore all tools",
+    "loc.pack_hint": "You chose the {pack} pack at signup — buy it when ready.",
+
     "login.title": "Sign in — GameForge",
     "login.h1": "Welcome back",
     "login.sub": "Sign in to your forge",
@@ -888,6 +897,15 @@ const DICT = {
     "land.choose_indie": "Выбрать Indie",
     "land.choose_studio": "Выбрать Studio",
     "land.footer": "GameForge — ИИ-инструменты для геймдева",
+
+    "register.sub_locforge": "LocForge: локализуйте первый CSV за минуту",
+    "loc.sample_btn": "Загрузить демо Ashen Hollow",
+    "loc.sample_loaded": "Демо загружено — {count} ключей. Нажмите Translate.",
+    "loc.upsell_title": "Что дальше",
+    "loc.upsell_body": "Купите пакет слов для больших CSV или откройте ещё 13 инструментов GameForge.",
+    "loc.upsell_pack": "Купить Starter",
+    "loc.upsell_tools": "Все инструменты",
+    "loc.pack_hint": "При регистрации выбран пакет {pack} — купите, когда будете готовы.",
 
     "login.title": "Вход — GameForge",
     "login.h1": "С возвращением",

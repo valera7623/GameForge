@@ -1,0 +1,69 @@
+key,source
+ui.start,Start game
+ui.continue,Continue
+ui.settings,Settings
+ui.quit,Quit to desktop
+ui.new_game,New game
+ui.load,Load save
+ui.save,Save progress
+ui.inventory,Inventory
+ui.map,World map
+ui.journal,Quest journal
+ui.confirm,Are you sure?
+ui.cancel,Cancel
+ui.apply,Apply changes
+ui.back,Go back
+hud.health,Health
+hud.mana,Mana
+hud.stamina,Stamina
+hud.level,Level {n}
+hud.xp,Experience
+hud.gold,Gold
+menu.audio,Audio
+menu.video,Video
+menu.controls,Controls
+menu.language,Language
+menu.difficulty,Difficulty
+diff.easy,Story
+diff.normal,Adventurer
+diff.hard,Ashen path
+npc.mira.name,Mira
+npc.mira.greet,Welcome to Ashen Hollow traveler.
+npc.mira.quest,The crypt below still holds the key.
+npc.guard.name,Gate Guard
+npc.guard.halt,Halt! State your business.
+npc.guard.pass,You may pass. Stay on the path.
+npc.blacksmith.name,Torren
+npc.blacksmith.offer,Need a blade sharpened?
+item.ashen_blade,Ashen Blade
+item.ashen_blade.desc,A sword cooled in gray fire.
+item.health_potion,Health potion
+item.health_potion.desc,Restores a portion of health.
+item.mana_flask,Mana flask
+item.mana_flask.desc,Restores a portion of mana.
+item.rusty_key,Rusty crypt key
+item.rusty_key.desc,Opens the sealed crypt door.
+quest.intro.title,Into the Hollow
+quest.intro.obj,Speak with Mira at the gate.
+quest.crypt.title,The Sealed Crypt
+quest.crypt.obj,Find the rusty key and open the crypt.
+quest.crypt.done,The seal breaks. Darkness waits below.
+dlg.mira.01,Ash and dust. That is what remains.
+dlg.mira.02,Keep Mira's token close. It marks you as friend.
+dlg.torren.01,Steel fails when courage does.
+dlg.torren.02,Bring me scrap. I will forge something better.
+hint.jump,Press Space to jump
+hint.interact,Press E to interact
+hint.sprint,Hold Shift to sprint
+hint.map,Press M to open the map
+err.save_failed,Could not save. Try again.
+err.load_failed,Save file is missing or corrupt.
+err.inventory_full,Inventory is full.
+tut.welcome,Welcome to Ashen Hollow.
+tut.move,Use WASD to move through the ruins.
+tut.combat,Left click to attack. Right click to block.
+tut.rest,Rest at a campfire to restore health and mana.
+ending.a,You leave the Hollow with the key and a debt unpaid.
+ending.b,The ash settles. Mira watches the road behind you.
+steam.short,Explore a ruined valley of ash and forgotten keys.
+steam.long,"Ashen Hollow is a short action-adventure about courage memory and the cost of opening sealed doors. Fight scrape and bargain your way through gray fire ruins."

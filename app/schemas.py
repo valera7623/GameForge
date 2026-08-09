@@ -13,6 +13,9 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=10, max_length=128)
     full_name: Optional[str] = None
+    signup_source: Optional[str] = Field(default=None, max_length=64)
+    signup_pack: Optional[str] = Field(default=None, max_length=32)
+    attribution: Optional[dict[str, Any]] = None
 
 
 class LoginRequest(BaseModel):
@@ -72,6 +75,8 @@ class UserMeResponse(UserResponse):
     generations_limit: int = 5
     achievements_count: int = 0
     localization_words_remaining: int = 0
+    signup_source: Optional[str] = None
+    signup_pack: Optional[str] = None
 
 
 # ── Projects ──────────────────────────────────────────────────────────

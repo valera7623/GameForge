@@ -50,6 +50,7 @@
     </div>
   </div>
   <script type="module">
+    import { mergeAttributionOverrides, trackEvent } from "../js/analytics.js";
     import { redirectIfAuthed, register, safeNextPath } from "../js/auth.js";
     import { applyDomI18n, toast } from "../js/app.js";
     import { applyTheme, bindThemeToggles, getTheme } from "../js/theme.js";
@@ -60,6 +61,9 @@
     const params = new URLSearchParams(location.search);
     const next = safeNextPath(params.get("next"), "/dashboard");
     const emailPrefill = params.get("email");
+    const from = (params.get("from") || "").trim();
+    const pack = (params.get("pack") || "").trim();
+    if (from || pack) mergeAttributionOverrides({ from: from || undefined, pack: pack || undefined });
     if (emailPrefill) {
       const emailInput = document.getElementById("regEmail");
       if (emailInput) emailInput.value = emailPrefill;
@@ -68,14 +72,27 @@
     if (signinLink) {
       const q = new URLSearchParams({ next });
       if (emailPrefill) q.set("email", emailPrefill);
+      if (from) q.set("from", from);
+      if (pack) q.set("pack", pack);
       signinLink.href = `/login?${q}`;
+    }
+    if (from === "locforge") {
+      const sub = document.querySelector(".auth-card .sub");
+      if (sub) sub.setAttribute("data-i18n", "register.sub_locforge");
+      applyDomI18n(document);
     }
     document.getElementById("regForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       try {
-        await register(fd.get("email"), fd.get("password"), fd.get("full_name") || null);
-        location.href = next;
+        await register(fd.get("email"), fd.get("password"), fd.get("full_name") || null, {
+          signup_source: from || undefined,
+          signup_pack: pack || undefined,
+        });
+        trackEvent("sign_up_complete", { from: from || undefined, pack: pack || undefined });
+        const dest = new URL(next, location.origin);
+        if (pack && !dest.searchParams.get("pack")) dest.searchParams.set("pack", pack);
+        location.href = dest.pathname + dest.search;
       } catch (err) {
         toast(err.message, true);
       }

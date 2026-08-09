@@ -64,7 +64,7 @@
       <a class="btn-icon" href="/en/locforge" title="English" lang="en">EN</a>
       <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Переключить тему">☾</button>
       <a href="/login?next=/localization" class="btn btn-ghost">Войти</a>
-      <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary">Начать бесплатно</a>
+      <a href="/register?from=locforge&amp;next=/localization&amp;utm_source=locforge&amp;utm_medium=nav&amp;utm_campaign=lf_ru" class="btn btn-primary">Начать бесплатно</a>
     </nav>
   </header>
 
@@ -78,7 +78,7 @@
         <h1>Локализация инди-игры за один вечер</h1>
         <p class="lede">CSV на входе, имена в глоссарии, QA длины, Unity и Godot на выходе — без бюро переводов.</p>
         <div class="cta-row">
-          <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary btn-lg">Локализовать первый CSV</a>
+          <a href="/register?from=locforge&amp;next=/localization&amp;utm_source=locforge&amp;utm_medium=hero&amp;utm_campaign=lf_ru" class="btn btn-primary btn-lg">Локализовать первый CSV</a>
           <a href="#how" class="btn btn-ghost btn-lg">Как это работает</a>
         </div>
       </div>
@@ -155,23 +155,29 @@
         Глоссарий сохранил Mira и Torren. QA длины отметил короткие UI/HUD-лейблы, которые раздуваются в DE/RU —
         типичное переполнение до релиза в Steam.
       </p>
+      <p class="lf-case-body" style="margin-top:1rem">
+        <strong>Хотите своё имя в кейсе?</strong>
+        Пришлите CSV на бесплатный пилот — RU/ES/DE, глоссарий и QA длины.
+        <a href="/ru/feedback?category=other&amp;utm_source=locforge&amp;utm_medium=case&amp;utm_campaign=lf_ru_pilot">Заявка через обратную связь</a>
+        или <a href="mailto:gameforge.website@yandex.ru?subject=LocForge%20pilot">gameforge.website@yandex.ru</a>.
+      </p>
     </section>
 
     <section id="pricing" class="section lf-section lf-pricing">
       <h2>Платите за слова, не за ферму мест</h2>
       <p class="section-sub">Пакеты на один цикл релиза. Оплата через ЮKassa в рублях — сегодня можно начать бесплатно.</p>
       <div class="lf-price-row">
-        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=starter">
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=starter&amp;utm_source=locforge&amp;utm_medium=pricing&amp;utm_campaign=lf_ru&amp;utm_content=starter">
           <h3>Starter</h3>
           <p class="lf-price-amount">4 990 ₽</p>
           <p class="lf-price-meta">5 000 слов</p>
         </a>
-        <a class="lf-price lf-price--featured" href="/register?from=locforge&amp;next=/localization&amp;pack=indie">
+        <a class="lf-price lf-price--featured" href="/register?from=locforge&amp;next=/localization&amp;pack=indie&amp;utm_source=locforge&amp;utm_medium=pricing&amp;utm_campaign=lf_ru&amp;utm_content=indie">
           <h3>Indie</h3>
           <p class="lf-price-amount">14 990 ₽</p>
           <p class="lf-price-meta">25 000 слов</p>
         </a>
-        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=studio">
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=studio&amp;utm_source=locforge&amp;utm_medium=pricing&amp;utm_campaign=lf_ru&amp;utm_content=studio">
           <h3>Studio</h3>
           <p class="lf-price-amount">39 990 ₽</p>
           <p class="lf-price-meta">100 000 слов</p>
@@ -193,11 +199,14 @@
   <script type="module">
     import { setLang } from "/src/js/i18n.js";
     import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
-    import { initAnalytics } from "/src/js/analytics.js";
+    import { initAnalytics, trackEvent } from "/src/js/analytics.js";
     initAnalytics();
     setLang("ru");
     applyTheme(getTheme());
     bindThemeToggles();
+    document.querySelectorAll('a[href*="from=locforge"]').forEach((a) => {
+      a.addEventListener("click", () => trackEvent("locforge_cta", { href: a.getAttribute("href") || "" }));
+    });
   </script>
 </body>
 </html>

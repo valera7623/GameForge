@@ -64,7 +64,7 @@
       <a class="btn-icon" href="/ru/locforge" title="Русский" lang="ru">RU</a>
       <button type="button" class="btn-icon theme-toggle" data-theme-toggle aria-label="Toggle theme">☾</button>
       <a href="/login?next=/localization" class="btn btn-ghost">Sign in</a>
-      <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary">Start free</a>
+      <a href="/register?from=locforge&amp;next=/localization&amp;utm_source=locforge&amp;utm_medium=nav&amp;utm_campaign=lf_en" class="btn btn-primary">Start free</a>
     </nav>
   </header>
 
@@ -78,7 +78,7 @@
         <h1>Indie game localization in one evening</h1>
         <p class="lede">CSV in, glossary-locked names, length QA, Unity and Godot out — without a translation bureau.</p>
         <div class="cta-row">
-          <a href="/register?from=locforge&amp;next=/localization" class="btn btn-primary btn-lg">Localize your first CSV</a>
+          <a href="/register?from=locforge&amp;next=/localization&amp;utm_source=locforge&amp;utm_medium=hero&amp;utm_campaign=lf_en" class="btn btn-primary btn-lg">Localize your first CSV</a>
           <a href="#how" class="btn btn-ghost btn-lg">See how</a>
         </div>
       </div>
@@ -144,7 +144,7 @@
 
     <section id="case" class="section lf-section lf-case">
       <h2>Demo pilot — Ashen Hollow sample pack</h2>
-      <p class="section-sub">Stand-in case until a live indie grants a named quote. Same pipeline you’ll get in a free pilot.</p>
+      <p class="section-sub">Interim case until a live indie grants a named quote. Same pipeline as a free pilot.</p>
       <div class="lf-case-metrics" role="list">
         <div role="listitem"><strong>68</strong><span>keys</span></div>
         <div role="listitem"><strong>273</strong><span>words</span></div>
@@ -155,23 +155,29 @@
         Glossary kept Mira and Torren intact. Length QA flagged short UI/HUD labels that grow in German and Russian —
         the overflow that breaks layouts before Steam.
       </p>
+      <p class="lf-case-body" style="margin-top:1rem">
+        <strong>Want your game named here?</strong>
+        Send a CSV for a free pilot — we localize RU/ES/DE with glossary + length QA.
+        <a href="/feedback?category=other&amp;utm_source=locforge&amp;utm_medium=case&amp;utm_campaign=lf_en_pilot">Apply via feedback</a>
+        or email <a href="mailto:gameforge.website@yandex.ru?subject=LocForge%20pilot">gameforge.website@yandex.ru</a>.
+      </p>
     </section>
 
     <section id="pricing" class="section lf-section lf-pricing">
       <h2>Pay for words, not a seat farm</h2>
       <p class="section-sub">Packs for one ship cycle. Pay with YuKassa in rubles — start free today.</p>
       <div class="lf-price-row">
-        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=starter">
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=starter&amp;utm_source=locforge&amp;utm_medium=pricing&amp;utm_campaign=lf_en&amp;utm_content=starter">
           <h3>Starter</h3>
           <p class="lf-price-amount">4 990 ₽</p>
           <p class="lf-price-meta">5,000 words</p>
         </a>
-        <a class="lf-price lf-price--featured" href="/register?from=locforge&amp;next=/localization&amp;pack=indie">
+        <a class="lf-price lf-price--featured" href="/register?from=locforge&amp;next=/localization&amp;pack=indie&amp;utm_source=locforge&amp;utm_medium=pricing&amp;utm_campaign=lf_en&amp;utm_content=indie">
           <h3>Indie</h3>
           <p class="lf-price-amount">14 990 ₽</p>
           <p class="lf-price-meta">25,000 words</p>
         </a>
-        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=studio">
+        <a class="lf-price" href="/register?from=locforge&amp;next=/localization&amp;pack=studio&amp;utm_source=locforge&amp;utm_medium=pricing&amp;utm_campaign=lf_en&amp;utm_content=studio">
           <h3>Studio</h3>
           <p class="lf-price-amount">39 990 ₽</p>
           <p class="lf-price-meta">100,000 words</p>
@@ -193,11 +199,14 @@
   <script type="module">
     import { setLang } from "/src/js/i18n.js";
     import { applyTheme, bindThemeToggles, getTheme } from "/src/js/theme.js";
-    import { initAnalytics } from "/src/js/analytics.js";
+    import { initAnalytics, trackEvent } from "/src/js/analytics.js";
     initAnalytics();
     setLang("en");
     applyTheme(getTheme());
     bindThemeToggles();
+    document.querySelectorAll('a[href*="from=locforge"]').forEach((a) => {
+      a.addEventListener("click", () => trackEvent("locforge_cta", { href: a.getAttribute("href") || "" }));
+    });
   </script>
 </body>
 </html>

@@ -30,7 +30,7 @@ async def localize(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await run_tool(
+    result = await run_tool(
         request=request,
         db=db,
         user=user,
@@ -49,6 +49,17 @@ async def localize(
             body.include_pseudo,
         ),
     )
+    # One-shot post-translate nurture (LocForge funnel)
+    if not getattr(user, "first_localize_notified", False):
+        try:
+            from app.services.email_service import send_post_localize_upsell
+
+            await send_post_localize_upsell(user.email, user.full_name)
+            user.first_localize_notified = True
+            await db.commit()
+        except Exception:
+            pass
+    return result
 
 
 @router.post("/pseudo")

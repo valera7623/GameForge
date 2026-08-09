@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -47,6 +47,10 @@ class User(Base):
     generations_this_month: Mapped[int] = mapped_column(Integer, default=0)
     generation_reset_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     avatar_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    signup_source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    signup_pack: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    attribution: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    first_localize_notified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     reset_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     reset_token_expires: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)

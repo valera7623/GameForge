@@ -58,12 +58,22 @@ async def register(
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    source = (body.signup_source or "").strip()[:64] or None
+    pack = (body.signup_pack or "").strip()[:32] or None
+    attribution = body.attribution if isinstance(body.attribution, dict) else None
+    if attribution:
+        # Keep payload small / PII-free
+        attribution = {str(k)[:40]: str(v)[:200] for k, v in list(attribution.items())[:20] if v is not None}
+
     user = User(
         email=body.email.lower(),
         hashed_password=hash_password(body.password),
         full_name=body.full_name,
         is_verified=True,
         generation_reset_at=datetime.now(timezone.utc),
+        signup_source=source,
+        signup_pack=pack,
+        attribution=attribution,
     )
     db.add(user)
     await db.flush()
@@ -80,10 +90,13 @@ async def register(
     )
     await db.flush()
 
-    from app.services.email_service import send_welcome
+    from app.services.email_service import send_locforge_welcome, send_welcome
 
     try:
-        await send_welcome(user.email, user.full_name)
+        if source == "locforge":
+            await send_locforge_welcome(user.email, user.full_name, pack)
+        else:
+            await send_welcome(user.email, user.full_name)
     except Exception:
         pass
 
@@ -205,6 +218,8 @@ async def me(user: User = Depends(get_current_user), db: AsyncSession = Depends(
         generations_limit=sub.generations_limit,
         achievements_count=len(achievements),
         localization_words_remaining=int(sub.localization_words_remaining or 0),
+        signup_source=user.signup_source,
+        signup_pack=user.signup_pack,
     )
 
 
